@@ -1,7 +1,26 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "**.fal.media",
+      },
+      {
+        protocol: "https",
+        hostname: "fal.media",
+      }
+    ],
+  },
+  serverExternalPackages: ["@react-pdf/renderer"],
+  experimental: {
+    esmExternals: "loose",
+  },
+  webpack: (config) => {
+    config.resolve.alias.canvas = false;
+    return config;
+  },
 };
 
 export default nextConfig;

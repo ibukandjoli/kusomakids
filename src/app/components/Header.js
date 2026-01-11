@@ -1,0 +1,147 @@
+// src/app/components/Header.js
+'use client';
+
+import Link from 'next/link';
+import { useState, useEffect, useRef } from 'react';
+import { useBookContext } from '../context/BookContext';
+
+import { supabase } from '@/lib/supabase';
+
+export default function Header() {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+  const { cart } = useBookContext();
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    // Scroll handler
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 10);
+    };
+    window.addEventListener('scroll', handleScroll);
+
+    // Auth handler
+    const checkUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setUser(session?.user || null);
+    };
+    checkUser();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user || null);
+    });
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  return (
+    <header
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled
+        ? 'bg-white/80 backdrop-blur-md shadow-sm border-b border-gray-100 py-3'
+        : 'bg-transparent py-5'
+        }`}
+    >
+      <div className="container mx-auto px-4 md:px-8">
+        <div className="flex justify-between items-center">
+          {/* Logo */}
+          <Link href="/" className="flex items-center gap-2 group">
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-xl transition-all duration-300 ${isScrolled ? 'bg-orange-500 text-white' : 'bg-orange-500 text-white shadow-lg' // FIXED: bg-orange-500 always
+              }`}>
+              K
+            </div>
+            <span className={`text-xl font-bold tracking-tight transition-colors duration-300 ${isScrolled ? 'text-gray-900' : 'text-gray-900' // FIXED: text-gray-900 always
+              }`}>
+              Kusoma<span className="text-orange-500">Kids</span>
+            </span>
+          </Link>
+
+          {/* Desktop Menu */}
+          <nav className="hidden md:flex items-center space-x-8">
+            {[
+              { label: 'Bibliothèque', href: '/books' },
+              { label: 'Comment ça marche', href: '/#how-it-works' },
+              { label: 'Club Kusoma', href: '/club' },
+              { label: 'FAQ', href: '/#faq' }
+            ].map((item) => (
+              <Link
+                key={item.label}
+                href={item.href}
+                className={`text-sm font-medium transition-colors duration-200 ${isScrolled ? 'text-gray-600 hover:text-orange-500' : 'text-gray-900 hover:text-orange-500'
+                  }`}
+              >
+                {item.label}
+              </Link>
+            ))}
+          </nav>
+
+          {/* Actions */}
+          <div className="flex items-center space-x-4">
+            {/* Cart Icon (Simple) */}
+            <Link href="/checkout" className={`relative p-2 rounded-full transition-colors ${isScrolled ? 'text-gray-600 hover:bg-gray-100' : 'text-gray-900 hover:bg-gray-100' // FIXED: text-gray-900 on transparent bg
+              }`}>
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+              </svg>
+              {cart.items.length > 0 && (
+                <span className="absolute top-0 right-0 w-4 h-4 bg-red-500 text-white text-[10px] font-bold flex items-center justify-center rounded-full">
+                  {cart.items.length}
+                </span>
+              )}
+            </Link>
+
+            {/* Login Button */}
+            <Link
+              href={user ? "/dashboard" : "/login"}
+              className={`hidden md:inline-flex items-center justify-center px-5 py-2 text-sm font-semibold rounded-full transition-all duration-300 ${isScrolled
+                ? 'bg-gray-900 text-white hover:bg-gray-800'
+                : 'bg-orange-600 text-white hover:bg-orange-500 shadow-lg'
+                }`}
+            >
+              {user ? "Mon Espace" : "Connexion"}
+            </Link>
+
+            {/* Mobile Toggle */}
+            <button
+              className={`md:hidden p-2 rounded-lg ${isScrolled ? 'text-gray-900' : 'text-gray-900' // FIXED: text-gray-900 always
+                }`}
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={mobileMenuOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"} />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        {/* Mobile Menu */}
+        {mobileMenuOpen && (
+          <div className="absolute top-full left-0 right-0 bg-white border-b border-gray-100 p-4 md:hidden shadow-xl animate-slideUp">
+            <nav className="flex flex-col space-y-4">
+              {[
+                { label: 'Bibliothèque', href: '/books' },
+                { label: 'Comment ça marche', href: '/#how-it-works' },
+                { label: 'Club Kusoma', href: '/club' },
+                { label: user ? 'Mon Espace' : 'Connexion', href: user ? '/dashboard' : '/login' }
+              ].map((item) => (
+                <Link
+                  key={item.label}
+                  href={item.href}
+                  className={`font-medium transition-colors ${item.label === 'Mon Espace'
+                    ? 'bg-orange-500 text-white px-4 py-3 rounded-xl text-center font-bold mt-4 shadow-lg shadow-orange-500/30'
+                    : 'text-gray-600 hover:text-orange-500 block py-2'
+                    }`}
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  {item.label}
+                </Link>
+              ))}
+            </nav>
+          </div>
+        )}
+      </div>
+    </header>
+  );
+}

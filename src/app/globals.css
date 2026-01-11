@@ -1,0 +1,85 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Styles personnalisés pour les boutons */
+@layer components {
+  .btn {
+    @apply inline-block rounded-full font-medium py-3 px-6 transition-all duration-300 transform hover:scale-105;
+  }
+  
+  .btn-primary {
+    @apply bg-white text-orange-600 hover:bg-gray-50;
+  }
+  
+  .btn-gradient {
+    @apply bg-gradient-to-r from-orange-500 to-orange-600 text-white hover:from-orange-600 hover:to-orange-700 shadow-md;
+  }
+  
+  .card {
+    @apply bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300;
+  }
+
+  /* 3D Book Effects */
+  .perspective-1000 {
+    perspective: 1000px;
+  }
+  
+  .transform-style-3d {
+    transform-style: preserve-3d;
+  }
+  
+  .backface-hidden {
+    backface-visibility: hidden;
+  }
+  
+  .rotate-y-12 {
+     transform: rotateY(12deg);
+  }
+
+  /* Animations */
+  .animate-pulse-slow {
+    animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+  
+  .animate-slideUp {
+    animation: slideUp 0.8s ease-out;
+  }
+  
+  .animate-fadeIn {
+    animation: fadeIn 0.3s ease-out;
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.9;
+    transform: scale(1.03);
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

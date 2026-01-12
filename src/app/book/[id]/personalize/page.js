@@ -130,7 +130,11 @@ export default function PersonalizePage() {
                                         className="text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100"
                                     />
                                 </div>
-                                <p className="text-xs text-gray-400 mt-2">Une photo de face, bien éclairée, sans lunettes de soleil.</p>
+                                <div className="flex gap-2 mt-4 text-xs font-medium text-gray-500">
+                                    <span className="flex items-center gap-1"><span className="text-green-500">✅</span> Bonne lumière</span>
+                                    <span className="flex items-center gap-1"><span className="text-red-500">❌</span> Pas de lunettes</span>
+                                    <span className="flex items-center gap-1"><span className="text-red-500">❌</span> Seul(e)</span>
+                                </div>
                             </div>
 
                             {/* Name */}
@@ -223,6 +227,9 @@ export default function PersonalizePage() {
                                     'Lancer la personnalisation 🚀'
                                 )}
                             </button>
+                            <p className="text-center text-sm text-gray-500 mt-3 font-medium">
+                                Cela prend environ 45 secondes ⏱️
+                            </p>
                             <p className="text-gray-400 text-xs mt-4">
                                 Étape suivante : Prévisualisation de l'histoire
                             </p>
@@ -233,6 +240,6 @@ export default function PersonalizePage() {
                 </div>
 
             </div>
-        </div>
+        </div >
     );
 }

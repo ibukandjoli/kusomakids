@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Image from 'next/image';
 import { fal } from '@fal-ai/client';
+import BookReader from '@/app/components/BookReader';
 
 fal.config({
     proxyUrl: '/api/fal/proxy',
@@ -19,6 +20,7 @@ export default function PreviewPage() {
     // States
     const [status, setStatus] = useState("init"); // init, writing, illustrating, complete
     const [progressMessage, setProgressMessage] = useState("Initialisation...");
+    const [loadingTip, setLoadingTip] = useState("Savais-tu que le Baobab peut vivre 2000 ans ? 🌳"); // Rotating tip
     const [orderData, setOrderData] = useState(null);
     const [pages, setPages] = useState([]);
 
@@ -36,6 +38,23 @@ export default function PreviewPage() {
         setOrderData(parsed);
 
         startGeneration(parsed);
+
+        // Rotating Tips
+        const tips = [
+            "Savais-tu que le Baobab peut vivre 2000 ans ? 🌳",
+            "Préparation des illustrations magiques... 🎨",
+            "Ajout de la touche de poussière d'étoiles... ✨",
+            "Le héros se prépare pour l'aventure... 🦸🏾",
+            "Les griots accordent leurs koras... 🎵",
+            "Nos artistes dessinent le sourire de votre enfant... ✏️"
+        ];
+        let tipIndex = 0;
+        const interval = setInterval(() => {
+            tipIndex = (tipIndex + 1) % tips.length;
+            setLoadingTip(tips[tipIndex]);
+        }, 3500);
+
+        return () => clearInterval(interval);
     }, [router]);
 
     const startGeneration = async (data) => {
@@ -73,34 +92,51 @@ export default function PreviewPage() {
                 const page = previewPages[i];
                 setProgressMessage(`Illustration de la page ${i + 1} / 3...`);
 
-                // Call Fal AI
-                const result = await fal.subscribe(MODEL_ID, {
-                    input: {
-                        prompt: `${page.imagePrompt}, pixar style, cute, vibrant colors`,
-                        image_url: data.personalization.photoUrl,
-                        image_strength: 0.5,
-                        guidance_scale: 3.5,
-                        num_inference_steps: 25,
-                        enable_safety_checker: false
-                    },
-                    logs: false,
-                });
+                // Prepare Input safely
+                const falInput = {
+                    prompt: `${page.imagePrompt}, pixar style, cute, vibrant colors`,
+                    image_strength: 0.5,
+                    guidance_scale: 3.5,
+                    num_inference_steps: 25,
+                    enable_safety_checker: false
+                };
 
-                let imageUrl = '/images/books/page1-placeholder.png'; // Fallback
-                if (result.images && result.images.length > 0) {
-                    imageUrl = result.images[0].url;
-                } else if (result.image) {
-                    imageUrl = result.image.url;
+                // Only add image_url if it exists and looks valid
+                if (data.personalization?.photoUrl) {
+                    falInput.image_url = data.personalization.photoUrl;
                 }
 
-                generatedPages.push({
-                    id: i + 1,
-                    text: page.text,
-                    image: imageUrl
-                });
+                try {
+                    // Call Fal AI
+                    const result = await fal.subscribe(MODEL_ID, {
+                        input: falInput,
+                        logs: false,
+                    });
 
-                // Update state progressively to show images arriving
-                setPages([...generatedPages]);
+                    let imageUrl = '/images/books/soso-etoiles/page1.png'; // Fallback
+                    if (result.images && result.images.length > 0) {
+                        imageUrl = result.images[0].url;
+                    } else if (result.image) {
+                        imageUrl = result.image.url;
+                    }
+
+                    generatedPages.push({
+                        id: i + 1,
+                        text: page.text,
+                        image: imageUrl
+                    });
+
+                    setPages([...generatedPages]);
+
+                } catch (err) {
+                    console.error("Fal Generation Error:", err);
+                    generatedPages.push({
+                        id: i + 1,
+                        text: page.text,
+                        image: '/images/books/soso-etoiles/page1.png'
+                    });
+                    setPages([...generatedPages]);
+                }
             }
 
             setStatus("complete");
@@ -108,39 +144,67 @@ export default function PreviewPage() {
         } catch (error) {
             console.error("Generation Error:", error);
             alert("Une erreur est survenue lors de la magie. Nous allons réessayer.");
-            // Potentially redirect or retry
         }
     };
 
-    const handleTextChange = (id, newText) => {
-        setPages(pages.map(p => p.id === id ? { ...p, text: newText } : p));
+    // Navigation and Handlers
+    const [currentIndex, setCurrentIndex] = useState(0);
+    const [editingId, setEditingId] = useState(null);
+    const [tempText, setTempText] = useState("");
+    const [user, setUser] = useState(null);
+
+    useEffect(() => {
+        const checkUser = async () => {
+            const { data: { session } } = await import('@/lib/supabase').then(m => m.supabase.auth.getSession());
+            setUser(session?.user);
+        }
+        checkUser();
+    }, []);
+
+    const handleEditStart = (page) => {
+        setEditingId(page.id);
+        setTempText(page.text);
+    };
+
+    const handleEditCancel = () => {
+        setEditingId(null);
+        setTempText("");
+    };
+
+    const handleEditSave = (pageId, newText) => {
+        setPages(pages.map(p => p.id === pageId ? { ...p, text: newText } : p));
+        setEditingId(null);
     };
 
     const handleConfirm = () => {
-        // Save finalized text/images to cart?
-        // For now, we assume the checkout flow will just capture the initial intent + personalization
-        // In a real app, we would update the 'cart_item' with the finalized 'pages' data
         const updatedOrder = { ...orderData, finalizedPages: pages };
         localStorage.setItem('cart_item', JSON.stringify(updatedOrder));
-        router.push('/checkout');
+
+        if (user) {
+            router.push('/checkout');
+        } else {
+            router.push('/checkout');
+        }
     };
 
     if (status !== "complete") {
         return (
-            <div className="min-h-screen bg-gray-900 flex flex-col items-center justify-center text-white px-4">
+            <div className="min-h-screen bg-orange-50 flex flex-col items-center justify-center text-gray-900 px-4">
                 <div className="w-32 h-32 relative mb-8">
-                    <div className="absolute inset-0 border-4 border-orange-500 rounded-full animate-ping opacity-25"></div>
+                    <div className="absolute inset-0 border-4 border-orange-200 rounded-full animate-ping opacity-75"></div>
                     <div className="absolute inset-4 border-4 border-orange-500 rounded-full animate-spin border-t-transparent"></div>
                     {status === 'writing' && <span className="absolute inset-0 flex items-center justify-center text-4xl animate-bounce">✍️</span>}
                     {status === 'illustrating' && <span className="absolute inset-0 flex items-center justify-center text-4xl animate-pulse">🎨</span>}
                 </div>
-                <h2 className="text-3xl font-bold mb-4 text-center">Magie en cours...</h2>
-                <p className="text-gray-400 text-center max-w-md animate-pulse font-mono bg-gray-800 px-4 py-2 rounded-lg">
+                <h2 className="text-3xl font-bold mb-4 text-center text-gray-900">Magie en cours...</h2>
+                <p className="text-gray-600 text-center max-w-md animate-pulse font-mono bg-white/50 px-4 py-2 rounded-lg mb-2 shadow-sm border border-orange-100">
                     {progressMessage}
                 </p>
+                <p className="text-orange-600 text-sm italic opacity-80 select-none font-bold">
+                    "{loadingTip}"
+                </p>
 
-                {/* Progress Bar */}
-                <div className="w-64 h-2 bg-gray-800 rounded-full mt-8 overflow-hidden">
+                <div className="w-64 h-2 bg-gray-200 rounded-full mt-8 overflow-hidden">
                     <div
                         className="h-full bg-orange-500 transition-all duration-500"
                         style={{
@@ -157,70 +221,55 @@ export default function PreviewPage() {
     }
 
     return (
-        <div className="min-h-screen bg-orange-50 pt-32 pb-20">
-            <div className="container mx-auto px-4 max-w-4xl">
+        <div className="min-h-screen bg-orange-50 pt-24 pb-8 flex flex-col">
+            <div className="flex-grow flex flex-col w-full h-full px-4 md:px-8">
 
-                <div className="text-center mb-12 animate-in fade-in slide-in-from-bottom-8 duration-700">
-                    <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Voici votre histoire !</h1>
-                    <p className="text-gray-600">
-                        Découvrez les 3 premières pages générées spécialement pour {orderData?.personalization?.childName}.
+                <div className="text-center mb-6 animate-in fade-in slide-in-from-bottom-8 duration-700">
+                    <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Voici votre histoire !</h1>
+                    <p className="text-gray-600 text-sm">
+                        Découvrez les 3 premières pages générées pour {orderData?.personalization?.childName}.
                     </p>
                 </div>
 
-                <div className="space-y-12">
-                    {pages.map((page, index) => (
-                        <div key={page.id} className="bg-white p-6 md:p-8 rounded-3xl shadow-lg border border-orange-100 flex flex-col md:flex-row gap-8 items-center animate-in zoom-in duration-500 delay-100">
-
-                            {/* Page Number */}
-                            <div className="absolute -left-4 -top-4 w-12 h-12 bg-orange-500 text-white font-bold rounded-full flex items-center justify-center shadow-lg transform -translate-y-1/2">
-                                {index + 1}
-                            </div>
-
-                            {/* Image (Left) */}
-                            <div className="w-full md:w-1/3 aspect-square bg-gray-100 rounded-2xl flex items-center justify-center text-gray-400 relative overflow-hidden shadow-inner group">
-                                <Image
-                                    src={page.image}
-                                    alt={`Page ${index + 1}`}
-                                    fill
-                                    className="object-cover transition-transform duration-700 group-hover:scale-110"
-                                />
-                                <div className="absolute inset-0 ring-1 ring-inset ring-black/10 rounded-2xl"></div>
-                            </div>
-
-                            {/* Editable Text (Right) */}
-                            <div className="w-full md:w-2/3">
-                                <label className="block text-sm font-bold text-gray-500 mb-2 uppercase tracking-wide flex justify-between">
-                                    <span>Texte de la page {index + 1}</span>
-                                    <span className="text-xs text-orange-500 font-normal">✏️ Modifiable</span>
-                                </label>
-                                <textarea
-                                    value={page.text}
-                                    onChange={(e) => handleTextChange(page.id, e.target.value)}
-                                    rows={5}
-                                    className="w-full p-4 rounded-xl border border-gray-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 outline-none transition-all font-serif text-lg leading-relaxed text-gray-800 bg-orange-50/30 resize-none shadow-inner"
-                                />
-                            </div>
-                        </div>
-                    ))}
+                {/* --- BOOK READER (Interactive & Editable) --- */}
+                <div className="flex-grow flex items-center justify-center w-full mb-8 relative">
+                    <div className="w-full h-full max-h-[75vh] max-w-[1600px] mx-auto">
+                        <BookReader
+                            book={{
+                                title: story?.title || `L'aventure de ${orderData?.personalization?.childName}`,
+                                child_name: orderData?.personalization?.childName,
+                                cover_url: pages[0]?.image || null,
+                                is_unlocked: true
+                            }}
+                            extraPages={pages}
+                            isEditable={true}
+                            onTextChange={(index, newText) => {
+                                const pageId = pages[index]?.id;
+                                if (pageId) handleEditSave(pageId, newText);
+                            }}
+                        />
+                    </div>
                 </div>
 
-                <div className="mt-16 bg-white p-8 rounded-3xl shadow-xl border-t-4 border-orange-500 text-center animate-in fade-in duration-700 delay-500">
-                    <h3 className="text-2xl font-bold text-gray-900 mb-4">Satisfait du résultat ?</h3>
-                    <p className="text-gray-600 mb-8 max-w-xl mx-auto">
-                        Ceci n'est qu'un aperçu avec des images basse résolution. Le livre final contiendra toutes les pages en haute définition.
-                    </p>
-
-                    <div className="flex flex-col md:flex-row items-center justify-center gap-6">
+                <div className="bg-white p-4 md:p-6 rounded-3xl shadow-xl border-t-4 border-orange-500 text-center animate-in fade-in duration-700 delay-500 max-w-5xl mx-auto w-full sticky bottom-4 z-40">
+                    <div className="flex flex-col md:flex-row items-center justify-between gap-4">
                         <div className="text-left">
-                            <span className="block text-sm text-gray-500">Total à payer</span>
-                            <span className="block text-4xl font-bold text-gray-900">3.000 F CFA</span>
+                            <h3 className="font-bold text-gray-900">Satisfait du résultat ?</h3>
+                            <p className="text-gray-500 text-sm">Ceci n'est qu'un aperçu basse résolution.</p>
                         </div>
-                        <button
-                            onClick={handleConfirm}
-                            className="bg-green-600 text-white px-10 py-5 rounded-full font-bold text-xl hover:bg-green-700 transition-all shadow-xl hover:shadow-green-600/30 transform hover:-translate-y-1 flex items-center gap-3"
-                        >
-                            Valider et Commander <span className="bg-white/20 px-2 py-1 rounded text-sm">💳</span>
-                        </button>
+
+                        <div className="flex items-center gap-6">
+                            <div className="text-right hidden md:block">
+                                <span className="block text-xs text-gray-500">Total à payer</span>
+                                <span className="block text-2xl font-bold text-gray-900">3.000 F CFA</span>
+                            </div>
+                            <button
+                                onClick={handleConfirm}
+                                className="bg-green-600 text-white px-8 py-3 rounded-full font-bold text-lg hover:bg-green-700 transition-all shadow-xl hover:shadow-green-600/30 transform hover:-translate-y-1 flex items-center gap-3"
+                            >
+                                Valider et Commander <span className="bg-white/20 px-2 py-1 rounded text-sm">💳</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
 

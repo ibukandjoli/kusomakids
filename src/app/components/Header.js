@@ -1,4 +1,3 @@
-// src/app/components/Header.js
 'use client';
 
 import Link from 'next/link';
@@ -92,21 +91,46 @@ export default function Header() {
               )}
             </Link>
 
-            {/* Login Button */}
-            <Link
-              href={user ? "/dashboard" : "/login"}
-              className={`hidden md:inline-flex items-center justify-center px-5 py-2 text-sm font-semibold rounded-full transition-all duration-300 ${isScrolled
-                ? 'bg-gray-900 text-white hover:bg-gray-800'
-                : 'bg-orange-600 text-white hover:bg-orange-500 shadow-lg'
-                }`}
-            >
-              {user ? "Mon Espace" : "Connexion"}
-            </Link>
+            {/* Auth Buttons */}
+            {user ? (
+              <Link
+                href="/dashboard"
+                className={`hidden md:inline-flex items-center justify-center px-5 py-2 text-sm font-bold rounded-full transition-all duration-300 ${isScrolled
+                  ? 'bg-gray-900 text-white hover:bg-gray-800'
+                  : 'bg-orange-600 text-white hover:bg-orange-500 shadow-lg'
+                  }`}
+              >
+                Mon Espace
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4 ml-2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                </svg>
+              </Link>
+            ) : (
+              <div className="hidden md:flex items-center gap-4">
+                <Link
+                  href="/login"
+                  className={`text-sm font-bold transition-colors ${isScrolled ? 'text-gray-900 hover:text-orange-500' : 'text-gray-900 hover:text-orange-500'}`}
+                >
+                  Se connecter
+                </Link>
+                <Link
+                  href="/signup"
+                  className={`inline-flex items-center justify-center px-5 py-2 text-sm font-bold rounded-full transition-all duration-300 ${isScrolled
+                    ? 'bg-gray-900 text-white hover:bg-gray-800'
+                    : 'bg-orange-600 text-white hover:bg-orange-500 shadow-lg'
+                    }`}
+                >
+                  Rejoindre le Club
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4 ml-2">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                  </svg>
+                </Link>
+              </div>
+            )}
 
             {/* Mobile Toggle */}
             <button
-              className={`md:hidden p-2 rounded-lg ${isScrolled ? 'text-gray-900' : 'text-gray-900' // FIXED: text-gray-900 always
-                }`}
+              className={`md:hidden p-2 rounded-lg ${isScrolled ? 'text-gray-900' : 'text-gray-900'}`}
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -124,20 +148,52 @@ export default function Header() {
                 { label: 'Bibliothèque', href: '/books' },
                 { label: 'Comment ça marche', href: '/#how-it-works' },
                 { label: 'Club Kusoma', href: '/club' },
-                { label: user ? 'Mon Espace' : 'Connexion', href: user ? '/dashboard' : '/login' }
+                { label: 'FAQ', href: '/#faq' }
               ].map((item) => (
                 <Link
                   key={item.label}
                   href={item.href}
-                  className={`font-medium transition-colors ${item.label === 'Mon Espace'
-                    ? 'bg-orange-500 text-white px-4 py-3 rounded-xl text-center font-bold mt-4 shadow-lg shadow-orange-500/30'
-                    : 'text-gray-600 hover:text-orange-500 block py-2'
-                    }`}
+                  className="font-medium text-gray-600 hover:text-orange-500 block py-2"
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   {item.label}
                 </Link>
               ))}
+
+              <div className="pt-4 border-t border-gray-100 flex flex-col gap-3">
+                {user ? (
+                  <Link
+                    href="/dashboard"
+                    className="bg-orange-500 text-white px-4 py-3 rounded-xl text-center font-bold shadow-lg shadow-orange-500/30 flex items-center justify-center"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Mon Espace
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5 ml-2">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                    </svg>
+                  </Link>
+                ) : (
+                  <>
+                    <Link
+                      href="/login"
+                      className="text-gray-900 font-bold py-2 text-center"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      Se connecter
+                    </Link>
+                    <Link
+                      href="/signup"
+                      className="bg-orange-500 text-white px-4 py-3 rounded-xl text-center font-bold shadow-lg shadow-orange-500/30 flex items-center justify-center"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      Rejoindre le Club
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5 ml-2">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                      </svg>
+                    </Link>
+                  </>
+                )}
+              </div>
             </nav>
           </div>
         )}

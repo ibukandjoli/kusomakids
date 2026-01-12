@@ -163,6 +163,9 @@ export default function CheckoutPage() {
                   <span>Livre Personnalisé PDF</span>
                   <span>{cartItem.price} F</span>
                 </div>
+                <div className="text-xs text-green-600 font-bold flex items-center gap-1">
+                  <span>✨</span> Inclus : PDF Haute Définition (A conserver à vie)
+                </div>
                 {/* Audio line removed as requested */}
                 <div className="flex justify-between text-xl font-bold text-gray-900 border-t border-gray-100 pt-4">
                   <span>Total</span>

@@ -27,7 +27,9 @@ export default function SignupPage() {
 
             if (error) throw error;
 
-            setSuccess(true);
+            // Redirect to Verify Email page
+            router.push(`/verify-email?email=${encodeURIComponent(email)}`);
+
         } catch (err) {
             setError(err.message);
         } finally {

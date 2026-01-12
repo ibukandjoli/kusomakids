@@ -1,10 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter, useSearchParams } from 'next/navigation';
 
-export default function VerifyEmailPage() {
+function VerifyContent() {
     const [token, setToken] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
@@ -75,5 +75,13 @@ export default function VerifyEmailPage() {
                 </form>
             </div>
         </div>
+    );
+}
+
+export default function VerifyEmailPage() {
+    return (
+        <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Chargement...</div>}>
+            <VerifyContent />
+        </Suspense>
     );
 }

@@ -15,8 +15,8 @@ export async function POST(request) {
         method: "POST",
         headers: {
             Authorization: `Key ${process.env.FAL_KEY}`,
-            "Content-Type": "application/json",
             Accept: "application/json",
+            ...(headers.get("content-type") ? { "Content-Type": headers.get("content-type") } : {}),
         },
         body: request.body,
         // @ts-ignore

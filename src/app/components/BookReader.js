@@ -32,7 +32,7 @@ export default function BookReader({ book, user, onUnlock, isEditable = false, o
     const isViewLocked = !isUnlocked && currentPage >= 2;
 
     return (
-        <div className="relative w-full max-w-6xl mx-auto aspect-[16/9] lg:aspect-[2/1] bg-[#FDFBF7] rounded-[2rem] shadow-2xl overflow-hidden flex flex-col md:flex-row border-4 border-[#F0E6D2]">
+        <div className="relative w-full h-full bg-[#FDFBF7] rounded-[2rem] shadow-2xl overflow-hidden flex flex-col md:flex-row border-4 border-[#F0E6D2]">
 
             {/* Paper Texture */}
             <div className="absolute inset-0 opacity-30 pointer-events-none z-0 mix-blend-multiply" style={{ backgroundImage: 'url("https://www.transparenttextures.com/patterns/paper.png")' }}></div>
@@ -43,11 +43,11 @@ export default function BookReader({ book, user, onUnlock, isEditable = false, o
                     <motion.div
                         key="cover"
                         initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                        className="w-full h-full flex flex-col items-center justify-center p-8 relative z-10"
+                        className="w-full h-full flex flex-col items-center justify-center p-8 relative z-10 overflow-y-auto"
                     >
                         <h2 className="text-orange-500 text-sm uppercase tracking-widest font-bold mb-6">Livre Personnalisé</h2>
                         <h1 className="text-4xl md:text-6xl font-black text-gray-900 mb-8 text-center leading-tight font-serif">{book.title}</h1>
-                        <div className="w-64 h-64 md:w-80 md:h-80 relative rounded-full overflow-hidden shadow-2xl border-8 border-white mb-8 transform hover:scale-105 transition-transform duration-500">
+                        <div className="w-64 h-64 md:w-80 md:h-80 relative rounded-full overflow-hidden shadow-2xl border-8 border-white mb-8 transform hover:scale-105 transition-transform duration-500 flex-shrink-0">
                             {book.cover_url ? (
                                 <Image src={book.cover_url} alt="Cover" fill className="object-cover" />
                             ) : (
@@ -65,7 +65,7 @@ export default function BookReader({ book, user, onUnlock, isEditable = false, o
                     >
                         {/* LEFT: IMAGE */}
                         <div className="w-full md:w-1/2 h-1/2 md:h-full relative bg-gray-100 border-b md:border-b-0 md:border-r border-[#E0D0B0] overflow-hidden group">
-                            {/* Image or Placeholder */}
+                            {/* IMAGES MUST BE GENERATED - FALLBACK REMOVED/HANDLED IN PARENT */}
                             {pages[currentPage - 1]?.image ? (
                                 <Image
                                     src={pages[currentPage - 1].image}
@@ -74,17 +74,25 @@ export default function BookReader({ book, user, onUnlock, isEditable = false, o
                                     className={`object-cover ${isViewLocked ? 'blur-md opacity-50' : ''} transition-transform duration-1000 group-hover:scale-105`}
                                 />
                             ) : (
-                                <div className="w-full h-full flex items-center justify-center text-gray-300 bg-gray-50">
-                                    <span className="text-6xl opacity-20">🎨</span>
+                                <div className="w-full h-full flex flex-col items-center justify-center text-gray-400 bg-gray-50 p-4 text-center">
+                                    <span className="text-6xl opacity-50 mb-2">⏳</span>
+                                    <span className="text-sm font-medium">Image en cours de création...</span>
                                 </div>
                             )}
+
+                            {/* WATERMARK */}
+                            <div className="absolute inset-0 pointer-events-none z-20 flex items-center justify-center opacity-40">
+                                <div className="p-4 border-4 border-white/80 -rotate-12 text-white font-black text-4xl md:text-5xl uppercase tracking-widest drop-shadow-md select-none mix-blend-overlay">
+                                    Kusoma Kids
+                                </div>
+                            </div>
 
                             {/* Locking Overlay on Image */}
                             {isViewLocked && <div className="absolute inset-0 bg-white/20 backdrop-blur-sm"></div>}
                         </div>
 
                         {/* RIGHT: TEXT */}
-                        <div className="w-full md:w-1/2 h-1/2 md:h-full p-8 md:p-16 flex flex-col justify-center relative">
+                        <div className="w-full md:w-1/2 h-1/2 md:h-full p-6 md:p-16 flex flex-col justify-center relative bg-white/50 overflow-y-auto">
 
                             {isViewLocked ? (
                                 <div className="text-center p-8">
@@ -96,7 +104,7 @@ export default function BookReader({ book, user, onUnlock, isEditable = false, o
                                 </div>
                             ) : (
                                 <>
-                                    <div className="absolute top-8 right-8 text-gray-300 font-mono text-xs">Page {currentPage}</div>
+                                    <div className="absolute top-4 right-4 md:top-8 md:right-8 text-gray-300 font-mono text-xs">Page {currentPage}</div>
 
                                     {isEditable && onTextChange ? (
                                         <div className="relative w-full h-full flex flex-col">
@@ -107,12 +115,12 @@ export default function BookReader({ book, user, onUnlock, isEditable = false, o
                                             <textarea
                                                 value={pages[currentPage - 1]?.text}
                                                 onChange={(e) => onTextChange(currentPage - 1, e.target.value)}
-                                                className="w-full h-full p-6 bg-white/50 rounded-xl border-2 border-orange-200 focus:border-orange-500 focus:ring-4 focus:ring-orange-100 outline-none resize-none font-serif text-lg leading-loose text-gray-800 transition-all"
+                                                className="w-full h-full p-4 md:p-6 bg-white/80 rounded-xl border-2 border-orange-200 focus:border-orange-500 focus:ring-4 focus:ring-orange-100 outline-none resize-none font-serif text-lg leading-loose text-gray-800 transition-all custom-scrollbar"
                                                 placeholder="Écrivez l'histoire ici..."
                                             />
                                         </div>
                                     ) : (
-                                        <div className="prose prose-lg text-gray-800 font-serif leading-loose">
+                                        <div className="prose prose-lg text-gray-800 font-serif leading-loose max-w-none">
                                             <span className="text-orange-400 font-bold text-6xl float-left mr-4 -mt-2 leading-none">
                                                 {pages[currentPage - 1]?.text?.charAt(0)}
                                             </span>

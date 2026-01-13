@@ -53,14 +53,14 @@ export default function BookReader({ book, user, onUnlock, isEditable = false, o
                     )}
 
                     {/* CSS Overlay Title */}
-                    <div className="absolute inset-0 flex items-center justify-center p-6 bg-black/10">
-                        <h1 className="text-3xl font-black text-white font-serif text-center leading-tight drop-shadow-md"
+                    <div className="absolute inset-0 flex items-center justify-center p-4 bg-black/10">
+                        <h1 className="text-2xl md:text-3xl font-black text-white font-serif text-center leading-tight drop-shadow-md"
                             style={{ textShadow: '2px 2px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000' }}>
                             {book.title}
                         </h1>
                     </div>
                 </div>
-                <p className="text-gray-600 italic mt-2 font-serif">Une aventure pour {book.child_name}</p>
+                <p className="text-gray-600 italic mt-2 mb-1 font-serif text-sm">Une aventure pour <span className="font-bold">{book.child_name}</span></p>
             </div>
 
             {/* Pages List */}

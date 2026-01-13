@@ -190,7 +190,7 @@ function CheckoutContent() {
                 </div>
                 <div className="flex items-center gap-2">
                   <input type="checkbox" id="newsletter" className="rounded text-orange-500 focus:ring-orange-500" />
-                  <label htmlFor="newsletter" className="text-sm text-gray-600">M'inscrire au Club Kusoma pour des histoires gratuites.</label>
+                  <label htmlFor="newsletter" className="text-sm text-gray-600">M'inscrire au Club Kusoma pour lire en ligne en illimité (audio inclus).</label>
                 </div>
               </div>
             </div>
@@ -269,7 +269,7 @@ function CheckoutContent() {
                   <span>{cartItem.price} F</span>
                 </div>
                 <div className="text-xs text-green-600 font-bold flex items-center gap-1">
-                  <span>✨</span> Inclus : PDF Haute Définition (A conserver à vie)
+                  <span>✨</span> Inclus : PDF Haute Définition
                 </div>
                 {/* Audio line removed as requested */}
                 <div className="flex justify-between text-xl font-bold text-gray-900 border-t border-gray-100 pt-4">

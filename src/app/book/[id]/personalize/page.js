@@ -133,23 +133,25 @@ export default function PersonalizePage() {
                                                 className="hidden"
                                             />
                                         </label>
-                                        {uploadSuccess ? (
-                                            <div className="mt-3 inline-flex items-center gap-2 text-sm font-bold text-green-600 bg-green-100 px-3 py-1 rounded-lg animate-in fade-in slide-in-from-left-2">
-                                                <span>✨</span> Super photo ! On la traite ☺️
+                                        {/* Photo Tips - 2 cols on mobile, 4 on desktop */}
+                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mt-6">
+                                            <div className="text-center bg-white/50 p-3 rounded-2xl border border-orange-50/50">
+                                                <div className="text-2xl mb-1">👤</div>
+                                                <p className="text-xs text-gray-600 font-bold">Solo & De face</p>
                                             </div>
-                                        ) : (
-                                            <div className="mt-3 space-y-2">
-                                                <div className="flex items-center gap-2 text-xs font-medium text-gray-500 bg-white/50 p-1.5 rounded-lg border border-orange-100/50">
-                                                    <span>🌞</span> Bien éclairé (Lumière du jour)
-                                                </div>
-                                                <div className="flex items-center gap-2 text-xs font-medium text-gray-500 bg-white/50 p-1.5 rounded-lg border border-orange-100/50">
-                                                    <span>👤</span> De face & Seul(e) sur la photo
-                                                </div>
-                                                <div className="flex items-center gap-2 text-xs font-medium text-gray-500 bg-white/50 p-1.5 rounded-lg border border-orange-100/50">
-                                                    <span>🚫</span> Pas de cache (Ni lunettes, ni mains)
-                                                </div>
+                                            <div className="text-center bg-white/50 p-3 rounded-2xl border border-orange-50/50">
+                                                <div className="text-2xl mb-1">🌞</div>
+                                                <p className="text-xs text-gray-600 font-bold">Bien éclairé</p>
                                             </div>
-                                        )}
+                                            <div className="text-center bg-white/50 p-3 rounded-2xl border border-orange-50/50">
+                                                <div className="text-2xl mb-1">🚫</div>
+                                                <p className="text-xs text-gray-600 font-bold">Pas de cache</p>
+                                            </div>
+                                            <div className="text-center bg-white/50 p-3 rounded-2xl border border-orange-50/50">
+                                                <div className="text-2xl mb-1">✨</div>
+                                                <p className="text-xs text-gray-600 font-bold">Visage entier</p>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -166,26 +168,26 @@ export default function PersonalizePage() {
                                 />
                             </div>
 
-                            <div className="grid grid-cols-2 gap-6">
+                            <div className="grid grid-cols-2 gap-4 md:gap-6">
                                 {/* Age */}
                                 <div>
-                                    <label className="block text-lg font-bold text-gray-800 mb-3">Quel âge a-t-il/elle ?</label>
+                                    <label className="block text-base md:text-lg font-bold text-gray-800 mb-2 md:mb-3">Son âge</label>
                                     <input
                                         type="number"
                                         value={formData.age}
                                         onChange={(e) => setFormData({ ...formData, age: e.target.value })}
-                                        className="w-full px-5 py-4 text-lg rounded-2xl border-2 border-gray-100 bg-white focus:border-orange-400 focus:ring-4 focus:ring-orange-100 outline-none transition-all placeholder:text-gray-300 font-bold text-gray-700"
-                                        placeholder="Ex: 5"
+                                        className="w-full px-4 py-3 md:px-5 md:py-4 text-base md:text-lg rounded-2xl border-2 border-gray-100 bg-white focus:border-orange-400 focus:ring-4 focus:ring-orange-100 outline-none transition-all placeholder:text-gray-300 font-bold text-gray-700"
+                                        placeholder="Age"
                                     />
                                 </div>
 
                                 {/* Gender */}
                                 <div>
-                                    <label className="block text-lg font-bold text-gray-800 mb-3">C'est...</label>
-                                    <div className="flex bg-gray-100 p-1 rounded-2xl">
+                                    <label className="block text-base md:text-lg font-bold text-gray-800 mb-2 md:mb-3">C'est...</label>
+                                    <div className="flex bg-gray-100 p-1 rounded-2xl md:rounded-2xl h-full items-center">
                                         <button
                                             onClick={() => setFormData({ ...formData, gender: 'girl' })}
-                                            className={`flex-1 py-3 rounded-xl font-bold transition-all ${formData.gender === 'girl' ? 'bg-orange-500 text-white shadow-md transform scale-105' : 'text-gray-400 hover:text-gray-600'}`}
+                                            className={`flex-1 py-3 rounded-xl font-bold text-sm md:text-base transition-all whitespace-nowrap flex items-center justify-center gap-1 ${formData.gender === 'girl' ? 'bg-orange-500 text-white shadow-md' : 'text-gray-400 hover:text-gray-600'}`}
                                         >
                                             Fille 👧🏿
                                         </button>

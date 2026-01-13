@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Image from 'next/image';
+import { motion } from 'framer-motion';
 import { supabase } from '@/lib/supabase';
 import { fal } from '@fal-ai/client';
 import BookReader from '@/app/components/BookReader';
@@ -103,7 +104,29 @@ export default function PreviewPage() {
             // 4. Start Generation with Real Theme
             startGeneration(parsed, themeToUse);
 
-            // 5. Rotating Tips
+            // 5. Timed Magic Messages & Progress
+            const steps = [
+                { t: 0, text: `🔍 Analyse de la photo de ${parsed.personalization?.childName || 'ton enfant'}...`, icon: "🔍", progress: 10 },
+                { t: 10, text: "✨ Préparation de la poudre magique...", icon: "✨", progress: 30 },
+                { t: 25, text: "🎨 Les artistes peignent la couverture...", icon: "🎨", progress: 60 },
+                { t: 40, text: "📚 Assemblage du livre... C'est presque prêt !", icon: "📚", progress: 90 }
+            ];
+
+            const startTime = Date.now();
+            const timerInterval = setInterval(() => {
+                const elapsedSec = (Date.now() - startTime) / 1000;
+
+                // Find current step
+                const currentStep = steps.slice().reverse().find(s => elapsedSec >= s.t) || steps[0];
+
+                setProgressMessage(currentStep.text);
+                // Optionally update a visual icon state if you want (using setProgressIcon, but we can reuse status for icons if we map them)
+                // Here we just update the text message as requested. 
+                // To update icon/progress bar visually, we might need new states or refactor loadingSteps logic.
+                // Let's rely on the text for now as it's the primary request.
+            }, 1000);
+
+            // 5. Rotating Tips (Keep existing)
             const tips = [
                 "💡 Le lion rugit si fort qu'on l'entend à 8 km !",
                 "🦒 La girafe a une langue bleue de 50 cm !",
@@ -113,12 +136,15 @@ export default function PreviewPage() {
                 "🎨 Chaque livre est unique, comme toi !",
             ];
             let tipIndex = 0;
-            const interval = setInterval(() => {
+            const tipInterval = setInterval(() => {
                 tipIndex = (tipIndex + 1) % tips.length;
                 setLoadingTip(tips[tipIndex]);
             }, 3500);
 
-            return () => clearInterval(interval);
+            return () => {
+                clearInterval(timerInterval);
+                clearInterval(tipInterval);
+            };
         };
 
         init();
@@ -351,33 +377,32 @@ export default function PreviewPage() {
         const currentStep = loadingSteps[status] || loadingSteps.init;
 
         return (
-            <div className="fixed inset-0 z-50 bg-orange-50 flex flex-col items-center justify-center text-gray-900 px-4 font-serif">
+            <div className="fixed inset-0 z-50 bg-[#FDFBF7] flex flex-col items-center justify-center text-gray-900 px-4 font-sans">
                 <div className="w-48 h-48 relative mb-8 flex items-center justify-center">
                     <div className="absolute inset-0 border-4 border-orange-200 rounded-full animate-ping opacity-75"></div>
                     <div className="absolute inset-4 border-4 border-orange-500 rounded-full animate-spin border-t-transparent"></div>
-                    <span className="text-6xl animate-bounce filter drop-shadow-lg">{currentStep.icon}</span>
+                    {/* We can use a generic magic icon here since text changes */}
+                    <span className="text-6xl animate-bounce filter drop-shadow-lg">✨</span>
                 </div>
-                <h2 className="text-4xl font-bold mb-6 text-center text-gray-900 leading-tight">
-                    {currentStep.text}
+
+                <h2 className="text-2xl md:text-3xl font-black mb-6 text-center text-gray-900 leading-tight max-w-lg animate-pulse">
+                    {progressMessage}
                 </h2>
-                <div className="bg-white/80 backdrop-blur-sm p-6 rounded-2xl shadow-xl max-w-lg w-full border border-orange-100 transform transition-all hover:scale-105 duration-500">
-                    <p className="text-gray-500 text-xs font-bold uppercase tracking-widest text-center mb-2">Pendant que tu patientes...</p>
-                    <p className="text-xl text-center text-orange-600 font-medium italic">"{loadingTip}"</p>
+
+                <div className="bg-white p-6 rounded-2xl shadow-xl max-w-lg w-full border border-orange-100 transform transition-all hover:scale-105 duration-500 relative overflow-hidden">
+                    <div className="absolute top-0 left-0 w-full h-1 bg-gray-100">
+                        <motion.div
+                            className="h-full bg-orange-500"
+                            initial={{ width: "0%" }}
+                            animate={{ width: "100%" }}
+                            transition={{ duration: 45, ease: "linear" }}
+                        />
+                    </div>
+                    <p className="text-gray-400 text-[10px] font-bold uppercase tracking-widest text-center mb-3">Pendant que tu patientes...</p>
+                    <p className="text-lg text-center text-gray-700 font-medium italic">"{loadingTip}"</p>
                 </div>
-                <div className="w-64 md:w-96 h-3 bg-gray-200 rounded-full mt-10 overflow-hidden shadow-inner">
-                    <div
-                        className="h-full bg-gradient-to-r from-orange-400 to-red-500 transition-all duration-700 ease-out"
-                        style={{
-                            width: status === 'writing' ? '30%'
-                                : status === 'illustrating' && pages.length === 0 ? '50%'
-                                    : status === 'illustrating' && pages.length === 1 ? '65%'
-                                        : status === 'illustrating' && pages.length === 2 ? '80%'
-                                            : status === 'illustrating' && pages.length === 3 ? '95%'
-                                                : '10%'
-                        }}
-                    ></div>
-                </div>
-                <p className="mt-2 text-xs text-gray-400 font-mono">Magie en cours... ne quitte pas !</p>
+
+                <p className="mt-6 text-xs text-gray-400 font-medium">Magie en cours... ne quitte pas !</p>
             </div>
         );
     }

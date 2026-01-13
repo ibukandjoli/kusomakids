@@ -29,7 +29,8 @@ function MotionSection({ children, className, delay = 0, id = '' }) {
 }
 
 // Hero Visual Component (Shapes, Image, Badge)
-function HeroVisual({ className }) {
+function HeroVisual(props) {
+    const { className } = props;
     return (
         <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
@@ -53,16 +54,16 @@ function HeroVisual({ className }) {
                     />
                 </div>
 
-                {/* Floating Badge */}
+                {/* Floating Badge (Scaled down on mobile) */}
                 <motion.div
                     animate={{ y: [0, -10, 0] }}
                     transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }}
-                    className="absolute -bottom-6 -left-6 bg-white p-4 rounded-2xl shadow-xl flex items-center gap-3 border border-orange-100"
+                    className={`absolute -bottom-6 -left-6 bg-white p-3 md:p-4 rounded-2xl shadow-xl flex items-center gap-3 border border-orange-100 ${props.isMobile ? 'scale-75 origin-bottom-left' : ''}`}
                 >
-                    <div className="bg-yellow-100 w-12 h-12 rounded-full flex items-center justify-center text-2xl">✨</div>
+                    <div className="bg-yellow-100 w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center text-xl md:text-2xl">✨</div>
                     <div>
-                        <p className="text-gray-900 font-bold">Magique !</p>
-                        <p className="text-gray-500 text-xs">Plus de 50 parents ravis</p>
+                        <p className="text-gray-900 font-bold text-sm md:text-base">Magique !</p>
+                        <p className="text-gray-500 text-[10px] md:text-xs">Plus de 50 parents ravis</p>
                     </div>
                 </motion.div>
             </div>
@@ -88,7 +89,7 @@ export default function HomeClient() {
         <div className="w-full bg-noise">
 
             {/* --- HERO SECTION --- (Orange-50/30) */}
-            <section className="relative pt-32 pb-48 lg:pt-48 lg:pb-64 overflow-hidden">
+            <section className="relative pt-24 pb-32 lg:pt-48 lg:pb-64 overflow-hidden">
                 {/* Background Particles (Framer Motion Parallax) */}
                 <motion.div style={{ y: y1 }} className="absolute top-20 left-10 text-yellow-400 opacity-20 text-9xl font-black pointer-events-none select-none z-0">
                     ▲
@@ -99,7 +100,7 @@ export default function HomeClient() {
                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-gradient-to-tr from-orange-200 to-pink-200 rounded-full blur-[120px] opacity-30 pointer-events-none"></div>
 
                 <div className="container mx-auto px-4 relative z-10">
-                    <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-20">
+                    <div className="flex flex-col lg:flex-row items-center gap-8 lg:gap-20">
 
                         {/* Text Column */}
                         <motion.div
@@ -108,37 +109,37 @@ export default function HomeClient() {
                             transition={{ duration: 0.8 }}
                             className="lg:w-1/2 text-center lg:text-left"
                         >
-                            <span className="inline-block py-2 px-4 rounded-full bg-white/80 border border-orange-100 text-orange-600 font-bold text-sm mb-6 shadow-sm backdrop-blur-sm">
+                            <span className="inline-block py-2 px-4 rounded-full bg-white/80 border border-orange-100 text-orange-600 font-bold text-xs md:text-sm mb-6 shadow-sm backdrop-blur-sm">
                                 🎁 Le cadeau qui donne le goût de lire
                             </span>
-                            <h1 className="text-4xl lg:text-6xl font-black text-gray-900 leading-tight mb-6">
+                            <h1 className="text-3xl lg:text-6xl font-black text-gray-900 leading-tight mb-6">
                                 Donnez à votre enfant le pouvoir d'être le <span className="text-orange-600 relative inline-block">
                                     Héros
-                                    <svg className="absolute w-full h-4 -bottom-2 left-0 text-orange-200 -z-10" viewBox="0 0 100 10" preserveAspectRatio="none"><path d="M0 5 Q 50 10 100 5" stroke="currentColor" strokeWidth="12" fill="none" /></svg>
+                                    <svg className="absolute w-full h-3 md:h-4 -bottom-1 md:-bottom-2 left-0 text-orange-200 -z-10" viewBox="0 0 100 10" preserveAspectRatio="none"><path d="M0 5 Q 50 10 100 5" stroke="currentColor" strokeWidth="12" fill="none" /></svg>
                                 </span>.
                             </h1>
-                            <p className="text-xl text-gray-700 mb-8 leading-relaxed max-w-xl mx-auto lg:mx-0 font-medium">
+                            <p className="text-lg md:text-xl text-gray-700 mb-8 leading-relaxed max-w-xl mx-auto lg:mx-0 font-medium">
                                 Créez et personnalisez des histoires sur-mesure où son <span className="font-bold">prénom</span> et son <span className="font-bold">visage</span> prennent vie. Fini les héros qui ne lui ressemblent pas. Offrez-lui le plus beau cadeau pour sa <span className="font-bold text-orange-600 bg-orange-100 px-1 rounded">confiance en lui.</span>
                             </p>
 
-                            {/* MOBILE VISUAL (between promise and action) */}
-                            <div className="lg:hidden mb-12">
-                                <HeroVisual />
+                            {/* MOBILE VISUAL (Restored visibility, reduced badge) */}
+                            <div className="lg:hidden mb-8 w-full px-4">
+                                <HeroVisual isMobile={true} />
                             </div>
 
                             <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start mb-8">
                                 <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                                     <Link
                                         href="/books"
-                                        className="bg-orange-600 text-white px-8 py-4 rounded-full font-bold text-lg shadow-xl shadow-orange-500/30 flex items-center justify-center gap-2"
+                                        className="bg-orange-600 text-white px-6 py-3 md:px-8 md:py-4 rounded-full font-bold text-base md:text-lg shadow-xl shadow-orange-500/30 flex items-center justify-center gap-2 w-full sm:w-auto"
                                     >
-                                        Créer son livre magique <span className="text-2xl animate-spin-slow">🪄</span>
+                                        Créer son livre magique <span className="text-xl md:text-2xl animate-spin-slow">🪄</span>
                                     </Link>
                                 </motion.div>
                                 <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                                     <Link
                                         href="/club"
-                                        className="bg-white text-gray-900 border-2 border-gray-100 px-8 py-4 rounded-full font-bold text-lg hover:border-orange-200 hover:text-orange-500 transition-all flex items-center justify-center gap-2"
+                                        className="bg-white text-gray-900 border-2 border-gray-100 px-6 py-3 md:px-8 md:py-4 rounded-full font-bold text-base md:text-lg hover:border-orange-200 hover:text-orange-500 transition-all flex items-center justify-center gap-2 w-full sm:w-auto"
                                     >
                                         Rejoindre le Club
                                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5 ml-2">

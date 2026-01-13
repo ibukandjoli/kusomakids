@@ -185,10 +185,10 @@ export default function BookDetailClient({ initialBook, initialRelatedBooks }) {
                     <h2 className="text-3xl font-bold text-center mb-12 text-gray-900">Vous aimerez aussi</h2>
 
                     {relatedBooks.length > 0 ? (
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                            {relatedBooks.map((related) => (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                            {relatedBooks.slice(0, 3).map((related) => (
                                 <Link href={`/book/${related.id}`} key={related.id} className="group block">
-                                    <div className="relative aspect-[3/4] rounded-xl overflow-hidden mb-3 shadow-md group-hover:shadow-lg transition-all">
+                                    <div className="relative aspect-square rounded-[2rem] overflow-hidden mb-4 shadow-md group-hover:shadow-lg transition-all border border-gray-100">
                                         <Image
                                             src={related.cover_url || STATIC_COVERS[related.theme_slug] || '/images/covers/cover_school.jpg'}
                                             alt={related.title}
@@ -196,10 +196,10 @@ export default function BookDetailClient({ initialBook, initialRelatedBooks }) {
                                             className="object-cover group-hover:scale-105 transition-transform duration-500"
                                         />
                                     </div>
-                                    <h3 className="font-bold text-gray-900 text-sm md:text-base leading-tight group-hover:text-orange-600 transition-colors">
+                                    <h3 className="font-bold text-gray-900 text-lg leading-tight group-hover:text-orange-600 transition-colors mb-1">
                                         {formatTitle(related.title)}
                                     </h3>
-                                    <p className="text-xs text-gray-500 mt-1">{related.age_range} ans</p>
+                                    <p className="text-sm text-gray-500">{related.age_range.replace(/\s*ans$/i, '')} ans</p>
                                 </Link>
                             ))}
                         </div>

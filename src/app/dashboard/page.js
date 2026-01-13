@@ -129,7 +129,7 @@ function DashboardContent() {
                         {books.map((book) => (
                             <div key={book.id} className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg transition-shadow">
                                 {/* Cover Helper */}
-                                <div className="aspect-[3/4] bg-gray-200 relative">
+                                <div className="aspect-square bg-gray-200 relative">
                                     {/* Ideally we save a cover URL, or use the first image from content */}
                                     {/* Placeholder for now */}
                                     <div className="absolute inset-0 flex items-center justify-center text-gray-400">

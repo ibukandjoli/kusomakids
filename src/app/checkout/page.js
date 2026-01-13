@@ -159,8 +159,11 @@ function CheckoutContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pt-32 pb-20">
-      <div className="container mx-auto px-4 max-w-5xl">
+    <div className="min-h-screen pt-32 pb-20 relative bg-[#FAFAF8]">
+      {/* Background Pattern */}
+      <div className="absolute inset-0 z-0 opacity-40 pointer-events-none" style={{ backgroundImage: 'url(/images/pattern_bg.png)', backgroundSize: '400px' }}></div>
+
+      <div className="container mx-auto px-4 max-w-5xl relative z-10">
         <h1 className="text-3xl font-bold text-gray-900 mb-8">Finaliser votre commande</h1>
 
         <div className="grid lg:grid-cols-3 gap-8">
@@ -247,7 +250,7 @@ function CheckoutContent() {
               <h3 className="font-bold text-gray-900 mb-6 text-lg">Récapitulatif</h3>
 
               <div className="flex gap-4 mb-6 pb-6 border-b border-gray-100">
-                <div className="w-16 h-20 bg-gray-200 rounded-lg flex-shrink-0 bg-cover bg-center overflow-hidden relative">
+                <div className="w-20 h-20 bg-gray-200 rounded-lg flex-shrink-0 bg-cover bg-center overflow-hidden relative border border-gray-200">
                   {cartItem.coverUrl ? (
                     <img src={cartItem.coverUrl} alt="Cover" className="w-full h-full object-cover" />
                   ) : (

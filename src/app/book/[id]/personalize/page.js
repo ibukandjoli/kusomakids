@@ -138,9 +138,17 @@ export default function PersonalizePage() {
                                                 <span>✨</span> Super photo ! On la traite ☺️
                                             </div>
                                         ) : (
-                                            <p className="text-xs text-gray-400 mt-2 pl-1">
-                                                Visage bien éclairé, sans lunettes, seul(e).
-                                            </p>
+                                            <div className="mt-3 space-y-2">
+                                                <div className="flex items-center gap-2 text-xs font-medium text-gray-500 bg-white/50 p-1.5 rounded-lg border border-orange-100/50">
+                                                    <span>🌞</span> Bien éclairé (Lumière du jour)
+                                                </div>
+                                                <div className="flex items-center gap-2 text-xs font-medium text-gray-500 bg-white/50 p-1.5 rounded-lg border border-orange-100/50">
+                                                    <span>👤</span> De face & Seul(e) sur la photo
+                                                </div>
+                                                <div className="flex items-center gap-2 text-xs font-medium text-gray-500 bg-white/50 p-1.5 rounded-lg border border-orange-100/50">
+                                                    <span>🚫</span> Pas de cache (Ni lunettes, ni mains)
+                                                </div>
+                                            </div>
                                         )}
                                     </div>
                                 </div>
@@ -177,13 +185,13 @@ export default function PersonalizePage() {
                                     <div className="flex bg-gray-100 p-1 rounded-2xl">
                                         <button
                                             onClick={() => setFormData({ ...formData, gender: 'girl' })}
-                                            className={`flex-1 py-3 rounded-xl font-bold transition-all ${formData.gender === 'girl' ? 'bg-white text-orange-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+                                            className={`flex-1 py-3 rounded-xl font-bold transition-all ${formData.gender === 'girl' ? 'bg-orange-500 text-white shadow-md transform scale-105' : 'text-gray-400 hover:text-gray-600'}`}
                                         >
                                             Fille 👧🏿
                                         </button>
                                         <button
                                             onClick={() => setFormData({ ...formData, gender: 'boy' })}
-                                            className={`flex-1 py-3 rounded-xl font-bold transition-all ${formData.gender === 'boy' ? 'bg-white text-orange-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+                                            className={`flex-1 py-3 rounded-xl font-bold transition-all ${formData.gender === 'boy' ? 'bg-orange-500 text-white shadow-md transform scale-105' : 'text-gray-400 hover:text-gray-600'}`}
                                         >
                                             Garçon 👦🏿
                                         </button>

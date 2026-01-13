@@ -407,7 +407,8 @@ export default function PreviewPage() {
             <div className="flex-grow w-full relative overflow-hidden">
                 <BookReader
                     book={{
-                        title: story?.title || orderData?.bookTitle,
+                        // Priority to Template Title (orderData.bookTitle) to ensure persistence
+                        title: orderData?.bookTitle || story?.title,
                         child_name: orderData?.personalization?.childName,
                         cover_url: coverImage, // Use the generated/swapped cover
                         is_unlocked: false

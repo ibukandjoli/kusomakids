@@ -3,8 +3,15 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
+import { usePathname } from 'next/navigation';
 
 export default function Footer() {
+  const pathname = usePathname();
+  // Hide on Auth Pages and Preview Page
+  const isHidden = ['/login', '/signup', '/forgot-password', '/reset-password'].includes(pathname) || pathname.includes('/preview');
+
+  if (isHidden) return null;
+
   const currentYear = new Date().getFullYear();
   const [phoneNumber, setPhoneNumber] = useState('');
 

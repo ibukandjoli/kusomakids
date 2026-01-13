@@ -39,75 +39,80 @@ export default function BookReader({ book, user, onUnlock, isEditable = false, o
 
     // 1. Mobile View (Vertical Scroll of All Pages)
     const MobileView = () => (
-        <div className="md:hidden w-full overflow-y-auto pb-32 space-y-8 p-4">
+        <div className="md:hidden w-full overflow-y-auto pb-32 space-y-8 p-4 bg-[#FDFBF7]">
             {/* Cover */}
-            <div className="bg-white rounded-[2rem] shadow-xl overflow-hidden p-2 flex flex-col items-center text-center border-4 border-orange-100">
-                <div className="w-full aspect-square relative rounded-2xl overflow-hidden shadow-lg border-2 border-white mb-2">
+            <div className="bg-white rounded-[2rem] shadow-xl overflow-hidden p-2 flex flex-col items-center text-center border-4 border-orange-100 relative">
+                <div className="w-full aspect-square relative rounded-2xl overflow-hidden shadow-lg border-2 border-white mb-2 bg-orange-50">
                     {book.cover_url ? (
                         <Image src={book.cover_url} alt="Cover" fill className="object-cover" />
                     ) : (
-                        <div className="w-full h-full bg-orange-100 flex items-center justify-center text-2xl">📖</div>
+                        <div className="absolute inset-0 flex items-center justify-center flex-col text-orange-300 animate-pulse">
+                            <span className="text-4xl mb-2">✨</span>
+                            <span className="text-xs font-bold uppercase">Création en cours...</span>
+                        </div>
                     )}
 
                     {/* CSS Overlay Title */}
-                    <div className="absolute inset-0 flex items-center justify-center p-4">
-                        <h1 className="text-4xl font-black text-white font-serif drop-shadow-[0_4px_4px_rgba(0,0,0,0.8)] text-center leading-tight" style={{ textShadow: '2px 2px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000' }}>
+                    <div className="absolute inset-0 flex items-center justify-center p-6 bg-black/10">
+                        <h1 className="text-3xl font-black text-white font-serif text-center leading-tight drop-shadow-md"
+                            style={{ textShadow: '2px 2px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000' }}>
                             {book.title}
                         </h1>
                     </div>
                 </div>
-                <p className="text-gray-600 italic mt-2">Pour {book.child_name}</p>
+                <p className="text-gray-600 italic mt-2 font-serif">Une aventure pour {book.child_name}</p>
             </div>
 
             {/* Pages List */}
             {pages.map((page, index) => {
-                const isLocked = !isUnlocked && (index + 1) >= 4; // Page 1 is index 0
+                const isPageLocked = !isUnlocked && (index + 1) >= 3; // Lock from Page 3 onwards (Hybrid Mode)
                 return (
                     <div key={index} className="bg-white rounded-[2rem] shadow-sm border border-[#E0D0B0] overflow-hidden">
                         {/* Image Area */}
-                        <div className="aspect-square relative bg-gray-100">
+                        <div className="aspect-[4/3] relative bg-gray-100 border-b border-[#F0E6D2]">
                             {page.image ? (
                                 <Image
                                     src={page.image}
                                     alt={`Page ${index + 1}`}
                                     fill
-                                    className={`object-cover ${isLocked ? 'blur-md opacity-50' : ''}`}
+                                    className={`object-cover ${isPageLocked ? 'blur-xl opacity-60' : ''}`}
                                 />
                             ) : (
                                 <div className="absolute inset-0 flex items-center justify-center text-gray-400">
                                     <span className="text-4xl animate-pulse">🎨</span>
                                 </div>
                             )}
-                            {/* Watermark */}
-                            <div className="absolute inset-0 flex items-center justify-center opacity-30 pointer-events-none">
-                                <span className="font-black text-white text-2xl -rotate-12 uppercase tracking-widest drop-shadow-md">Kusoma Kids</span>
-                            </div>
+
+                            {/* Lock Overlay */}
+                            {isPageLocked && (
+                                <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/20 backdrop-blur-[2px] p-4 text-center">
+                                    <div className="bg-white/90 p-3 rounded-full shadow-lg mb-2">
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-orange-500" viewBox="0 0 20 20" fill="currentColor">
+                                            <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                                        </svg>
+                                    </div>
+                                    <p className="text-white font-bold text-sm drop-shadow-md px-4 py-1 bg-black/40 rounded-full">
+                                        Illustration générée après paiement
+                                    </p>
+                                </div>
+                            )}
                         </div>
 
-                        {/* Text Area */}
+                        {/* Text Area (ALWAYS VISIBLE) */}
                         <div className="p-6 relative">
                             <span className="absolute top-4 right-4 text-xs font-bold text-gray-300">Page {index + 1}</span>
 
-                            {isLocked ? (
-                                <div className="text-center py-8">
-                                    <h3 className="font-bold text-gray-900 mb-2">La suite est magique ! ✨</h3>
-                                    <button onClick={onUnlock} className="bg-orange-500 text-white px-6 py-2 rounded-full font-bold text-sm shadow-lg">
-                                        Débloquer l'histoire
-                                    </button>
-                                </div>
+                            {isEditable && onTextChange ? (
+                                <textarea
+                                    value={page.text}
+                                    onChange={(e) => onTextChange(index, e.target.value)}
+                                    className="w-full h-40 p-4 bg-orange-50/30 rounded-xl border border-orange-100 text-gray-800 font-serif text-lg leading-relaxed focus:ring-2 focus:ring-orange-500 outline-none resize-none"
+                                />
                             ) : (
-                                isEditable && onTextChange ? (
-                                    <textarea
-                                        value={page.text}
-                                        onChange={(e) => onTextChange(index, e.target.value)}
-                                        className="w-full h-40 p-3 bg-orange-50/50 rounded-xl border border-orange-200 text-gray-800 font-serif leading-relaxed focus:ring-2 focus:ring-orange-500 outline-none"
-                                    />
-                                ) : (
-                                    <p className="font-serif text-lg text-gray-800 leading-relaxed">
-                                        <span className="text-orange-500 font-bold text-3xl float-left mr-2 leading-none">{page.text?.charAt(0)}</span>
-                                        {page.text?.substring(1)}
-                                    </p>
-                                )
+                                <p className="font-serif text-lg text-gray-800 leading-relaxed">
+                                    <span className="text-orange-500 font-bold text-3xl float-left mr-2 leading-none">{page.text?.charAt(0)}</span>
+                                    {page.text?.substring(1)}
+                                </p>
                             )}
                         </div>
                     </div>
@@ -116,25 +121,23 @@ export default function BookReader({ book, user, onUnlock, isEditable = false, o
         </div>
     );
 
-    // 2. Desktop View (Carousel)
+    // 2. Desktop View (Cinema Mode)
     const DesktopView = () => (
-        <div className="hidden md:flex relative w-full h-full bg-[#FDFBF7] overflow-hidden flex-col md:flex-row shadow-2xl rounded-[2rem] border-4 border-[#F0E6D2] m-8 max-w-[95%] max-h-[90%]">
-            {/* Paper Texture */}
-            <div className="absolute inset-0 opacity-30 pointer-events-none z-0 mix-blend-multiply" style={{ backgroundImage: 'url("https://www.transparenttextures.com/patterns/paper.png")' }}></div>
+        <div className="hidden md:flex relative w-full h-full bg-[#FDFBF7] overflow-hidden flex-col md:flex-row shadow-2xl rounded-[1rem] border border-[#F0E6D2] m-4 max-w-[95%] max-h-[90%]">
 
-            {/* Navigation Buttons (Desktop Only - Centered on Edges) */}
+            {/* Navigation Buttons */}
             <>
                 <button
                     onClick={handlePrev}
                     disabled={currentPage === 0}
-                    className="absolute left-4 top-1/2 -translate-y-1/2 z-50 w-12 h-12 rounded-full bg-white/80 backdrop-blur shadow-xl border border-gray-200 flex items-center justify-center text-gray-700 hover:bg-orange-500 hover:text-white transition-all disabled:opacity-0 disabled:pointer-events-none group"
+                    className="absolute left-4 top-1/2 -translate-y-1/2 z-50 w-12 h-12 rounded-full bg-white/90 shadow-xl border border-gray-100 flex items-center justify-center text-gray-700 hover:bg-orange-500 hover:text-white transition-all disabled:opacity-0 disabled:pointer-events-none group"
                 >
                     <span className="group-hover:-translate-x-1 transition-transform">←</span>
                 </button>
                 <button
                     onClick={handleNext}
-                    disabled={currentPage === totalPages || isViewLocked}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 z-50 w-12 h-12 rounded-full bg-white/80 backdrop-blur shadow-xl border border-gray-200 flex items-center justify-center text-gray-700 hover:bg-orange-500 hover:text-white transition-all disabled:opacity-0 disabled:pointer-events-none group"
+                    disabled={currentPage === totalPages} // Allow going to end even if locked
+                    className="absolute right-4 top-1/2 -translate-y-1/2 z-50 w-12 h-12 rounded-full bg-white/90 shadow-xl border border-gray-100 flex items-center justify-center text-gray-700 hover:bg-orange-500 hover:text-white transition-all disabled:opacity-0 disabled:pointer-events-none group"
                 >
                     <span className="group-hover:translate-x-1 transition-transform">→</span>
                 </button>
@@ -146,27 +149,31 @@ export default function BookReader({ book, user, onUnlock, isEditable = false, o
                     <motion.div
                         key="cover"
                         initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                        className="w-full h-full flex flex-col items-center justify-center p-8 relative z-10"
+                        className="w-full h-full flex flex-col items-center justify-center p-8 relative z-10 bg-[url('/images/pattern_bg.png')] bg-repeat"
                     >
-                        <div className="w-[500px] h-[500px] relative rounded-3xl overflow-hidden shadow-2xl border-[8px] border-white mb-8 group transform hover:scale-105 transition-transform duration-500">
+                        <div className="w-[500px] h-[500px] relative rounded-3xl overflow-hidden shadow-2xl border-[12px] border-white mb-8 group transform hover:scale-[1.02] transition-transform duration-700 bg-orange-50">
                             {book.cover_url ? (
                                 <Image src={book.cover_url} alt="Cover" fill className="object-cover" />
                             ) : (
-                                <div className="w-full h-full bg-orange-100 flex items-center justify-center text-6xl">📖</div>
+                                <div className="absolute inset-0 flex items-center justify-center flex-col text-orange-300 animate-pulse">
+                                    <span className="text-6xl mb-4">✨</span>
+                                    <span className="text-lg font-bold uppercase">Création de la couverture...</span>
+                                </div>
                             )}
 
                             {/* CSS Overlay Title (Desktop) */}
-                            <div className="absolute inset-0 flex items-center justify-center p-8 bg-gradient-to-t from-black/20 via-transparent to-transparent">
-                                <h1 className="text-6xl font-black text-white font-serif text-center leading-tight drop-shadow-2xl"
+                            <div className="absolute inset-0 flex items-center justify-center p-12 bg-black/10">
+                                <h1 className="text-5xl font-black text-white font-serif text-center leading-tight drop-shadow-2xl"
                                     style={{
                                         textShadow: '3px 3px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000',
-                                        fontFamily: '"Fredoka", sans-serif' // Explicitly trying Fredoka if available
                                     }}>
                                     {book.title}
                                 </h1>
                             </div>
                         </div>
-                        <p className="text-2xl text-gray-600 italic font-serif">Une aventure pour {book.child_name}</p>
+                        <div className="bg-white px-8 py-3 rounded-full shadow-lg border border-orange-100">
+                            <p className="text-xl text-gray-600 italic font-serif">Une aventure magique écrite pour <span className="text-orange-600 font-bold">{book.child_name}</span></p>
+                        </div>
                     </motion.div>
                 ) : (
                     <motion.div
@@ -174,46 +181,61 @@ export default function BookReader({ book, user, onUnlock, isEditable = false, o
                         initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                         className="w-full h-full flex flex-row relative z-10"
                     >
-                        {/* Left: Image */}
-                        <div className="w-1/2 h-full relative bg-gray-100 border-r border-[#E0D0B0] overflow-hidden">
+                        {/* LEFT: Image (Locked or Unlocked) */}
+                        <div className="w-1/2 h-full relative bg-gray-100 border-r border-[#E0D0B0] overflow-hidden group">
+                            {/* Page Index 0 is Page 1 */}
                             {pages[currentPage - 1]?.image ? (
                                 <Image
                                     src={pages[currentPage - 1].image}
                                     alt={`Page ${currentPage}`}
                                     fill
-                                    className={`object-cover ${isViewLocked ? 'blur-lg opacity-50' : ''}`}
+                                    className={`object-cover transition-all duration-700 ${(!isUnlocked && currentPage >= 3) ? 'blur-xl scale-110 opacity-60' : 'group-hover:scale-105'}`}
                                 />
                             ) : (
                                 <div className="absolute inset-0 flex items-center justify-center flex-col text-gray-400">
                                     <span className="text-6xl animate-bounce mb-4">🎨</span>
-                                    <p>Création en cours...</p>
+                                    <p>Illustration en cours...</p>
                                 </div>
                             )}
+
+                            {/* Hybrid Lock Overlay */}
+                            {(!isUnlocked && currentPage >= 3) && (
+                                <div className="absolute inset-0 flex flex-col items-center justify-center z-10 bg-black/20">
+                                    <div className="bg-white/10 backdrop-blur-md p-6 rounded-3xl border border-white/20 text-center shadow-xl">
+                                        <div className="w-16 h-16 bg-white text-orange-500 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg text-2xl">
+                                            🔒
+                                        </div>
+                                        <h3 className="text-xl font-bold text-white mb-1 drop-shadow-md">Illustration Verrouillée</h3>
+                                        <p className="text-white/90 text-sm font-medium drop-shadow-sm">Sera générée en haute qualité après paiement</p>
+                                    </div>
+                                </div>
+                            )}
+
                             {/* Watermark */}
                             <div className="absolute inset-0 flex items-center justify-center opacity-40 pointer-events-none">
                                 <span className="text-white font-black text-6xl -rotate-12 uppercase tracking-widest drop-shadow-lg mix-blend-overlay">Kusoma Kids</span>
                             </div>
                         </div>
 
-                        {/* Right: Text */}
-                        <div className="w-1/2 h-full p-20 flex flex-col justify-center bg-white/60 relative">
+                        {/* RIGHT: Text (Always Editable) */}
+                        <div className="w-1/2 h-full p-16 flex flex-col justify-center bg-[#FFFEFA] relative shadow-inner">
                             <span className="absolute top-8 right-8 text-gray-300 font-bold font-mono">PAGE {currentPage}</span>
 
-                            {isViewLocked ? (
-                                <div className="text-center">
-                                    <h3 className="text-3xl font-bold text-gray-900 mb-4">L'aventure continue... 🔒</h3>
-                                    <button onClick={onUnlock} className="px-8 py-3 bg-orange-500 text-white rounded-full font-bold shadow-lg hover:scale-105 transition-transform">
-                                        Rejoindre le Club
-                                    </button>
+                            {isEditable && onTextChange ? (
+                                <div className="relative group">
+                                    <div className="absolute -top-10 left-0 bg-orange-100 text-orange-600 text-xs font-bold px-3 py-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
+                                        <span>✏️</span> Vous pouvez modifier ce texte
+                                    </div>
+                                    <textarea
+                                        value={pages[currentPage - 1]?.text}
+                                        onChange={(e) => onTextChange(currentPage - 1, e.target.value)}
+                                        className="w-full h-[60vh] p-6 bg-transparent rounded-2xl border-2 border-transparent hover:border-orange-100 focus:border-orange-300 focus:bg-white text-2xl font-serif leading-relaxed text-gray-800 outline-none resize-none transition-all placeholder:text-gray-300"
+                                        style={{ fontFamily: '"Georgia", serif' }} // Using Georgia as safe fallback for book font
+                                        spellCheck="false"
+                                    />
                                 </div>
-                            ) : isEditable && onTextChange ? (
-                                <textarea
-                                    value={pages[currentPage - 1]?.text}
-                                    onChange={(e) => onTextChange(currentPage - 1, e.target.value)}
-                                    className="w-full h-3/4 p-6 bg-white/80 rounded-2xl border-2 border-orange-100 focus:border-orange-400 text-xl font-serif leading-relaxed text-gray-800 outline-none resize-none shadow-inner"
-                                />
                             ) : (
-                                <div className="prose prose-xl font-serif text-gray-800">
+                                <div className="prose prose-2xl font-serif text-gray-800 leading-relaxed">
                                     <span className="text-7xl float-left mr-4 text-orange-500 font-bold leading-[0.8]">{pages[currentPage - 1]?.text?.charAt(0)}</span>
                                     {pages[currentPage - 1]?.text?.substring(1)}
                                 </div>

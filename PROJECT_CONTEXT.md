@@ -387,6 +387,12 @@ Pour réduire les coûts API :
 
 ## 12. JOURNAL DES MODIFICATIONS (Changelog)
 
+### Janvier 2026 (v1.3) - UI Polish & Hybrid Mode
+- **UI Rewrite** : Passage généralisé au **Format Carré (1:1)** pour les livres. Grille Desktop 3 colonnes, Tablette 2 colonnes, Mobile 1 colonne.
+- **Hybrid Preview** : Mode "Text First". Navigation débloquée pour toutes les pages. Textes visibles et éditables même si l'image est verrouillée (floutée) pour les pages 3+.
+- **Experience** : Header/Footer masqués en prévisualisation ("Mode Cinéma").
+- **Consistency** : Limitation à 3 items pour les sections "Dernières créations" pour un alignement parfait.
+
 ### Janvier 2026 (v1.2) - SEO & Performance
 - **SEO** : Refactor complet en Server Components pour `/`, `/books`, et `/book/[id]`. Ajout des balises OpenGraph dynamiques.
 - **Cost Optimization** : Implémentation du "Base Image Caching". Les templates peuvent avoir des images pré-générées pour éviter les appels Flux/Dev onéreux.

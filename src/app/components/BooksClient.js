@@ -39,8 +39,11 @@ export default function BooksClient() {
         : books.filter(book => book.age_range.includes(filterAge.split('-')[0]));
 
     return (
-        <div className="min-h-screen bg-gray-50 pt-32 pb-20">
-            <div className="container mx-auto px-4">
+        <div className="min-h-screen pt-32 pb-20 relative bg-[#FAFAF8]">
+            {/* Background Pattern */}
+            <div className="absolute inset-0 z-0 opacity-40 pointer-events-none" style={{ backgroundImage: 'url(/images/pattern_bg.png)', backgroundSize: '400px' }}></div>
+
+            <div className="container mx-auto px-4 relative z-10">
 
                 {/* Header */}
                 <div className="text-center mb-16">
@@ -72,12 +75,12 @@ export default function BooksClient() {
                         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-8">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-10">
                         {filteredBooks.map((book) => (
                             <Link href={`/book/${book.id}`} key={book.id} className="group">
-                                <div className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 h-full flex flex-col">
+                                <div className="bg-white rounded-[2rem] overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 h-full flex flex-col border border-gray-100">
                                     {/* Image Container */}
-                                    <div className="relative aspect-[3/4] overflow-hidden bg-gray-100">
+                                    <div className="relative aspect-square overflow-hidden bg-gray-100">
                                         {book.cover_url ? (
                                             <Image
                                                 src={book.cover_url}
@@ -93,7 +96,7 @@ export default function BooksClient() {
 
                                         {/* Badge */}
                                         <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-orange-600 shadow-sm">
-                                            {book.age_range} ans
+                                            {book.age_range.replace(/\s*ans$/i, '')} ans
                                         </div>
                                     </div>
 

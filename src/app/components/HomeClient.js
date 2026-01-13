@@ -211,8 +211,8 @@ export default function HomeClient() {
                         </Link>
                     </div>
 
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8">
-                        {books.slice(0, 4).map((book, i) => (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                        {books.slice(0, 3).map((book, i) => (
                             <motion.div
                                 key={book.id}
                                 initial={{ opacity: 0, y: 20 }}
@@ -223,7 +223,7 @@ export default function HomeClient() {
                                 className="group cursor-pointer"
                             >
                                 <Link href={`/book/${book.id}`}>
-                                    <div className="relative aspect-[3/4] mb-4 rounded-2xl overflow-hidden shadow-md group-hover:shadow-2xl transition-all duration-300">
+                                    <div className="relative aspect-square mb-4 rounded-[2rem] overflow-hidden shadow-md group-hover:shadow-2xl transition-all duration-300 border border-gray-100">
                                         {/* Realistic Texture Overlay */}
                                         <div className="absolute inset-0 bg-noise opacity-50 pointer-events-none z-10 mix-blend-multiply"></div>
                                         <div className="absolute left-0 top-0 bottom-0 w-[4px] bg-white/20 z-20"></div> {/* Spine Highlight */}
@@ -235,7 +235,7 @@ export default function HomeClient() {
                                             className="object-cover transform group-hover:scale-105 transition-transform duration-700"
                                         />
                                     </div>
-                                    <h3 className="font-bold text-gray-900 group-hover:text-orange-600 transition-colors text-lg leading-tight mb-1">{formatTitle(book.title)}</h3>
+                                    <h3 className="font-bold text-gray-900 group-hover:text-orange-600 transition-colors text-xl leading-tight mb-2">{formatTitle(book.title)}</h3>
                                     <p className="text-sm text-gray-500 italic">{book.tagline || book.ageRange}</p>
                                 </Link>
                             </motion.div>

@@ -1,39 +1,141 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import { supabase } from '@/lib/supabase';
 
 export default function CheckoutPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [cartItem, setCartItem] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState(null);
+  const [draftBook, setDraftBook] = useState(null); // The actual story content
 
   // Checkout States
   const [email, setEmail] = useState('');
-  const [paymentMethod, setPaymentMethod] = useState('card'); // 'card' or 'mobile'
-  const [credits, setCredits] = useState(0); // This would come from User Profile context
+  const [paymentMethod, setPaymentMethod] = useState('card');
+  const [credits, setCredits] = useState(0);
   const [processing, setProcessing] = useState(false);
 
   useEffect(() => {
-    // 1. Load Cart
-    const item = localStorage.getItem('cart_item');
-    if (item) {
-      setCartItem(JSON.parse(item));
-    } else {
-      // Redirect if empty
-      // router.push('/books');
-    }
-    setLoading(false);
-  }, [router]);
+    const init = async () => {
+      // Get User
+      const { data: { session } } = await supabase.auth.getSession();
+      setUser(session?.user);
+      if (session?.user?.email) setEmail(session.user.email);
 
-  const handlePayment = () => {
+      // Load specific cart data (Story content)
+      const storedItem = localStorage.getItem('cart_item');
+      let parsedDraft = null;
+      if (storedItem) {
+        parsedDraft = JSON.parse(storedItem);
+        setDraftBook(parsedDraft);
+      }
+
+      // Check Plan
+      const plan = searchParams.get('plan');
+      const bookId = searchParams.get('book_id') || searchParams.get('redirect_book_id'); // Template ID
+
+      if (plan === 'club') {
+        // CLUB MODE
+        setCartItem({
+          type: 'club',
+          price: 6500,
+          bookTitle: "Adhésion Club Kusoma",
+          coverUrl: "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExM3Z5eXAzZ3Z5eXAzZ3Z5eXAzZ3Z5eXAzZ3Z5eXAzZyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/3o7TKSjRrfIPjeiVyM/giphy.gif",
+          personalization: { childName: 'Membre VIP' },
+          targetBookId: bookId
+        });
+      } else {
+        // NORMAL CART MODE
+        if (parsedDraft) {
+          setCartItem(parsedDraft);
+        }
+      }
+      setLoading(false);
+    };
+    init();
+  }, [router, searchParams]);
+
+  const handlePayment = async () => {
     setProcessing(true);
-    // Simulate API Call
+
+    // 1. SAVE DRAFT IF EXISTS (Club or One-Time)
+    // We must ensure the book exists in DB before payment to attach ID.
+    let createdBookId = null;
+
+    if (draftBook && draftBook.finalizedPages) {
+      try {
+        const saveRes = await fetch('/api/books/create', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title: draftBook.bookTitle,
+            childName: draftBook.personalization?.childName,
+            childAge: draftBook.personalization?.age,
+            childGender: draftBook.personalization?.gender,
+            childPhotoUrl: draftBook.personalization?.photoUrl,
+            content_json: draftBook.finalizedPages,
+            coverUrl: draftBook.coverUrl,
+            templateId: draftBook.bookId // The original template ID
+          })
+        });
+        const saveData = await saveRes.json();
+        if (saveData.success) {
+          createdBookId = saveData.bookId;
+          console.log("✅ Draft Book Saved:", createdBookId);
+        } else {
+          console.error("Failed to save draft:", saveData.error);
+          // Proceeding without ID? No, we need it.
+          // Alert user?
+          alert("Erreur de sauvegarde du livre. Veuillez réessayer.");
+          setProcessing(false);
+          return;
+        }
+      } catch (e) {
+        console.error("Save Draft Error:", e);
+        alert("Erreur technique (Sauvegarde).");
+        setProcessing(false);
+        return;
+      }
+    }
+
+    const targetId = createdBookId || cartItem?.targetBookId; // Fallback to template ID if save failed (shouldn't happen if logic strict)
+
+    // CLUB SUBSCRIPTION FLOW
+    if (cartItem?.type === 'club') {
+      try {
+        const res = await fetch('/api/checkout/subscription', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: user?.id,
+            email: email,
+            target_book_id: targetId,
+            priceId: 'price_1Q...' // Replace with env var in real app
+          })
+        });
+        const data = await res.json();
+        if (data.url) {
+          window.location.href = data.url;
+        } else {
+          alert("Erreur Stripe: " + data.error);
+          setProcessing(false);
+        }
+      } catch (error) {
+        console.error("Payment Error:", error);
+        alert("Erreur de connexion paiement.");
+        setProcessing(false);
+      }
+      return;
+    }
+
+    // NORMAL CART FLOW (Simulation for now)
     setTimeout(() => {
       setProcessing(false);
       alert("Paiement simulé réussi ! Votre livre est en cours de génération.");
-      // Redirect to success / dashboard
       localStorage.removeItem('cart_item');
       router.push('/');
     }, 2000);

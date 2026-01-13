@@ -2,6 +2,12 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  body {
+    @apply overflow-x-hidden bg-orange-50/30;
+  }
+}
+
 /* Global Noise Texture */
 .bg-noise {
   position: relative;

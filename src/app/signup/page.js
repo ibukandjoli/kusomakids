@@ -2,8 +2,9 @@
 
 import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import { useEffect } from 'react';
 
 export default function SignupPage() {
     const [email, setEmail] = useState('');
@@ -11,6 +12,17 @@ export default function SignupPage() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const router = useRouter();
+    const searchParams = useSearchParams();
+
+    useEffect(() => {
+        // PERIST CONTEXT: If coming from Preview, save context for post-auth redirect
+        const plan = searchParams.get('plan');
+        const bookId = searchParams.get('redirect_book_id');
+
+        if (plan === 'club' && bookId) {
+            localStorage.setItem('signup_context', JSON.stringify({ plan, bookId }));
+        }
+    }, [searchParams]);
 
     const [success, setSuccess] = useState(false);
 
@@ -68,7 +80,10 @@ export default function SignupPage() {
                     <h2 className="text-3xl font-extrabold text-gray-900">Créer un compte</h2>
                     <p className="mt-2 text-sm text-gray-600">
                         Déjà membre ?{' '}
-                        <Link href="/login" className="font-medium text-orange-600 hover:text-orange-500">
+                        <Link
+                            href={`/login?${searchParams.toString()}`}
+                            className="font-medium text-orange-600 hover:text-orange-500"
+                        >
                             Connectez-vous
                         </Link>
                     </p>

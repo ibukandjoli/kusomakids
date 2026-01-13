@@ -12,6 +12,8 @@ export default function Header() {
   const { cart } = useBookContext();
   const [user, setUser] = useState(null);
 
+  const [guestCount, setGuestCount] = useState(0);
+
   useEffect(() => {
     // Scroll handler
     const handleScroll = () => {
@@ -20,18 +22,55 @@ export default function Header() {
     window.addEventListener('scroll', handleScroll);
 
     // Auth handler
+    const syncGuestBooks = async () => {
+      const stored = localStorage.getItem('guest_books');
+      if (!stored) return;
+      try {
+        const books = JSON.parse(stored);
+        if (Array.isArray(books) && books.length > 0) {
+          console.log("🔄 Syncing guest books...");
+          const res = await fetch('/api/books/sync', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ guestBooks: books })
+          });
+          if (res.ok) {
+            console.log("✅ Sync success");
+            localStorage.removeItem('guest_books');
+            setGuestCount(0);
+            window.dispatchEvent(new Event('guest_books_updated'));
+            // Dispatch custom event to refresh Dashboard if we are on it?
+          }
+        }
+      } catch (e) { console.error("Sync failed", e); }
+    };
+
     const checkUser = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       setUser(session?.user || null);
+      if (session?.user) syncGuestBooks();
     };
     checkUser();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user || null);
+      if (session?.user) syncGuestBooks();
     });
+
+    // Guest Books Handler
+    const checkGuestBooks = () => {
+      try {
+        const stored = localStorage.getItem('guest_books');
+        const parsed = stored ? JSON.parse(stored) : [];
+        setGuestCount(Array.isArray(parsed) ? parsed.length : 0);
+      } catch (e) { console.error(e); }
+    };
+    checkGuestBooks();
+    window.addEventListener('guest_books_updated', checkGuestBooks);
 
     return () => {
       window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('guest_books_updated', checkGuestBooks);
       subscription.unsubscribe();
     };
   }, []);
@@ -47,11 +86,11 @@ export default function Header() {
         <div className="flex justify-between items-center">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 group">
-            <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-xl transition-all duration-300 ${isScrolled ? 'bg-orange-500 text-white' : 'bg-orange-500 text-white shadow-lg' // FIXED: bg-orange-500 always
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-xl transition-all duration-300 ${isScrolled ? 'bg-orange-500 text-white' : 'bg-orange-500 text-white shadow-lg'
               }`}>
               K
             </div>
-            <span className={`text-xl font-bold tracking-tight transition-colors duration-300 ${isScrolled ? 'text-gray-900' : 'text-gray-900' // FIXED: text-gray-900 always
+            <span className={`text-xl font-bold tracking-tight transition-colors duration-300 ${isScrolled ? 'text-gray-900' : 'text-gray-900'
               }`}>
               Kusoma<span className="text-orange-500">Kids</span>
             </span>
@@ -79,14 +118,14 @@ export default function Header() {
           {/* Actions */}
           <div className="flex items-center space-x-4">
             {/* Cart Icon (Simple) */}
-            <Link href="/checkout" className={`relative p-2 rounded-full transition-colors ${isScrolled ? 'text-gray-600 hover:bg-gray-100' : 'text-gray-900 hover:bg-gray-100' // FIXED: text-gray-900 on transparent bg
+            <Link href="/checkout" className={`relative p-2 rounded-full transition-colors ${isScrolled ? 'text-gray-600 hover:bg-gray-100' : 'text-gray-900 hover:bg-gray-100'
               }`}>
               <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
               </svg>
-              {cart.items.length > 0 && (
+              {(cart.items.length > 0 || guestCount > 0) && (
                 <span className="absolute top-0 right-0 w-4 h-4 bg-red-500 text-white text-[10px] font-bold flex items-center justify-center rounded-full">
-                  {cart.items.length}
+                  {cart.items.length || guestCount}
                 </span>
               )}
             </Link>

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import PaymentModal from '../components/PaymentModal';
@@ -13,9 +13,11 @@ export default function Dashboard() {
     const [books, setBooks] = useState([]);
     const [loading, setLoading] = useState(true);
     const [modalOpen, setModalOpen] = useState(false);
+    const [welcomeModalOpen, setWelcomeModalOpen] = useState(false);
     const [selectedBookId, setSelectedBookId] = useState(null);
 
     const router = useRouter();
+    const searchParams = useSearchParams();
 
     useEffect(() => {
         async function fetchDashboardData() {
@@ -54,6 +56,17 @@ export default function Dashboard() {
         }
         fetchDashboardData();
     }, [router]);
+
+    useEffect(() => {
+        const action = searchParams.get('action');
+        const unlockBookId = searchParams.get('unlock_book');
+
+        if (action === 'club_welcome' && unlockBookId) {
+            setSelectedBookId(unlockBookId);
+            setWelcomeModalOpen(true);
+            // Clean URL? Optional but good UX.
+        }
+    }, [searchParams]);
 
     // Access Logic Checker
     const canAccessBook = (book) => {
@@ -142,8 +155,8 @@ export default function Dashboard() {
                                         <button
                                             onClick={() => handleAction(book, 'read')}
                                             className={`flex-1 py-3 px-4 rounded-xl font-bold border-2 transition-colors ${canAccessBook(book)
-                                                    ? 'border-orange-500 text-orange-600 hover:bg-orange-50'
-                                                    : 'border-gray-200 text-gray-400 hover:border-gray-300'
+                                                ? 'border-orange-500 text-orange-600 hover:bg-orange-50'
+                                                : 'border-gray-200 text-gray-400 hover:border-gray-300'
                                                 }`}
                                         >
                                             Lire 📖
@@ -151,8 +164,8 @@ export default function Dashboard() {
                                         <button
                                             onClick={() => handleAction(book, 'download')}
                                             className={`py-3 px-4 rounded-xl font-bold border-2 border-transparent transition-colors ${canAccessBook(book)
-                                                    ? 'bg-orange-100 text-orange-700 hover:bg-orange-200'
-                                                    : 'bg-gray-100 text-gray-400 hover:bg-gray-200'
+                                                ? 'bg-orange-100 text-orange-700 hover:bg-orange-200'
+                                                : 'bg-gray-100 text-gray-400 hover:bg-gray-200'
                                                 }`}
                                             title="Télécharger PDF"
                                         >
@@ -173,6 +186,60 @@ export default function Dashboard() {
                 user={user}
                 bookId={selectedBookId}
             />
+
+            {/* WELCOME CLUB MODAL */}
+            {welcomeModalOpen && (
+                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-black/80 backdrop-blur-sm"></div>
+                    <div className="relative bg-white rounded-3xl p-8 max-w-lg w-full text-center shadow-2xl animate-in zoom-in-95 border-4 border-orange-200">
+                        <div className="text-6xl mb-4 animate-bounce">🎉</div>
+                        <h2 className="text-3xl font-black text-gray-900 mb-2">Bienvenue au Club ! 🌟</h2>
+                        <p className="text-gray-600 mb-8 text-lg">
+                            Votre abonnement est actif et vous brillez déjà !<br />
+                            Vous avez <strong className="text-orange-600">1 crédit disponible</strong>.
+                        </p>
+
+                        <div className="bg-orange-50 p-6 rounded-2xl mb-8 border border-orange-100">
+                            <p className="font-bold text-gray-800 mb-2">Voulez-vous débloquer votre livre maintenant ?</p>
+                            <p className="text-sm text-gray-500">Cela utilisera 1 crédit pour générer le reste de l'histoire.</p>
+                        </div>
+
+                        <button
+                            onClick={async () => {
+                                try {
+                                    const res = await fetch('/api/books/unlock', {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({ bookId: selectedBookId })
+                                    });
+                                    if (res.ok) {
+                                        // TRIGGER WORKER (Fire and Forget)
+                                        fetch('/api/books/process-purchased', {
+                                            method: 'POST',
+                                            headers: { 'Content-Type': 'application/json' },
+                                            body: JSON.stringify({ bookId: selectedBookId })
+                                        }).catch(err => console.error("Worker Trigger Error", err));
+
+                                        // Redirect to Reader
+                                        router.push(`/read/${selectedBookId}`);
+                                    } else {
+                                        alert("Erreur lors du déblocage.");
+                                    }
+                                } catch (e) { console.error(e); }
+                            }}
+                            className="w-full bg-green-500 text-white py-4 rounded-xl font-bold text-xl hover:bg-green-600 transition-all shadow-lg hover:shadow-green-500/30 flex items-center justify-center gap-2"
+                        >
+                            <span>🔓</span> Oui, débloquer (Utiliser 1 crédit)
+                        </button>
+                        <button
+                            onClick={() => setWelcomeModalOpen(false)}
+                            className="mt-4 text-gray-400 text-sm hover:text-gray-600"
+                        >
+                            Non, plus tard
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

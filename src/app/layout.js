@@ -8,8 +8,44 @@ import { BookProvider } from './context/BookContext';
 const nunito = Nunito({ subsets: ['latin'] });
 
 export const metadata = {
-  title: 'KusomaKids - Livres personnalisés pour enfants africains',
-  description: 'Des livres personnalisés qui célèbrent l\'identité et la culture des enfants africains',
+  metadataBase: new URL('https://kusomakids.com'), // Replace with actual domain
+  title: {
+    default: 'KusomaKids - Livres personnalisés pour enfants africains',
+    template: '%s | KusomaKids'
+  },
+  description: 'Offrez à votre enfant une aventure magique dont il est le héros. Des livres personnalisés célébrant l\'identité africaine, avec son prénom et son avatar.',
+  keywords: ['livre personnalisé', 'enfant africain', 'conte africain', 'cadeau enfant', 'lecture', 'identité', 'culture'],
+  authors: [{ name: 'KusomaKids Team' }],
+  creator: 'KusomaKids',
+  publisher: 'KusomaKids',
+  openGraph: {
+    title: 'KusomaKids - Le héros de l\'histoire, c\'est votre enfant',
+    description: 'Créez en 3 minutes un livre unique où votre enfant vit des aventures magiques en Afrique.',
+    url: 'https://kusomakids.com',
+    siteName: 'KusomaKids',
+    images: [
+      {
+        url: '/images/og-default.jpg', // Ensure this exists or use a generic cover
+        width: 1200,
+        height: 630,
+        alt: 'KusomaKids Preview',
+      },
+    ],
+    locale: 'fr_FR',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'KusomaKids - Livres personnalisés',
+    description: 'Votre enfant héros de son propre conte africain.',
+    images: ['/images/og-default.jpg'], // Same as OG
+  },
+  viewport: {
+    width: 'device-width',
+    initialScale: 1,
+    maximumScale: 1,
+  },
+  themeColor: '#FF6B00',
 };
 
 export default function RootLayout({ children }) {

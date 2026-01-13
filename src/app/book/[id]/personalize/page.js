@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
+import { formatTitle } from '@/utils/format';
 
 import { fal } from '@fal-ai/client';
 
@@ -18,7 +19,7 @@ export default function PersonalizePage() {
     const [formData, setFormData] = useState({
         childName: '',
         gender: 'boy',
-        age: '',
+        age: '4',
         photo: null
     });
     const [previewUrl, setPreviewUrl] = useState(null);
@@ -44,11 +45,14 @@ export default function PersonalizePage() {
         fetchBook();
     }, [params.id]);
 
+    const [uploadSuccess, setUploadSuccess] = useState(false);
+
     const handlePhotoChange = (e) => {
         const file = e.target.files[0];
         if (file) {
             setFormData({ ...formData, photo: file });
             setPreviewUrl(URL.createObjectURL(file));
+            setUploadSuccess(true);
             // In a real app, integrate Supabase Storage upload here
         }
     };
@@ -130,11 +134,18 @@ export default function PersonalizePage() {
                                         className="text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100"
                                     />
                                 </div>
-                                <div className="flex gap-2 mt-4 text-xs font-medium text-gray-500">
-                                    <span className="flex items-center gap-1"><span className="text-green-500">✅</span> Bonne lumière</span>
-                                    <span className="flex items-center gap-1"><span className="text-red-500">❌</span> Pas de lunettes</span>
-                                    <span className="flex items-center gap-1"><span className="text-red-500">❌</span> Seul(e)</span>
-                                </div>
+                                {uploadSuccess ? (
+                                    <div className="mt-3 bg-green-50 border border-green-200 rounded-lg p-2 flex items-center gap-2 text-sm font-bold text-green-700 animate-pulse">
+                                        <span className="bg-green-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">✓</span>
+                                        Photo validée !
+                                    </div>
+                                ) : (
+                                    <div className="flex gap-2 mt-4 text-xs font-medium text-gray-500">
+                                        <span className="flex items-center gap-1"><span className="text-green-500">✅</span> Bonne lumière</span>
+                                        <span className="flex items-center gap-1"><span className="text-red-500">❌</span> Pas de lunettes</span>
+                                        <span className="flex items-center gap-1"><span className="text-red-500">❌</span> Seul(e)</span>
+                                    </div>
+                                )}
                             </div>
 
                             {/* Name */}
@@ -170,7 +181,7 @@ export default function PersonalizePage() {
 
                             {/* Age */}
                             <div>
-                                <label className="block text-sm font-bold text-gray-700 mb-2">Âge (Optionnel)</label>
+                                <label className="block text-sm font-bold text-gray-700 mb-2">Âge</label>
                                 <input
                                     type="number"
                                     value={formData.age}
@@ -203,7 +214,7 @@ export default function PersonalizePage() {
                                         </div>
                                     )}
                                 </div>
-                                <h3 className="text-xl font-bold text-gray-900 mb-2">{book ? book.title : '...'}</h3>
+                                <h3 className="text-xl font-bold text-gray-900 mb-2">{book ? formatTitle(book.title).replace('[Son prénom]', formData.childName || '[Son prénom]') : '...'}</h3>
                                 <p className="text-gray-500 text-sm">Une aventure unique pour {formData.childName || 'votre enfant'}</p>
                             </div>
 

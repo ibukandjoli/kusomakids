@@ -1,6 +1,7 @@
 'use client';
 
 import { supabase } from '@/lib/supabase';
+import { STATIC_COVERS } from '@/lib/static-covers';
 
 // Données simulées pour les livres (à remplacer par des appels API réels)
 const booksData = [
@@ -197,6 +198,8 @@ export const bookService = {
           longDescription: b.description, // Ou champ dédié
           features: ["Personnalisable", "Héros Africain", "Éducatif"], // Valeurs par défaut
           previewPages: [], // À gérer plus tard ou via un champ JSON
+          coverUrl: b.cover_url || STATIC_COVERS[b.theme_slug] || '/images/covers/cover_school.jpg',
+          tagline: b.tagline,
           ...b.content_json // Merge extra data if stored in JSON
         }));
       } else {

@@ -5,7 +5,6 @@ import { supabase } from '@/lib/supabase';
 import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { formatTitle } from '@/utils/format';
-
 import { fal } from '@fal-ai/client';
 
 fal.config({
@@ -53,17 +52,10 @@ export default function PersonalizePage() {
             setFormData({ ...formData, photo: file });
             setPreviewUrl(URL.createObjectURL(file));
             setUploadSuccess(true);
-            // In a real app, integrate Supabase Storage upload here
         }
     };
 
-    // ... inside component
-
-    // ... inside component
-
     const [uploading, setUploading] = useState(false);
-
-    // ... handlePhotoChange stays same
 
     const handleCheckout = async () => {
         if (!formData.photo) return;
@@ -101,148 +93,166 @@ export default function PersonalizePage() {
         }
     };
 
-    if (loading) return <div className="min-h-screen pt-32 text-center">Chargement...</div>;
+    if (loading) return <div className="min-h-screen pt-32 text-center text-orange-500 font-bold">Chargement de la magie...</div>;
     if (!book) return <div className="min-h-screen pt-32 text-center">Livre introuvable</div>;
 
     return (
-        <div className="min-h-screen bg-gray-50 pt-32 pb-20">
-            <div className="container mx-auto px-4 max-w-6xl">
+        <div className="min-h-screen pt-32 pb-20 relative bg-[#FAFAF8]">
+            {/* Background Pattern */}
+            <div className="absolute inset-0 z-0 opacity-40 pointer-events-none" style={{ backgroundImage: 'url(/images/pattern_bg.png)', backgroundSize: '400px' }}></div>
 
-                <div className="grid lg:grid-cols-2 gap-12">
+            <div className="container mx-auto px-4 max-w-6xl relative z-10">
+
+                <div className="grid lg:grid-cols-2 gap-12 items-start">
 
                     {/* LEFT: Form */}
-                    <div className="bg-white p-8 rounded-3xl shadow-sm h-fit">
-                        <h1 className="text-3xl font-bold text-gray-900 mb-6">Personnalisons l'histoire !</h1>
+                    <div className="bg-white/90 backdrop-blur-sm p-8 md:p-10 rounded-[2.5rem] shadow-xl border border-white/50 h-fit transition-all hover:shadow-2xl">
+                        <h1 className="text-3xl md:text-4xl font-black text-gray-900 mb-2">Personnalisons l'histoire !</h1>
+                        <p className="text-gray-500 mb-8 font-medium">Pour qu'elle soit unique, comme votre enfant.</p>
 
-                        <div className="space-y-6">
+                        <div className="space-y-8">
 
                             {/* Photo Upload */}
-                            <div>
-                                <label className="block text-sm font-bold text-gray-700 mb-2">Photo de l'enfant</label>
-                                <div className="flex items-center gap-4">
-                                    <div className="w-24 h-24 rounded-full bg-gray-100 flex items-center justify-center overflow-hidden border-2 border-dashed border-gray-300 relative">
+                            <div className="bg-orange-50/50 p-6 rounded-3xl border border-orange-100">
+                                <label className="block text-lg font-bold text-gray-800 mb-3">Photo du petit héros 📸</label>
+                                <div className="flex items-center gap-6">
+                                    <div className="w-24 h-24 rounded-full bg-white shadow-sm flex-shrink-0 flex items-center justify-center overflow-hidden border-4 border-white ring-2 ring-orange-100 relative group">
                                         {previewUrl ? (
                                             <Image src={previewUrl} alt="Preview" fill className="object-cover" />
                                         ) : (
-                                            <span className="text-4xl">📸</span>
+                                            <span className="text-4xl group-hover:scale-110 transition-transform">😊</span>
                                         )}
                                     </div>
-                                    <input
-                                        type="file"
-                                        accept="image/*"
-                                        onChange={handlePhotoChange}
-                                        className="text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100"
-                                    />
+                                    <div className="flex-1">
+                                        <label className="cursor-pointer inline-block px-5 py-2.5 bg-white border-2 border-orange-200 text-orange-700 font-bold rounded-xl hover:bg-orange-500 hover:text-white hover:border-orange-500 transition-all shadow-sm">
+                                            Choisir une photo
+                                            <input
+                                                type="file"
+                                                accept="image/*"
+                                                onChange={handlePhotoChange}
+                                                className="hidden"
+                                            />
+                                        </label>
+                                        {uploadSuccess ? (
+                                            <div className="mt-3 inline-flex items-center gap-2 text-sm font-bold text-green-600 bg-green-100 px-3 py-1 rounded-lg animate-in fade-in slide-in-from-left-2">
+                                                <span>✨</span> Super photo ! On la traite ☺️
+                                            </div>
+                                        ) : (
+                                            <p className="text-xs text-gray-400 mt-2 pl-1">
+                                                Visage bien éclairé, sans lunettes, seul(e).
+                                            </p>
+                                        )}
+                                    </div>
                                 </div>
-                                {uploadSuccess ? (
-                                    <div className="mt-3 bg-green-50 border border-green-200 rounded-lg p-2 flex items-center gap-2 text-sm font-bold text-green-700 animate-pulse">
-                                        <span className="bg-green-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">✓</span>
-                                        Photo validée !
-                                    </div>
-                                ) : (
-                                    <div className="flex gap-2 mt-4 text-xs font-medium text-gray-500">
-                                        <span className="flex items-center gap-1"><span className="text-green-500">✅</span> Bonne lumière</span>
-                                        <span className="flex items-center gap-1"><span className="text-red-500">❌</span> Pas de lunettes</span>
-                                        <span className="flex items-center gap-1"><span className="text-red-500">❌</span> Seul(e)</span>
-                                    </div>
-                                )}
                             </div>
 
                             {/* Name */}
                             <div>
-                                <label className="block text-sm font-bold text-gray-700 mb-2">Prénom de l'enfant</label>
+                                <label className="block text-lg font-bold text-gray-800 mb-3">Quel est le prénom de votre petit héros ?</label>
                                 <input
                                     type="text"
                                     value={formData.childName}
                                     onChange={(e) => setFormData({ ...formData, childName: e.target.value })}
-                                    className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-all"
-                                    placeholder="Ex: Aminata"
+                                    className="w-full px-5 py-4 text-lg rounded-2xl border-2 border-gray-100 bg-white focus:border-orange-400 focus:ring-4 focus:ring-orange-100 outline-none transition-all placeholder:text-gray-300 font-bold text-gray-700"
+                                    placeholder="Ex: Aminata, Kofi..."
                                 />
                             </div>
 
-                            {/* Gender */}
-                            <div>
-                                <label className="block text-sm font-bold text-gray-700 mb-2">C'est...</label>
-                                <div className="flex gap-4">
-                                    <button
-                                        onClick={() => setFormData({ ...formData, gender: 'girl' })}
-                                        className={`flex-1 py-3 rounded-xl font-bold border-2 transition-all ${formData.gender === 'girl' ? 'border-orange-500 bg-orange-50 text-orange-600' : 'border-gray-200 text-gray-500'}`}
-                                    >
-                                        Une Fille 👧
-                                    </button>
-                                    <button
-                                        onClick={() => setFormData({ ...formData, gender: 'boy' })}
-                                        className={`flex-1 py-3 rounded-xl font-bold border-2 transition-all ${formData.gender === 'boy' ? 'border-orange-500 bg-orange-50 text-orange-600' : 'border-gray-200 text-gray-500'}`}
-                                    >
-                                        Un Garçon 👦
-                                    </button>
+                            <div className="grid grid-cols-2 gap-6">
+                                {/* Age */}
+                                <div>
+                                    <label className="block text-lg font-bold text-gray-800 mb-3">Quel âge a-t-il/elle ?</label>
+                                    <input
+                                        type="number"
+                                        value={formData.age}
+                                        onChange={(e) => setFormData({ ...formData, age: e.target.value })}
+                                        className="w-full px-5 py-4 text-lg rounded-2xl border-2 border-gray-100 bg-white focus:border-orange-400 focus:ring-4 focus:ring-orange-100 outline-none transition-all placeholder:text-gray-300 font-bold text-gray-700"
+                                        placeholder="Ex: 5"
+                                    />
                                 </div>
-                            </div>
 
-                            {/* Age */}
-                            <div>
-                                <label className="block text-sm font-bold text-gray-700 mb-2">Âge</label>
-                                <input
-                                    type="number"
-                                    value={formData.age}
-                                    onChange={(e) => setFormData({ ...formData, age: e.target.value })}
-                                    className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-all"
-                                    placeholder="Ex: 5"
-                                />
+                                {/* Gender */}
+                                <div>
+                                    <label className="block text-lg font-bold text-gray-800 mb-3">C'est...</label>
+                                    <div className="flex bg-gray-100 p-1 rounded-2xl">
+                                        <button
+                                            onClick={() => setFormData({ ...formData, gender: 'girl' })}
+                                            className={`flex-1 py-3 rounded-xl font-bold transition-all ${formData.gender === 'girl' ? 'bg-white text-orange-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+                                        >
+                                            Fille 👧🏿
+                                        </button>
+                                        <button
+                                            onClick={() => setFormData({ ...formData, gender: 'boy' })}
+                                            className={`flex-1 py-3 rounded-xl font-bold transition-all ${formData.gender === 'boy' ? 'bg-white text-orange-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+                                        >
+                                            Garçon 👦🏿
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
 
                         </div>
                     </div>
 
                     {/* RIGHT: Illustration & CTA */}
-                    <div className="relative flex flex-col justify-center">
+                    <div className="relative flex flex-col justify-center lg:pt-10">
                         <div className="sticky top-32 text-center">
 
-                            {/* Illustration placeholder */}
-                            <div className="bg-white rounded-3xl p-8 shadow-xl border border-orange-100 mb-8 transform rotate-2 max-w-sm mx-auto">
-                                <div className="aspect-[3/4] relative overflow-hidden rounded-2xl bg-orange-50 mb-4">
+                            {/* Book Preview Card */}
+                            <div className="bg-white rounded-[2.5rem] p-4 pb-8 shadow-2xl shadow-orange-500/10 border-4 border-white mb-8 transform hover:rotate-1 transition-transform duration-500 max-w-sm mx-auto relative group">
+                                <div className="absolute -top-6 -right-6 bg-yellow-400 text-yellow-900 font-black px-4 py-2 rounded-xl rotate-12 shadow-lg z-20 text-sm">
+                                    Best-Seller ⭐
+                                </div>
+                                <div className="aspect-[3/4] relative overflow-hidden rounded-[2rem] bg-orange-50 mb-6 shadow-inner">
                                     {book && book.cover_url ? (
-                                        <Image src={book.cover_url} alt={book.title} fill className="object-cover" />
+                                        <Image src={book.cover_url} alt={book.title} fill className="object-cover transition-transform duration-700 group-hover:scale-105" />
                                     ) : (
                                         <div className="absolute inset-0 flex items-center justify-center text-orange-200">
                                             <span className="text-6xl">📖</span>
                                         </div>
                                     )}
+                                    {/* Floating Avatar Bubble */}
                                     {previewUrl && (
-                                        <div className="absolute bottom-4 right-4 w-20 h-20 rounded-full border-4 border-white shadow-lg overflow-hidden z-20">
+                                        <div className="absolute -bottom-2 -right-2 w-24 h-24 rounded-full border-4 border-white shadow-xl overflow-hidden z-20 animate-in zoom-in spin-in-3">
                                             <Image src={previewUrl} alt="Child" fill className="object-cover" />
                                         </div>
                                     )}
                                 </div>
-                                <h3 className="text-xl font-bold text-gray-900 mb-2">{book ? formatTitle(book.title).replace('[Son prénom]', formData.childName || '[Son prénom]') : '...'}</h3>
-                                <p className="text-gray-500 text-sm">Une aventure unique pour {formData.childName || 'votre enfant'}</p>
+                                <h3 className="text-2xl font-black text-gray-900 mb-2 px-4 leading-tight">
+                                    {book ? formatTitle(book.title).replace('[Son prénom]', formData.childName || 'Votre Enfant') : '...'}
+                                </h3>
+                                <p className="text-gray-500 font-medium text-sm">Une aventure magique écrite pour {formData.childName || 'lui/elle'}</p>
                             </div>
 
+                            {/* Magic CTA */}
                             <button
                                 onClick={handleCheckout}
                                 disabled={!formData.childName || uploading}
-                                className={`w-full max-w-sm mx-auto py-5 rounded-2xl font-bold text-xl transition-all shadow-xl flex items-center justify-center gap-2 ${formData.childName && !uploading
-                                    ? 'bg-orange-500 hover:bg-orange-600 text-white hover:-translate-y-1 shadow-orange-500/30'
+                                className={`w-full max-w-sm mx-auto py-5 px-6 rounded-2xl font-black text-xl transition-all shadow-xl group relative overflow-hidden ${formData.childName && !uploading
+                                    ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white hover:scale-105 hover:shadow-orange-500/40'
                                     : 'bg-gray-200 text-gray-400 cursor-not-allowed'
                                     }`}
                             >
-                                {uploading ? (
-                                    <>
-                                        <svg className="animate-spin h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                        </svg>
-                                        Envoi en cours...
-                                    </>
-                                ) : (
-                                    'Lancer la personnalisation 🚀'
+                                <span className="relative z-10 flex items-center justify-center gap-2">
+                                    {uploading ? (
+                                        <>
+                                            <svg className="animate-spin h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                            </svg>
+                                            Préparation de la magie...
+                                        </>
+                                    ) : (
+                                        <>Créer la magie maintenant ✨</>
+                                    )}
+                                </span>
+                                {formData.childName && !uploading && (
+                                    <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
                                 )}
                             </button>
-                            <p className="text-center text-sm text-gray-500 mt-3 font-medium">
-                                Cela prend environ 45 secondes ⏱️
-                            </p>
-                            <p className="text-gray-400 text-xs mt-4">
-                                Étape suivante : Prévisualisation de l'histoire
+
+                            <p className="text-center text-sm text-gray-500 mt-4 font-bold flex items-center justify-center gap-1 opacity-80">
+                                <span>⏱️</span> Cela prend environ 45 secondes
                             </p>
 
                         </div>
@@ -251,6 +261,6 @@ export default function PersonalizePage() {
                 </div>
 
             </div>
-        </div >
+        </div>
     );
 }

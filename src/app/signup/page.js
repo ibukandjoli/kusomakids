@@ -4,6 +4,7 @@ import { useState, useEffect, Suspense } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import AuthLayout from '../components/AuthLayout';
 
 function SignupContent() {
     const [email, setEmail] = useState('');
@@ -50,92 +51,94 @@ function SignupContent() {
 
     if (success) {
         return (
-            <div className="min-h-screen bg-gray-50 flex items-center justify-center pt-20 pb-12 px-4 sm:px-6 lg:px-8">
-                <div className="max-w-md w-full bg-white p-10 rounded-3xl shadow-xl text-center">
-                    <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-3xl mx-auto mb-6">
+            <AuthLayout>
+                <div className="text-center">
+                    <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-4xl mx-auto mb-6 animate-bounce">
                         ✉️
                     </div>
                     <h2 className="text-2xl font-bold text-gray-900 mb-4">Vérifiez votre boîte mail</h2>
-                    <p className="text-gray-600 mb-8">
-                        Un email de confirmation a été envoyé à <strong>{email}</strong>. Veuillez cliquer sur le lien pour activer votre compte.
+                    <p className="text-gray-600 mb-8 leading-relaxed">
+                        Un email de confirmation magique a été envoyé à <strong>{email}</strong>. <br />Veuillez cliquer sur le lien pour activer votre compte.
                     </p>
-                    <Link href="/login" className="text-orange-600 font-bold hover:underline">
+                    <Link href="/login" className="inline-block px-8 py-3 bg-white border-2 border-orange-500 text-orange-600 font-bold rounded-xl hover:bg-orange-50 transition-colors">
                         Retour à la connexion
                     </Link>
                 </div>
-            </div>
+            </AuthLayout>
         );
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center pt-20 pb-12 px-4 sm:px-6 lg:px-8">
-            <div className="max-w-md w-full space-y-8 bg-white p-10 rounded-3xl shadow-xl">
-                <div className="text-center">
-                    <Link href="/" className="inline-block mb-6">
-                        <div className="w-16 h-16 bg-orange-500 rounded-2xl flex items-center justify-center text-white text-3xl font-bold mx-auto shadow-lg shadow-orange-500/30">
-                            K
-                        </div>
+        <AuthLayout>
+            <div className="text-center">
+                <Link href="/" className="inline-block mb-8">
+                    <div className="w-16 h-16 bg-orange-500 rounded-2xl flex items-center justify-center text-white text-3xl font-bold mx-auto shadow-lg shadow-orange-500/30">
+                        K
+                    </div>
+                </Link>
+                <h2 className="text-3xl font-extrabold text-gray-900">Rejoindre le Club</h2>
+                <p className="mt-2 text-sm text-gray-600">
+                    Déjà membre ?{' '}
+                    <Link
+                        href={`/login?${searchParams.toString()}`}
+                        className="font-medium text-orange-600 hover:text-orange-500 underline decoration-2 underline-offset-2"
+                    >
+                        Connectez-vous
                     </Link>
-                    <h2 className="text-3xl font-extrabold text-gray-900">Créer un compte</h2>
-                    <p className="mt-2 text-sm text-gray-600">
-                        Déjà membre ?{' '}
-                        <Link
-                            href={`/login?${searchParams.toString()}`}
-                            className="font-medium text-orange-600 hover:text-orange-500"
-                        >
-                            Connectez-vous
-                        </Link>
-                    </p>
-                </div>
-                <form className="mt-8 space-y-6" onSubmit={handleSignup}>
-                    {error && (
-                        <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg text-sm">
-                            {error}
-                        </div>
-                    )}
-                    <div className="rounded-md shadow-sm space-y-4">
-                        <div>
-                            <label htmlFor="email-address" className="sr-only">Email</label>
-                            <input
-                                id="email-address"
-                                name="email"
-                                type="email"
-                                autoComplete="email"
-                                required
-                                className="appearance-none rounded-xl relative block w-full px-4 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-orange-500 focus:border-orange-500 focus:z-10 sm:text-sm"
-                                placeholder="Votre email"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                            />
-                        </div>
-                        <div>
-                            <label htmlFor="password" className="sr-only">Mot de passe</label>
-                            <input
-                                id="password"
-                                name="password"
-                                type="password"
-                                autoComplete="new-password"
-                                required
-                                className="appearance-none rounded-xl relative block w-full px-4 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-orange-500 focus:border-orange-500 focus:z-10 sm:text-sm"
-                                placeholder="Choisissez un mot de passe"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                            />
-                        </div>
-                    </div>
-
-                    <div>
-                        <button
-                            type="submit"
-                            disabled={loading}
-                            className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-bold rounded-xl text-white bg-orange-500 hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 transition-colors disabled:opacity-50"
-                        >
-                            {loading ? 'Création en cours...' : 'Rejoindre le Club Kusoma'}
-                        </button>
-                    </div>
-                </form>
+                </p>
             </div>
-        </div>
+
+            <form className="mt-8 space-y-6" onSubmit={handleSignup}>
+                {error && (
+                    <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg text-sm flex items-center gap-2">
+                        ⚠️ {error}
+                    </div>
+                )}
+                <div className="space-y-4">
+                    <div>
+                        <label htmlFor="email-address" className="block text-sm font-medium text-gray-700 mb-1">Adresse Email</label>
+                        <input
+                            id="email-address"
+                            name="email"
+                            type="email"
+                            autoComplete="email"
+                            required
+                            className="appearance-none rounded-xl block w-full px-4 py-3 border border-gray-200 text-gray-900 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
+                            placeholder="parents@exemple.com"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                        />
+                    </div>
+                    <div>
+                        <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">Mot de passe</label>
+                        <input
+                            id="password"
+                            name="password"
+                            type="password"
+                            autoComplete="new-password"
+                            required
+                            className="appearance-none rounded-xl block w-full px-4 py-3 border border-gray-200 text-gray-900 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
+                            placeholder="Au moins 6 caractères"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                        />
+                        <p className="text-xs text-gray-500 mt-2">
+                            En vous inscrivant, vous acceptez nos <Link href="/terms" className="underline">Conditions Générales</Link>.
+                        </p>
+                    </div>
+                </div>
+
+                <div>
+                    <button
+                        type="submit"
+                        disabled={loading}
+                        className="group relative w-full flex justify-center py-4 px-4 border border-transparent text-sm font-bold rounded-xl text-white bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 transition-all shadow-lg hover:shadow-orange-500/30 disabled:opacity-50 disabled:cursor-not-allowed transform hover:-translate-y-0.5"
+                    >
+                        {loading ? 'Création du compte...' : 'Commencer l\'aventure magique →'}
+                    </button>
+                </div>
+            </form>
+        </AuthLayout>
     );
 }
 

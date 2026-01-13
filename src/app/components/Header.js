@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useState, useEffect, useRef } from 'react';
 import { useBookContext } from '../context/BookContext';
+import { usePathname } from 'next/navigation';
 
 import { supabase } from '@/lib/supabase';
 
@@ -11,6 +12,10 @@ export default function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
   const { cart } = useBookContext();
   const [user, setUser] = useState(null);
+  const pathname = usePathname();
+
+  // Hide Header on Auth Pages
+  const isAuthPage = ['/login', '/signup', '/forgot-password', '/reset-password'].includes(pathname);
 
   const [guestCount, setGuestCount] = useState(0);
 
@@ -74,6 +79,8 @@ export default function Header() {
       subscription.unsubscribe();
     };
   }, []);
+
+  if (isAuthPage) return null;
 
   return (
     <header

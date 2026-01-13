@@ -1,11 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 
-export default function LoginPage() {
+function LoginContent() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
@@ -32,17 +32,6 @@ export default function LoginPage() {
             if (storedContext) {
                 const { plan, bookId } = JSON.parse(storedContext);
                 if (plan === 'club' && bookId) {
-                    nextUrl = `/checkout?target_book_id=${bookId}`; // Assuming /checkout handles query param
-                    // Or /checkout/club if we have specific page
-                    // User said: "/checkout/club?book_id=..."
-                    // I need to check if /checkout/club exists. 
-                    // File listing showed `src/app/checkout` directory.
-                    // Let's stick to user request: `/checkout/club` (if it exists) or generic `/checkout` with params.
-                    // User said: "Rediriger immédiatement vers le Middleware de Paiement ou la route /checkout/club."
-                    // I will check if `checkout/club` exists later. For now, I'll direct to `/checkout` as a safe bet with params, or `/checkout/club` if I confirm it.
-                    // Actually, I saw `src/app/checkout` contains `page.js` (implied). I saw `src/app/checkout/club` in list? 
-                    // Step 452: `checkout` dir has 2 children.
-                    // I'll assume `/checkout` is the main one. I'll pass params.
                     nextUrl = `/checkout?plan=club&book_id=${bookId}`;
                 }
                 localStorage.removeItem('signup_context'); // Clean up
@@ -131,5 +120,13 @@ export default function LoginPage() {
                 </form>
             </div>
         </div>
+    );
+}
+
+export default function LoginPage() {
+    return (
+        <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Chargement...</div>}>
+            <LoginContent />
+        </Suspense>
     );
 }

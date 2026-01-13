@@ -1,13 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import PaymentModal from '../components/PaymentModal';
 
-export default function Dashboard() {
+function DashboardContent() {
     const [user, setUser] = useState(null);
     const [profile, setProfile] = useState(null);
     const [books, setBooks] = useState([]);
@@ -241,5 +241,13 @@ export default function Dashboard() {
                 </div>
             )}
         </div>
+    );
+}
+
+export default function Dashboard() {
+    return (
+        <Suspense fallback={<div className="min-h-screen pt-32 text-center">Chargement...</div>}>
+            <DashboardContent />
+        </Suspense>
     );
 }

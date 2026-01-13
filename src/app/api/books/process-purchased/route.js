@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
+import { createClient } from '@/lib/supabase-server';
 import { fal } from '@fal-ai/serverless-client';
 
 export const maxDuration = 300; // 5 minutes (if Vercel Pro, ignored on Free but good practice)
@@ -9,7 +8,7 @@ export async function POST(req) {
     console.log("🛠️ Worker: process-purchased triggered");
 
     // 1. Auth & Input Validation
-    const supabase = createRouteHandlerClient({ cookies });
+    const supabase = await createClient();
     const { data: { session } } = await supabase.auth.getSession();
 
     // Note: We might want to allow Servce Role calling this if triggered by webhook?

@@ -4,12 +4,11 @@ import { supabase } from '@/lib/supabase'; // NOTE: using service role if needed
 // I'll check how other APIs do it. src/app/api/checkout/subscription uses `req.json()` and passes to Stripe.
 // src/app/api/generate-story uses `request.json()`.
 // For secure operations like decrementing credits, I should verify the User ID from the Session strictly.
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
+import { createClient } from '@/lib/supabase-server';
 
 export async function POST(req) {
     try {
-        const supabaseServer = createRouteHandlerClient({ cookies });
+        const supabaseServer = await createClient();
         const { data: { session } } = await supabaseServer.auth.getSession();
 
         if (!session) {

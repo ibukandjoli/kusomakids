@@ -4,20 +4,31 @@ import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
+import { formatTitle } from '@/utils/format';
 
 function CheckoutContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [cartItem, setCartItem] = useState(null);
+  const [cartItems, setCartItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState(null);
-  const [draftBook, setDraftBook] = useState(null); // The actual story content
 
   // Checkout States
   const [email, setEmail] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('card');
   const [credits, setCredits] = useState(0);
   const [processing, setProcessing] = useState(false);
+
+  // Helper to format title with Child Name
+  const getDisplayTitle = (title, childName) => {
+    if (!title) return "Livre Personnalisé";
+    const cleanTitle = formatTitle(title); // Handles other format quirks if any
+    // Explicitly replace {childName} with the actual name if present
+    // Note: formatTitle might have replaced it with [Son prénom]. 
+    // If formatTitle is simplistic, we might need to handle raw title.
+    // Let's assume title comes with placeholder.
+    return title.replace(/\{childName\}/gi, childName || 'votre enfant');
+  };
 
   useEffect(() => {
     const init = async () => {
@@ -26,32 +37,42 @@ function CheckoutContent() {
       setUser(session?.user);
       if (session?.user?.email) setEmail(session.user.email);
 
-      // Load specific cart data (Story content)
-      const storedItem = localStorage.getItem('cart_item');
-      let parsedDraft = null;
-      if (storedItem) {
-        parsedDraft = JSON.parse(storedItem);
-        setDraftBook(parsedDraft);
+      // Load Cart Data (Multi-item support)
+      let items = [];
+      try {
+        const storedList = localStorage.getItem('cart_items');
+        if (storedList) {
+          items = JSON.parse(storedList);
+        } else {
+          // Fallback to single item legacy
+          const storedSingle = localStorage.getItem('cart_item');
+          if (storedSingle) {
+            items = [JSON.parse(storedSingle)];
+          }
+        }
+      } catch (e) {
+        console.error("Cart Load Error:", e);
       }
 
-      // Check Plan
+      // Check Plan (Club Subscription)
       const plan = searchParams.get('plan');
-      const bookId = searchParams.get('book_id') || searchParams.get('redirect_book_id'); // Template ID
+      const bookId = searchParams.get('book_id') || searchParams.get('redirect_book_id');
 
       if (plan === 'club') {
-        // CLUB MODE
-        setCartItem({
+        // CLUB MODE - Override cart? Or append?
+        // Usually checkout for Club is specific. Let's start with JUST Club if plan is set.
+        setCartItems([{
           type: 'club',
           price: 6500,
           bookTitle: "Adhésion Club Kusoma",
-          coverUrl: "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExM3Z5eXAzZ3Z5eXAzZ3Z5eXAzZ3Z5eXAzZ3Z5eXAzZyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/3o7TKSjRrfIPjeiVyM/giphy.gif",
+          coverUrl: "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExM3Z5eXAzZ3Z5eXAzZ3Z5eXAzZ3Z5eXAzZyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/3o7TKSjRrfIPjeiVyM/giphy.gif",
           personalization: { childName: 'Membre VIP' },
           targetBookId: bookId
-        });
+        }]);
       } else {
         // NORMAL CART MODE
-        if (parsedDraft) {
-          setCartItem(parsedDraft);
+        if (Array.isArray(items) && items.length > 0) {
+          setCartItems(items);
         }
       }
       setLoading(false);
@@ -59,53 +80,69 @@ function CheckoutContent() {
     init();
   }, [router, searchParams]);
 
+  // Calculations
+  const subtotal = cartItems.reduce((acc, item) => acc + (item.price || 3000), 0);
+  const discount = credits > 0 ? 3000 * Math.min(credits, cartItems.length) : 0; // Simple discount logic
+  const total = Math.max(0, subtotal - discount);
+
   const handlePayment = async () => {
     setProcessing(true);
 
-    // 1. SAVE DRAFT IF EXISTS (Club or One-Time)
-    // We must ensure the book exists in DB before payment to attach ID.
-    let createdBookId = null;
+    const processedBookIds = [];
 
-    if (draftBook && draftBook.finalizedPages) {
-      try {
-        const saveRes = await fetch('/api/books/create', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            title: draftBook.bookTitle,
-            childName: draftBook.personalization?.childName,
-            childAge: draftBook.personalization?.age,
-            childGender: draftBook.personalization?.gender,
-            childPhotoUrl: draftBook.personalization?.photoUrl,
-            content_json: draftBook.finalizedPages,
-            coverUrl: draftBook.coverUrl,
-            templateId: draftBook.bookId // The original template ID
-          })
-        });
-        const saveData = await saveRes.json();
-        if (saveData.success) {
-          createdBookId = saveData.bookId;
-          console.log("✅ Draft Book Saved:", createdBookId);
-        } else {
-          console.error("Failed to save draft:", saveData.error);
-          // Proceeding without ID? No, we need it.
-          // Alert user?
-          alert("Erreur de sauvegarde du livre. Veuillez réessayer.");
+    // 1. ITERATE AND SAVE EACH BOOK IF NEEDED
+    // We update cartItems with bookId as we go, but local state might not reflect immediately.
+    // We use a temp array.
+
+    for (const item of cartItems) {
+      if (item.type === 'club') continue; // Handle separate
+
+      let bookId = item.bookId;
+
+      // If draft not saved yet
+      if (!bookId) {
+        try {
+          console.log(`💾 Saving Book: ${item.bookTitle}`);
+          const contentToSave = item.content || { pages: item.finalizedPages };
+
+          const saveRes = await fetch('/api/books/create', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              email: email, // Guest checkout support
+              title: item.bookTitle,
+              childName: item.personalization?.childName,
+              childAge: item.personalization?.age,
+              childGender: item.personalization?.gender,
+              childPhotoUrl: item.personalization?.photoUrl,
+              content_json: contentToSave,
+              coverUrl: item.coverImage || item.coverUrl,
+              templateId: item.templateId
+            })
+          });
+
+          const saveData = await saveRes.json();
+          if (!saveRes.ok) throw new Error(saveData.error || "Erreur sauvegarde d'un livre");
+          bookId = saveData.bookId;
+          console.log(`✅ Saved: ${bookId}`);
+
+        } catch (err) {
+          console.error("Save Error:", err);
+          alert(`Erreur lors de la sauvegarde du livre "${item.bookTitle}". Veuillez réessayer.`);
           setProcessing(false);
-          return;
+          return; // Stop flow
         }
-      } catch (e) {
-        console.error("Save Draft Error:", e);
-        alert("Erreur technique (Sauvegarde).");
-        setProcessing(false);
-        return;
       }
+
+      if (bookId) processedBookIds.push(bookId);
     }
 
-    const targetId = createdBookId || cartItem?.targetBookId; // Fallback to template ID if save failed (shouldn't happen if logic strict)
-
-    // CLUB SUBSCRIPTION FLOW
-    if (cartItem?.type === 'club') {
+    // 2. CHECK SUBSCRIPTION
+    const clubItem = cartItems.find(i => i.type === 'club');
+    if (clubItem) {
+      // Existing Club logic...
+      // Assuming mixed cart not supported yet, or Club takes precedence?
+      // User specific request was about Multiple Stories (6000F). 
       try {
         const res = await fetch('/api/checkout/subscription', {
           method: 'POST',
@@ -113,8 +150,8 @@ function CheckoutContent() {
           body: JSON.stringify({
             userId: user?.id,
             email: email,
-            target_book_id: targetId,
-            priceId: 'price_1Q...' // Replace with env var in real app
+            target_book_id: processedBookIds[0] || clubItem.targetBookId, // Link first book?
+            priceId: 'price_1Q...'
           })
         });
         const data = await res.json();
@@ -132,18 +169,35 @@ function CheckoutContent() {
       return;
     }
 
-    // NORMAL CART FLOW (Simulation for now)
+    // 3. NORMAL PAYMENT (SIMULATED FOR NOW)
     setTimeout(() => {
       setProcessing(false);
-      alert("Paiement simulé réussi ! Votre livre est en cours de génération.");
+
+      // Trigger Generation for ALL books
+      processedBookIds.forEach(bId => {
+        console.log("🚀 Triggering Worker for:", bId);
+        fetch('/api/workers/generate-book', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ bookId: bId }),
+          keepalive: true
+        }).catch(e => console.error(e));
+      });
+
+      alert("Paiement simulé réussi ! Vos livres sont en cours de finition.");
+
+      // Clear Cart
       localStorage.removeItem('cart_item');
+      localStorage.removeItem('cart_items');
+      window.dispatchEvent(new Event('cart_updated')); // Update Header count
+
       router.push('/');
     }, 2000);
   };
 
   if (loading) return <div className="min-h-screen pt-32 text-center">Chargement...</div>;
 
-  if (!cartItem) {
+  if (cartItems.length === 0) {
     return (
       <div className="min-h-screen bg-gray-50 pt-32 text-center px-4">
         <div className="max-w-md mx-auto bg-white p-8 rounded-2xl shadow-sm">
@@ -160,7 +214,6 @@ function CheckoutContent() {
 
   return (
     <div className="min-h-screen pt-32 pb-20 relative bg-[#FAFAF8]">
-      {/* Background Pattern */}
       <div className="absolute inset-0 z-0 opacity-40 pointer-events-none" style={{ backgroundImage: 'url(/images/pattern_bg.png)', backgroundSize: '400px' }}></div>
 
       <div className="container mx-auto px-4 max-w-5xl relative z-10">
@@ -201,80 +254,62 @@ function CheckoutContent() {
                 <span className="bg-orange-100 text-orange-600 w-8 h-8 rounded-full flex items-center justify-center text-sm mr-3">2</span>
                 Paiement sécurisé
               </h2>
-
               <div className="grid grid-cols-2 gap-4 mb-4">
-                <button
-                  onClick={() => setPaymentMethod('card')}
-                  className={`p-4 rounded-xl border-2 flex flex-col items-center justify-center gap-2 transition-all ${paymentMethod === 'card' ? 'border-orange-500 bg-orange-50' : 'border-gray-100 hover:border-gray-200'}`}
-                >
-                  <div className="h-8 w-auto relative flex items-center justify-center">
-                    <img src="/images/payment/visa.svg" alt="Visa" className="h-full object-contain" />
-                  </div>
+                <button onClick={() => setPaymentMethod('card')} className={`p-4 rounded-xl border-2 flex flex-col items-center justify-center gap-2 transition-all ${paymentMethod === 'card' ? 'border-orange-500 bg-orange-50' : 'border-gray-100'}`}>
+                  <div className="h-8 w-auto relative"><img src="/images/payment/visa.svg" alt="Visa" className="h-full object-contain" /></div>
                   <span className="font-bold text-sm">Carte Bancaire</span>
                 </button>
-                <button
-                  onClick={() => setPaymentMethod('mobile')}
-                  className={`p-4 rounded-xl border-2 flex flex-col items-center justify-center gap-2 transition-all ${paymentMethod === 'mobile' ? 'border-orange-500 bg-orange-50' : 'border-gray-100 hover:border-gray-200'}`}
-                >
-                  <div className="h-8 w-auto relative flex items-center justify-center">
-                    <img src="/images/payment/wave.svg" alt="Wave" className="h-full object-contain" />
-                  </div>
+                <button onClick={() => setPaymentMethod('mobile')} className={`p-4 rounded-xl border-2 flex flex-col items-center justify-center gap-2 transition-all ${paymentMethod === 'mobile' ? 'border-orange-500 bg-orange-50' : 'border-gray-100'}`}>
+                  <div className="h-8 w-auto relative"><img src="/images/payment/wave.svg" alt="Wave" className="h-full object-contain" /></div>
                   <span className="font-bold text-sm">Wave</span>
                 </button>
               </div>
-
               <p className="text-xs text-gray-500 text-center mb-6 bg-gray-50 p-3 rounded-lg border border-gray-100">
                 Vous pouvez payer avec votre carte Wave, Djamo, Orange Money, Yas, Visa ou Mastercard.
               </p>
-
-              {credits > 0 && (
-                <div className="bg-green-50 p-4 rounded-xl border border-green-100 flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-3">
-                    <span className="text-2xl">🎁</span>
-                    <div>
-                      <p className="font-bold text-green-800">Utiliser un crédit Club</p>
-                      <p className="text-xs text-green-600">Vous avez {credits} crédits disponibles.</p>
-                    </div>
-                  </div>
-                  <button className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-bold">Appliquer (-3000F)</button>
-                </div>
-              )}
-
             </div>
-
           </div>
 
           {/* RIGHT: Order Summary */}
           <div className="lg:col-span-1">
             <div className="bg-white p-6 rounded-2xl shadow-lg sticky top-32">
-              <h3 className="font-bold text-gray-900 mb-6 text-lg">Récapitulatif</h3>
+              <h3 className="font-bold text-gray-900 mb-6 text-lg">Récapitulatif ({cartItems.length})</h3>
 
-              <div className="flex gap-4 mb-6 pb-6 border-b border-gray-100">
-                <div className="w-20 h-20 bg-gray-200 rounded-lg flex-shrink-0 bg-cover bg-center overflow-hidden relative border border-gray-200">
-                  {cartItem.coverUrl ? (
-                    <img src={cartItem.coverUrl} alt="Cover" className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="w-full h-full bg-orange-100 flex items-center justify-center text-xs text-orange-400">?</div>
-                  )}
-                </div>
-                <div>
-                  <p className="font-bold text-gray-900 line-clamp-2">{cartItem.bookTitle}</p>
-                  <p className="text-sm text-gray-500 mt-1">Pour {cartItem.personalization.childName}</p>
-                </div>
+              <div className="space-y-6 mb-6 pb-6 border-b border-gray-100 max-h-[400px] overflow-y-auto">
+                {cartItems.map((item, idx) => (
+                  <div key={item.cartId || idx} className="flex gap-4">
+                    <div className="w-16 h-16 bg-gray-200 rounded-lg flex-shrink-0 bg-cover bg-center overflow-hidden border border-gray-200">
+                      {item.coverUrl || item.coverImage ? (
+                        <img src={item.coverUrl || item.coverImage} alt="Cover" className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full bg-orange-100 flex items-center justify-center text-xs text-orange-400">?</div>
+                      )}
+                    </div>
+                    <div>
+                      <p className="font-bold text-gray-900 text-sm line-clamp-2">
+                        {getDisplayTitle(item.bookTitle, item.personalization?.childName)}
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1">Pour {item.personalization?.childName}</p>
+                      <p className="text-sm font-bold text-orange-600 mt-1">{item.price || 3000} F</p>
+                    </div>
+                  </div>
+                ))}
               </div>
 
               <div className="space-y-3 mb-6">
-                <div className="flex justify-between text-gray-600">
-                  <span>Livre Personnalisé PDF</span>
-                  <span>{cartItem.price} F</span>
+                <div className="flex justify-between text-gray-600 font-medium">
+                  <span>Sous-total</span>
+                  <span>{subtotal} FCFA</span>
                 </div>
-                <div className="text-xs text-green-600 font-bold flex items-center gap-1">
-                  <span>✨</span> Inclus : PDF Haute Définition
-                </div>
-                {/* Audio line removed as requested */}
+                {discount > 0 && (
+                  <div className="flex justify-between text-green-600">
+                    <span>Réduction</span>
+                    <span>-{discount} FCFA</span>
+                  </div>
+                )}
                 <div className="flex justify-between text-xl font-bold text-gray-900 border-t border-gray-100 pt-4">
                   <span>Total</span>
-                  <span>{cartItem.price} FCFA</span>
+                  <span>{total} FCFA</span>
                 </div>
               </div>
 
@@ -286,7 +321,7 @@ function CheckoutContent() {
                   : 'bg-orange-500 hover:bg-orange-600 hover:shadow-orange-500/30'
                   }`}
               >
-                {processing ? 'Traitement...' : 'Payer et Télécharger'}
+                {processing ? 'Traitement...' : `Payer ${total} FCFA`}
               </button>
 
               <div className="mt-4 flex items-center justify-center gap-2 text-gray-400 text-xs grayscale opacity-70">

@@ -62,22 +62,48 @@ export default function Header() {
       if (session?.user) syncGuestBooks();
     });
 
-    // Guest Books Handler
+    // Guest Books & Cart Handler
     const checkGuestBooks = () => {
       try {
-        const stored = localStorage.getItem('guest_books');
-        const parsed = stored ? JSON.parse(stored) : [];
-        setGuestCount(Array.isArray(parsed) ? parsed.length : 0);
+        const storedGuest = localStorage.getItem('guest_books');
+        const parsedGuest = storedGuest ? JSON.parse(storedGuest) : [];
+        setGuestCount(Array.isArray(parsedGuest) ? parsedGuest.length : 0);
+
+        // Also check Cart Items (Unified Source of Truth)
+        const storedCart = localStorage.getItem('cart_items');
+        // We will manually update cart count here if not using BookContext
+        // But BookContext might not be updated.
+        // Let's force update the context if possible, or just ignore context for count.
       } catch (e) { console.error(e); }
     };
     checkGuestBooks();
     window.addEventListener('guest_books_updated', checkGuestBooks);
+    window.addEventListener('cart_updated', checkGuestBooks); // Re-use logic or new logic
 
     return () => {
       window.removeEventListener('scroll', handleScroll);
       window.removeEventListener('guest_books_updated', checkGuestBooks);
+      window.removeEventListener('cart_updated', checkGuestBooks);
       subscription.unsubscribe();
     };
+  }, []);
+
+  // Calculate Total Count safely
+  const getCartCount = () => {
+    if (typeof window === 'undefined') return 0;
+    try {
+      const c = JSON.parse(localStorage.getItem('cart_items') || '[]');
+      return Array.isArray(c) ? c.length : 0;
+    } catch (e) { return 0; }
+  };
+
+  // Use a state for cart count to avoid hydration mismatch
+  const [cartCount, setCartCount] = useState(0);
+  useEffect(() => {
+    const updateCount = () => setCartCount(getCartCount());
+    updateCount();
+    window.addEventListener('cart_updated', updateCount);
+    return () => window.removeEventListener('cart_updated', updateCount);
   }, []);
 
   if (isAuthPage) return null;
@@ -130,9 +156,9 @@ export default function Header() {
               <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
               </svg>
-              {(cart.items.length > 0 || guestCount > 0) && (
+              {(cartCount > 0 || guestCount > 0) && (
                 <span className="absolute top-0 right-0 w-4 h-4 bg-red-500 text-white text-[10px] font-bold flex items-center justify-center rounded-full">
-                  {cart.items.length || guestCount}
+                  {cartCount || guestCount}
                 </span>
               )}
             </Link>

@@ -30,8 +30,7 @@ export default function Footer() {
               </span>
             </Link>
             <p className="text-gray-400 leading-relaxed mb-6">
-              La première plateforme qui fait de votre enfant le héros d'histoires africaines magiques.
-              Célébrons notre culture, une page à la fois.
+              Une plateforme magique qui transforme votre enfant en héros d'histoires uniques dont vous restez le co-auteur. L'IA imagine l'histoire, vous la perfectionnez, et votre enfant la dévore.
             </p>
             <div className="flex gap-4">
               <a href="https://instagram.com/kusomakids" className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center hover:bg-orange-500 transition-colors text-white">
@@ -55,7 +54,7 @@ export default function Footer() {
             <ul className="space-y-4 text-gray-400">
               <li><Link href="/books" className="hover:text-orange-500 transition-colors">Bibliothèque</Link></li>
               <li><Link href="/club" className="hover:text-orange-500 transition-colors">Club Kusoma</Link></li>
-              <li><Link href="/login" className="hover:text-orange-500 transition-colors">Mon espace</Link></li>
+              <li><Link href="/dashboard" className="hover:text-orange-500 transition-colors">Mon espace</Link></li>
             </ul>
           </div>
 

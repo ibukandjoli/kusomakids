@@ -360,8 +360,26 @@ export default function PreviewPage() {
     };
 
     const handleConfirm = () => {
-        const updatedOrder = { ...orderData, finalizedPages: pages };
-        localStorage.setItem('cart_item', JSON.stringify(updatedOrder));
+        const updatedOrder = { ...orderData, finalizedPages: pages, cartId: Date.now() };
+
+        // Retrieve existing cart
+        let currentCart = [];
+        try {
+            currentCart = JSON.parse(localStorage.getItem('cart_items') || '[]');
+            if (!Array.isArray(currentCart)) currentCart = [];
+        } catch (e) {
+            currentCart = [];
+        }
+
+        // Check if item validation/deduplication needed?
+        // For now, simply append.
+        currentCart.push(updatedOrder);
+
+        localStorage.setItem('cart_items', JSON.stringify(currentCart));
+
+        // Force update for Header
+        window.dispatchEvent(new Event('cart_updated'));
+
         router.push('/checkout');
     };
 

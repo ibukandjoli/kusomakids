@@ -32,13 +32,13 @@ function LoginContent() {
 
             if (storedContext) {
                 const { plan, bookId } = JSON.parse(storedContext);
-                if (plan === 'club' && bookId) {
-                    nextUrl = `/checkout?plan=club&book_id=${bookId}`;
+                if (plan === 'club') {
+                    nextUrl = `/checkout?plan=club${bookId ? `&book_id=${bookId}` : ''}`;
                 }
                 localStorage.removeItem('signup_context'); // Clean up
             } else if (searchParams.get('plan') === 'club') {
                 const bookId = searchParams.get('redirect_book_id');
-                if (bookId) nextUrl = `/checkout?plan=club&book_id=${bookId}`;
+                nextUrl = `/checkout?plan=club${bookId ? `&book_id=${bookId}` : ''}`;
             }
 
             router.push(nextUrl);

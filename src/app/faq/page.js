@@ -1,41 +1,99 @@
+import PageLayout from '../components/PageLayout';
+import Link from 'next/link';
+
 export default function FAQPage() {
-    const faqs = [
-        {
-            q: "Comment fonctionne la personnalisation ?",
-            a: "C'est très simple ! Vous choisissez une histoire, vous entrez le prénom et l'âge de votre enfant, et vous téléchargez une photo. Notre IA se charge de générer les illustrations et d'adapter le texte en quelques secondes."
-        },
-        {
-            q: "Quel est le délai de livraison ?",
-            a: "Pour les livres numériques (PDF), la livraison est immédiate après la génération. Vous recevez un lien de téléchargement par email."
-        },
-        {
-            q: "Puis-je imprimer le livre moi-même ?",
-            a: "Absolument ! Le format PDF haute définition est conçu pour être imprimé facilement chez vous ou chez un imprimeur professionnel."
-        },
-        {
-            q: "L'abonnement Club Kusoma est-il sans engagement ?",
-            a: "Oui, totalement sans engagement. Vous pouvez annuler votre abonnement à tout moment depuis votre espace personnel."
-        },
-        {
-            q: "Quels moyens de paiement acceptez-vous ?",
-            a: "Nous acceptons les cartes bancaires (Visa, Mastercard) ainsi que les paiements mobiles (Wave, Orange Money) via notre partenaire sécurisé."
-        }
-    ];
-
     return (
-        <div className="min-h-screen bg-gray-50 pt-32 pb-20">
-            <div className="container mx-auto px-4 max-w-3xl">
-                <h1 className="text-4xl font-bold text-gray-900 mb-12 text-center">Foire Aux Questions</h1>
+        <PageLayout title="Foire aux Questions">
 
-                <div className="space-y-6">
-                    {faqs.map((faq, index) => (
-                        <div key={index} className="bg-white rounded-2xl p-8 shadow-sm hover:shadow-md transition-shadow">
-                            <h3 className="text-xl font-bold text-gray-900 mb-3">{faq.q}</h3>
-                            <p className="text-gray-600 leading-relaxed">{faq.a}</p>
+            <div className="space-y-12">
+
+                {/* Section 1: Général */}
+                <section>
+                    <h3 className="flex items-center gap-2 text-2xl font-bold text-gray-900 mb-6 border-b pb-2 border-gray-100">
+                        <span>📚</span> À propos de nos livres
+                    </h3>
+                    <div className="space-y-6">
+                        <div>
+                            <h4 className="font-bold text-gray-900 text-lg mb-2">Pour quel âge sont adaptées les histoires ?</h4>
+                            <p>Nos histoires sont principalement conçues pour les enfants de <strong>2 à 8 ans</strong>. Pour les plus petits (2-5 ans), c'est une merveilleuse histoire à lire le soir par les parents. Pour les plus grands (6-8 ans), c'est un excellent outil pour l'apprentissage de la lecture autonome grâce à nos textes adaptés.</p>
                         </div>
-                    ))}
-                </div>
+                        <div>
+                            <h4 className="font-bold text-gray-900 text-lg mb-2">Quel est le format du livre ?</h4>
+                            <p>Nous proposons pour l'instant des <strong>livres numériques au format PDF Haute Définition</strong>. Ce format est universel : vous pouvez le lire sur tablette, smartphone, ordinateur ou télévision. C'est idéal pour avoir toute votre bibliothèque dans votre poche lors de vos déplacements !</p>
+                        </div>
+                        <div>
+                            <h4 className="font-bold text-gray-900 text-lg mb-2">Est-ce que je peux imprimer le livre ?</h4>
+                            <p><strong>Oui, absolument !</strong> Le fichier PDF que vous recevez est en très haute qualité (300 DPI). Vous pouvez l'imprimer sur votre imprimante personnelle ou le faire imprimer et relier chez un imprimeur professionnel près de chez vous pour un rendu "magasin".</p>
+                        </div>
+                    </div>
+                </section>
+
+                {/* Section 2: Personnalisation */}
+                <section>
+                    <h3 className="flex items-center gap-2 text-2xl font-bold text-gray-900 mb-6 border-b pb-2 border-gray-100">
+                        <span>✨</span> La Magie de la Personnalisation
+                    </h3>
+                    <div className="space-y-6">
+                        <div>
+                            <h4 className="font-bold text-gray-900 text-lg mb-2">Comment fonctionne la personnalisation ?</h4>
+                            <p>C'est très simple et cela prend moins de 2 minutes :
+                                <ol className="list-decimal list-inside mt-2 space-y-1 pl-4">
+                                    <li>Vous choisissez une histoire qui vous plaît.</li>
+                                    <li>Vous téléchargez une photo de votre enfant et renseignez son prénom.</li>
+                                    <li>Notre intelligence artificielle analyse la photo et génère les illustrations en intégrant le visage de votre enfant !</li>
+                                </ol>
+                            </p>
+                        </div>
+                        <div>
+                            <h4 className="font-bold text-gray-900 text-lg mb-2">Puis-je modifier l'histoire ?</h4>
+                            <p>Oui ! Avant la finalisation, vous pouvez lire l'histoire et modifier certains passages du texte si vous souhaitez ajouter une touche personnelle ou adapter le vocabulaire.</p>
+                        </div>
+                        <div>
+                            <h4 className="font-bold text-gray-900 text-lg mb-2">Que faites-vous des photos de mes enfants ?</h4>
+                            <p>La sécurité est notre priorité. Les photos sont utilisées <strong>uniquement</strong> par nos algorithmes pour générer le livre. Elles ne sont ni vendues, ni partagées, ni utilisées à des fins publicitaires. Vous pouvez demander leur suppression complète de nos serveurs à tout moment.</p>
+                        </div>
+                    </div>
+                </section>
+
+                {/* Section 3: Club & Tarifs */}
+                <section>
+                    <h3 className="flex items-center gap-2 text-2xl font-bold text-gray-900 mb-6 border-b pb-2 border-gray-100">
+                        <span>👑</span> Club Kusoma & Tarifs
+                    </h3>
+                    <div className="space-y-6">
+                        <div>
+                            <h4 className="font-bold text-gray-900 text-lg mb-2">Quels sont les avantages du Club Kusoma ?</h4>
+                            <p>Le Club est notre offre d'abonnement VIP à <strong>6.500 FCFA / mois</strong>. Il vous donne :
+                                <ul className="list-disc list-inside mt-2 space-y-1 pl-4">
+                                    <li>Un accès illimité à toute la bibliothèque en lecture streaming.</li>
+                                    <li>Les versions AUDIO de toutes les histoires.</li>
+                                    <li><strong>1 Crédit de téléchargement PDF offert chaque mois</strong> (valeur 3.000 F).</li>
+                                    <li>-50% sur tous les achats de livres supplémentaires.</li>
+                                </ul>
+                            </p>
+                        </div>
+                        <div>
+                            <h4 className="font-bold text-gray-900 text-lg mb-2">Puis-je annuler mon abonnement ?</h4>
+                            <p>Oui, le Club Kusoma est <strong>sans engagement</strong>. Vous pouvez vous désabonner à tout moment en un clic depuis votre espace "Mon Compte". L'accès restera actif jusqu'à la fin de la période payée.</p>
+                        </div>
+                    </div>
+                </section>
+
+                {/* Section 4: Support */}
+                <section>
+                    <h3 className="flex items-center gap-2 text-2xl font-bold text-gray-900 mb-6 border-b pb-2 border-gray-100">
+                        <span>🆘</span> Aide & Support
+                    </h3>
+                    <div className="space-y-6">
+                        <div>
+                            <h4 className="font-bold text-gray-900 text-lg mb-2">J'ai un problème avec ma commande</h4>
+                            <p>Pas de panique ! Notre équipe est là pour vous. Si vous n'avez pas reçu votre lien de téléchargement ou si vous rencontrez un souci technique, contactez-nous via notre <Link href="/support" className="text-orange-600 font-bold hover:underline">Page Support</Link> ou directement par email à <strong>hello@kusomakids.com</strong>.</p>
+                        </div>
+                    </div>
+                </section>
+
             </div>
-        </div>
+
+        </PageLayout>
     );
 }

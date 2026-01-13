@@ -19,7 +19,7 @@ function SignupContent() {
         const plan = searchParams.get('plan');
         const bookId = searchParams.get('redirect_book_id');
 
-        if (plan === 'club' && bookId) {
+        if (plan === 'club') {
             localStorage.setItem('signup_context', JSON.stringify({ plan, bookId }));
         }
     }, [searchParams]);

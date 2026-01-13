@@ -6,7 +6,7 @@ export const metadata = {
   description: 'Créez un livre unique où votre enfant devient le héros. Des histoires magiques célébrant l\'identité africaine, avec son prénom et son avatar.',
   openGraph: {
     title: 'KusomaKids - Le héros de l\'histoire, c\'est votre enfant',
-    description: 'Créez en 2 minutes un livre unique où votre enfant vit des aventures magiques en Afrique.',
+    description: 'Créez en 3 minutes une histoire unique où votre enfant vit des aventures magiques.',
     url: 'https://kusomakids.com',
     siteName: 'KusomaKids',
     images: [

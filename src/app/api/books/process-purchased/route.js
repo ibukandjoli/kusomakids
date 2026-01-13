@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase-server';
-import { fal } from '@fal-ai/serverless-client';
+import * as fal from '@fal-ai/serverless-client';
 
 export const maxDuration = 300; // 5 minutes (if Vercel Pro, ignored on Free but good practice)
 

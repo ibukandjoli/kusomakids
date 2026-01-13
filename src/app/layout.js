@@ -7,6 +7,13 @@ import { BookProvider } from './context/BookContext';
 
 const nunito = Nunito({ subsets: ['latin'] });
 
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  themeColor: '#FF6B00',
+}
+
 export const metadata = {
   metadataBase: new URL('https://kusomakids.com'), // Replace with actual domain
   title: {
@@ -40,12 +47,6 @@ export const metadata = {
     description: 'Votre enfant héros de son propre conte africain.',
     images: ['/images/og-default.jpg'], // Same as OG
   },
-  viewport: {
-    width: 'device-width',
-    initialScale: 1,
-    maximumScale: 1,
-  },
-  themeColor: '#FF6B00',
 };
 
 export default function RootLayout({ children }) {

@@ -78,7 +78,7 @@ export default async function BookDetailPage({ params }) {
     const { data: related } = await supabase
       .from('story_templates')
       .select('id, title, cover_url, theme_slug, age_range')
-      .neq('id', id)
+      .neq('id', book.id)
       .limit(4);
 
     relatedBooks = related || [];

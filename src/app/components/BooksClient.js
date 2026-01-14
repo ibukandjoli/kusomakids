@@ -57,10 +57,30 @@ export default function BooksClient() {
             .replace(/\{childName\}/gi, name);
     };
 
-    // Clientside filtering
-    const filteredBooks = filterAge === 'all'
-        ? books
-        : books.filter(book => book.age_range.includes(filterAge.split('-')[0]));
+    // Clientside filtering with Range Overlap
+    const filteredBooks = books.filter(book => {
+        if (filterAge === 'all') return true;
+
+        // Parse Filter Range
+        let fMin = 0, fMax = 100;
+        if (filterAge.includes('+')) {
+            fMin = parseInt(filterAge);
+        } else if (filterAge.includes('-')) {
+            [fMin, fMax] = filterAge.split('-').map(Number);
+        }
+
+        // Parse Book Range (e.g. "3-6 ans", "4-8")
+        // If string format is loose, we extract first and second numbers.
+        const matches = book.age_range ? book.age_range.match(/(\d+)/g) : null;
+        if (!matches) return true; // Show if no age defined
+
+        const bMin = parseInt(matches[0]);
+        const bMax = matches[1] ? parseInt(matches[1]) : bMin; // Handle single age "4 ans"
+
+        // Check if ranges overlap
+        // Overlap condition: max(start1, start2) <= min(end1, end2)
+        return Math.max(fMin, bMin) <= Math.min(fMax, bMax);
+    });
 
     return (
         <div className="min-h-screen pt-32 pb-20 relative bg-[#FAFAF8]">

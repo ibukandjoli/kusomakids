@@ -324,26 +324,26 @@ export default function HomeClient() {
                     <div className="text-center max-w-3xl mx-auto mb-20">
                         <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-6">Pourquoi les parents adorent ?</h2>
                         <p className="text-xl text-gray-600 leading-relaxed">
-                            Plus qu'un livre, c'est un outil pédagogique qui célèbre l'identité de votre enfant.
+                            KusomaKids est un outil pédagogique qui célèbre l'identité de votre enfant.
                         </p>
                     </div>
 
                     <div className="grid md:grid-cols-3 gap-8 lg:gap-12">
                         {[
                             {
-                                icon: "✨",
+                                icon: "/images/icons/personnalise.png",
                                 title: "100% Personnalisé",
                                 desc: "Votre enfant est le héros. Son prénom et son visage s'animent pour une immersion totale."
                             },
                             {
-                                icon: "🌍",
+                                icon: "/images/icons/fierte.png",
                                 title: "Fierté Culturelle",
                                 desc: "Des thèmes et des visuels qui valorisent l'Afrique, ses paysages et ses valeurs."
                             },
                             {
-                                icon: "❤️",
+                                icon: "/images/icons/confiance.png",
                                 title: "Confiance en soi",
-                                desc: "Un enfant qui se voit dans un livre développe 3x plus d'estime de soi."
+                                desc: "Voir son reflet dans l'histoire qu'on lit est un puissant boost d'estime de soi."
                             }
                         ].map((feature, i) => (
                             <motion.div
@@ -352,7 +352,14 @@ export default function HomeClient() {
                                 className="bg-white p-10 rounded-[2rem] shadow-xl border border-gray-100 hover:border-orange-200 transition-all duration-300 relative overflow-hidden group"
                             >
                                 <div className="absolute top-0 right-0 w-32 h-32 bg-orange-50 rounded-bl-full -mr-10 -mt-10 transition-transform group-hover:scale-110"></div>
-                                <div className="text-6xl mb-6 relative z-10">{feature.icon}</div>
+                                <div className="relative z-10 w-24 h-24 mb-6">
+                                    <Image
+                                        src={feature.icon}
+                                        alt={feature.title}
+                                        fill
+                                        className="object-contain"
+                                    />
+                                </div>
                                 <h3 className="text-2xl font-bold text-gray-900 mb-3 relative z-10">{feature.title}</h3>
                                 <p className="text-gray-600 leading-relaxed relative z-10">{feature.desc}</p>
                             </motion.div>
@@ -407,7 +414,7 @@ export default function HomeClient() {
                                 <li className="flex items-center gap-3 text-gray-600"><span className="text-green-500 font-bold">✓</span> 1 Livre PDF Haute Qualité</li>
                                 <li className="flex items-center gap-3 text-gray-600"><span className="text-green-500 font-bold">✓</span> Personnalisation complète</li>
                                 <li className="flex items-center gap-3 text-gray-600"><span className="text-green-500 font-bold">✓</span> Modification du texte</li>
-                                <li className="flex items-center gap-3 text-gray-400 opacity-50"><span className="text-gray-300">✕</span> Accès bibliothèque limité</li>
+                                <li className="flex items-center gap-3 text-gray-600"><span className="text-green-500 font-bold">✓</span> Lecture en ligne (+ Audio)</li>
                             </ul>
                             <Link href="/books" className="block w-full py-4 rounded-xl border-2 border-gray-900 text-center font-bold text-gray-900 hover:bg-gray-900 hover:text-white transition-all">
                                 Créer mon livre
@@ -433,9 +440,9 @@ export default function HomeClient() {
                                 <h3 className="text-4xl font-bold text-white mt-2">6.500 F CFA <span className="text-lg text-gray-400 font-normal">/ mois</span></h3>
                             </div>
                             <ul className="space-y-4 mb-8 flex-grow relative z-10">
-                                <li className="flex items-center gap-3 text-white"><span className="text-orange-500 bg-orange-500/20 rounded-full w-6 h-6 flex items-center justify-center text-xs">✓</span> Lecture illimitée (+ Audio)</li>
-                                <li className="flex items-center gap-3 text-white"><span className="text-orange-500 bg-orange-500/20 rounded-full w-6 h-6 flex items-center justify-center text-xs">✓</span> 1 PDF offert / mois</li>
-                                <li className="flex items-center gap-3 text-white"><span className="text-orange-500 bg-orange-500/20 rounded-full w-6 h-6 flex items-center justify-center text-xs">✓</span> -50% sur les suivants</li>
+                                <li className="flex items-center gap-3 text-white"><span className="text-orange-500 bg-orange-500/20 rounded-full w-6 h-6 flex items-center justify-center text-xs">✓</span> Lecture illimitée (Audio inclus)</li>
+                                <li className="flex items-center gap-3 text-white"><span className="text-orange-500 bg-orange-500/20 rounded-full w-6 h-6 flex items-center justify-center text-xs">✓</span> 1 PDF Haute Qualité offert / mois</li>
+                                <li className="flex items-center gap-3 text-white"><span className="text-orange-500 bg-orange-500/20 rounded-full w-6 h-6 flex items-center justify-center text-xs">✓</span> -50% sur les PDF suivants</li>
                                 <li className="flex items-center gap-3 text-white"><span className="text-orange-500 bg-orange-500/20 rounded-full w-6 h-6 flex items-center justify-center text-xs">✓</span> Histoires exclusives</li>
                             </ul>
                             <motion.div whileTap={{ scale: 0.95 }} className="relative z-10">

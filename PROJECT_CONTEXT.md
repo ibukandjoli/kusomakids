@@ -249,6 +249,13 @@ Gère le paiement one-time via Stripe.
 - **UX** : Refonte des terminologies ("Histoire" vs "Livre") et des templates emails.
 - **Tech** : Séparation des workers et clean up du Payment Flow.
 
+### Janvier 2026 (v1.5.1) - Pre-Launch Fixes
+- **Fix** : **Server Error** : Correction référence ID sur page détail histoire.
+- **Fix** : **Next.js 15+ Params** : Adaptation `await params` pour pages dynamiques.
+- **UI** : **Icônes 3D** : Nouvelles icônes "Afropolitaines" sur Homepage.
+- **Legal** : Refonte visuelle et typos des pages légales.
+
+
 ### Janvier 2026 (v1.4) - The "Production Ready" Update
 - **Feature** : **Panier Multi-Produits** complet avec totaux dynamiques.
 - **Feature** : **Guest Checkout** fluide sans friction de création de compte explicite (création silencieuse par email).

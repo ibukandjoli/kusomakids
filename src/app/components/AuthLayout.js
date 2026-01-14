@@ -38,7 +38,7 @@ export default function AuthLayout({ children, title, subtitle }) {
                             <span className="text-3xl font-bold tracking-tight">KusomaKids.</span>
                         </Link>
                         <p className="text-lg font-medium leading-relaxed opacity-90">
-                            "L'héritage le plus précieux que vous pouvez donner à votre enfant, c'est la fierté de son identité."
+                            "Un enfant qui lit est un adulte qui pense. Offrons-leur des histoires où ils sont les héros de leur propre magie."
                         </p>
                     </div>
                 </div>
@@ -56,6 +56,6 @@ export default function AuthLayout({ children, title, subtitle }) {
                     </div>
                 </div>
             </div>
-        </div>
+        </div >
     );
 }

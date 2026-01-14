@@ -74,7 +74,7 @@ export default function Footer() {
               Personnalisez vos histoires en illimité, lisez-les en ligne (audio inclus), et téléchargez chaque mois une histoire en PDF.
             </p>
             <div className="flex flex-col gap-4">
-              <Link href="/login" className="bg-orange-500 hover:bg-orange-600 px-6 py-3 rounded-xl font-bold transition-colors text-center shadow-lg hover:shadow-orange-500/25">
+              <Link href="/club" className="bg-orange-500 hover:bg-orange-600 px-6 py-3 rounded-xl font-bold transition-colors text-center shadow-lg hover:shadow-orange-500/25">
                 Rejoindre le Club
               </Link>
             </div>

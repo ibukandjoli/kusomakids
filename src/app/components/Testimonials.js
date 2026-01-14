@@ -5,25 +5,25 @@ import { useState, useEffect } from 'react';
 const testimonials = [
     {
         id: 1,
-        name: "Aminata D.",
+        name: "Fatou S.",
         role: "Maman de 2 enfants",
-        text: "J'ai pleuré en voyant la réaction de mon fils. Il n'en revenait pas d'être le héros. C'est bien plus qu'un livre, c'est un souvenir pour la vie.",
+        text: "J'ai pleuré en voyant la réaction de mon fils. Il n'en revenait pas d'être dans l'histoire. C'est bien plus qu'une histoire, c'est un souvenir pour la vie.",
         stars: 5,
         avatar: "👩🏾"
     },
     {
         id: 2,
-        name: "Marc L.",
-        role: "Papa de Lucas",
-        text: "Une qualité incroyable et une histoire qui a vraiment captivé mon fils. Il demande à le lire tous les soirs !",
+        name: "Yacine N.",
+        role: "Maman de Soraya",
+        text: "L'histoire de Soraya a vraiment captivé ma fille. Elle demande à la lire tous les soirs !",
         stars: 5,
-        avatar: "👨🏿"
+        avatar: "👩🏾"
     },
     {
         id: 3,
         name: "Sophie T.",
-        role: "Marraine gaga",
-        text: "Le cadeau parfait pour l'anniversaire de ma nièce. Elle a adoré se voir en princesse africaine.",
+        role: "Marraine de Mohamed",
+        text: "Le cadeau parfait pour l'anniversaire de mon neveu. Il a adoré se voir dans l'histoire.",
         stars: 5,
         avatar: "👩🏽"
     }

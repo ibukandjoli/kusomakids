@@ -15,7 +15,7 @@ export default function FAQPage() {
                     <div className="space-y-6">
                         <div>
                             <h4 className="font-bold text-gray-900 text-lg mb-2">Pour quel âge sont adaptées les histoires ?</h4>
-                            <p>Nos histoires sont principalement conçues pour les enfants de <strong>2 à 8 ans</strong>. Pour les plus petits (2-5 ans), c'est une merveilleuse histoire à lire le soir par les parents. Pour les plus grands (6-8 ans), c'est un excellent outil pour l'apprentissage de la lecture autonome grâce à nos textes adaptés.</p>
+                            <p>Nos histoires sont principalement conçues pour les enfants de <strong>2 à 10 ans</strong>. Pour les plus petits (2-5 ans), c'est une merveilleuse histoire à lire le soir par les parents. Pour les plus grands (6-10 ans), c'est un excellent outil pour l'apprentissage de la lecture autonome grâce à nos textes adaptés.</p>
                         </div>
                         <div>
                             <h4 className="font-bold text-gray-900 text-lg mb-2">Quel est le format du livre ?</h4>
@@ -39,8 +39,8 @@ export default function FAQPage() {
                             <p>C'est très simple et cela prend moins de 2 minutes :
                                 <ol className="list-decimal list-inside mt-2 space-y-1 pl-4">
                                     <li>Vous choisissez une histoire qui vous plaît.</li>
-                                    <li>Vous téléchargez une photo de votre enfant et renseignez son prénom.</li>
-                                    <li>Notre intelligence artificielle analyse la photo et génère les illustrations en intégrant le visage de votre enfant !</li>
+                                    <li>Vous importez une photo de votre enfant et renseignez son prénom.</li>
+                                    <li>Notre IA analyse la photo et génère les illustrations en intégrant le visage de votre enfant !</li>
                                 </ol>
                             </p>
                         </div>
@@ -74,7 +74,7 @@ export default function FAQPage() {
                         </div>
                         <div>
                             <h4 className="font-bold text-gray-900 text-lg mb-2">Puis-je annuler mon abonnement ?</h4>
-                            <p>Oui, le Club Kusoma est <strong>sans engagement</strong>. Vous pouvez vous désabonner à tout moment en un clic depuis votre espace "Mon Compte". L'accès restera actif jusqu'à la fin de la période payée.</p>
+                            <p>Oui, le Club Kusoma est <strong>sans engagement</strong>. Vous pouvez vous désabonner à tout moment en un clic depuis Votre Espace. L'accès restera actif jusqu'à la fin de la période payée.</p>
                         </div>
                     </div>
                 </section>
@@ -87,7 +87,7 @@ export default function FAQPage() {
                     <div className="space-y-6">
                         <div>
                             <h4 className="font-bold text-gray-900 text-lg mb-2">J'ai un problème avec ma commande</h4>
-                            <p>Pas de panique ! Notre équipe est là pour vous. Si vous n'avez pas reçu votre lien de téléchargement ou si vous rencontrez un souci technique, contactez-nous via notre <Link href="/support" className="text-orange-600 font-bold hover:underline">Page Support</Link> ou directement par email à <strong>hello@kusomakids.com</strong>.</p>
+                            <p>Pas de panique ! Notre équipe est là pour vous. Si vous n'avez pas reçu votre PDF ou si vous rencontrez un souci technique, contactez-nous directement par email à <strong>coucou@kusomakids.com</strong>.</p>
                         </div>
                     </div>
                 </section>

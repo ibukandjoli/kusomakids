@@ -16,7 +16,7 @@ export async function POST(req) {
         const result = await sendEmail({
             to: email,
             from: SENDERS.WELCOME,
-            subject: "Bienvenue dans la famille ! 🦁",
+            subject: "🎉 Bienvenue dans la famille KusomaKids ! (Un petit mot du papa de Soraya)",
             html: emailHtml
         });
 

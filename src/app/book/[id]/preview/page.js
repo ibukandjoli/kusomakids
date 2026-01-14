@@ -434,7 +434,7 @@ export default function PreviewPage() {
     // FULL SCREEN LAYOUT
     return (
         // Main Container: Fixed Full Screen, below Navbar (assumed 80px)
-        <div className="fixed inset-0 top-[80px] bottom-[0px] z-0 flex flex-col bg-[#FDFBF7]">
+        <div className="fixed inset-0 top-0 bottom-[0px] z-0 flex flex-col bg-[#FDFBF7]">
 
             {/* BACK & TITLE HEADER (Mobile Safe) */}
             <div className="flex-none p-4 flex items-center justify-between bg-white/50 backdrop-blur-sm border-b border-orange-100 z-20">

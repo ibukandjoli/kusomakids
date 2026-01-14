@@ -247,8 +247,13 @@ export default function BookReader({ book, user, onUnlock, isEditable = false, o
     );
 
     return (
-        <div className="w-full h-full flex items-center justify-center bg-[#FDFBF7]">
-            <MobileView />
+        <div className="w-full h-full flex flex-col md:items-center md:justify-center bg-[#FDFBF7] overflow-hidden">
+            {/* Mobile: Scrollable container handles its own overflow */}
+            <div className="md:hidden w-full h-full overflow-y-auto">
+                <MobileView />
+            </div>
+
+            {/* Desktop: Centered fixed view */}
             <DesktopView />
         </div>
     );

@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase-server';
 import { fal } from '@fal-ai/serverless-client';
+import { sendEmail } from '@/lib/resend';
+import { BookReadyEmail } from '@/lib/emails/BookReadyEmail';
 
 // Force dynamic to allow long-running processes (though Vercel has limits)
 export const dynamic = 'force-dynamic';
@@ -137,13 +139,13 @@ export async function POST(req) {
             }
         }
 
-        // 3. Save Context
+        // 3. Save Context & Send Email
         if (hasChanges) {
             const { error: updateError } = await supabase
                 .from('generated_books')
                 .update({
                     content_json: { ...book.content_json, pages: updatedPages },
-                    status: 'completed' // Mark as fully complete (or 'partial' if we want detailed states)
+                    status: 'completed' // Mark as fully complete
                 })
                 .eq('id', bookId);
 
@@ -152,6 +154,35 @@ export async function POST(req) {
                 return NextResponse.json({ error: "DB Update Failed" }, { status: 500 });
             }
             console.log("💾 Book updated successfully with new images.");
+
+            // 4. Send Email Notification
+            if (book.email) {
+                console.log(`📧 Sending ready email to ${book.email}...`);
+                try {
+                    const emailHtml = BookReadyEmail({
+                        childName: book.child_name || 'votre enfant',
+                        bookTitle: book.title,
+                        previewUrl: `${process.env.NEXT_PUBLIC_APP_URL || 'https://kusomakids.com'}/book/${book.id}/preview`
+                    });
+
+                    const emailRes = await sendEmail({
+                        to: book.email,
+                        subject: `L'histoire de ${book.child_name || 'votre enfant'} est prête ! 📖✨`,
+                        html: emailHtml
+                    });
+
+                    if (emailRes.success) {
+                        console.log("✅ Email sent successfully.");
+                    } else {
+                        console.error("⚠️ Email warning:", emailRes.error);
+                    }
+                } catch (emailErr) {
+                    console.error("❌ Email sending failed:", emailErr);
+                }
+            } else {
+                console.log("⚠️ No email found for this book. Skipping notification.");
+            }
+
         } else {
             console.log("🤷‍♂️ No changes made (all pages were already present).");
         }

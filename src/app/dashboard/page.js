@@ -93,84 +93,102 @@ function DashboardContent() {
     if (loading) return <div className="min-h-screen bg-gray-50 pt-32 flex justify-center"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div></div>;
 
     return (
-        <div className="min-h-screen bg-gray-50 pt-32 pb-20">
-            <div className="container mx-auto px-4">
+        <div className="min-h-screen bg-[#FDFBF7] pt-32 pb-20 relative">
+            {/* Background Pattern */}
+            <div className="absolute inset-0 z-0 opacity-40 pointer-events-none" style={{ backgroundImage: 'url(/images/pattern_bg.png)', backgroundSize: '400px' }}></div>
+
+            <div className="container mx-auto px-4 relative z-10">
 
                 {/* Header */}
-                <div className="flex justify-between items-center mb-10">
+                <div className="flex flex-col md:flex-row justify-between items-center mb-12 gap-6">
                     <div>
-                        <h1 className="text-3xl font-bold text-gray-900">Mon Espace Parents</h1>
-                        <p className="text-gray-600">Bienvenue, {profile?.full_name || user?.email}</p>
+                        <h1 className="text-3xl font-black text-gray-900">Mon Espace Parents</h1>
+                        <p className="text-gray-600 font-medium pt-1">Bienvenue, {profile?.full_name || user?.email}</p>
                         {profile?.subscription_status === 'active' && (
-                            <span className="inline-block mt-2 px-3 py-1 bg-gradient-to-r from-orange-400 to-pink-500 text-white rounded-full text-xs font-bold uppercase tracking-wider">
+                            <span className="inline-block mt-2 px-3 py-1 bg-gradient-to-r from-orange-400 to-pink-500 text-white rounded-full text-xs font-bold uppercase tracking-wider shadow-md">
                                 Membre Club VIP 🌟
                             </span>
                         )}
                     </div>
-                    <Link href="/books" className="bg-orange-500 text-white px-6 py-3 rounded-xl font-bold hover:bg-orange-600 transition-colors shadow-lg hover:shadow-orange-500/30">
+                    <Link href="/books" className="bg-white text-orange-600 px-6 py-3 rounded-xl font-bold border-2 border-orange-100 hover:border-orange-500 hover:bg-orange-50 transition-all shadow-sm">
                         + Nouvelle Histoire
                     </Link>
                 </div>
 
                 {/* Content */}
                 {books.length === 0 ? (
-                    <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-12 text-center">
-                        <div className="text-6xl mb-6">📚</div>
-                        <h2 className="text-2xl font-bold text-gray-900 mb-4">Votre bibliothèque est vide</h2>
-                        <p className="text-gray-500 max-w-md mx-auto mb-8">
-                            Vous n'avez pas encore personnalisé d'histoires. Créez la première maintenant et voyez les yeux de votre enfant s'illuminer !
+                    <div className="bg-white/80 backdrop-blur-sm rounded-[2.5rem] shadow-xl border border-white/50 p-12 text-center max-w-4xl mx-auto mt-10">
+                        <div className="mb-6 flex justify-center">
+                            {/* Magic Book GIF */}
+                            <img
+                                src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExM3Z5eXAzZ3Z5eXAzZ3Z5eXAzZ3Z5eXAzZyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/3o7TKSjRrfIPjeiVyM/giphy.gif"
+                                alt="Magic Book"
+                                className="w-48 h-auto rounded-2xl mix-blend-multiply"
+                            />
+                        </div>
+                        <h2 className="text-3xl md:text-4xl font-black text-gray-900 mb-4">L'aventure commence ici !</h2>
+                        <p className="text-gray-500 max-w-lg mx-auto mb-10 text-lg leading-relaxed">
+                            Votre enfant n'a pas encore son histoire magique.<br />
+                            Créez une histoire unique en quelques secondes et voyez ses yeux s'illuminer.
                         </p>
-                        <Link href="/books" className="text-orange-500 font-bold hover:underline">
-                            Découvrir le catalogue →
+                        <Link href="/books" className="inline-block bg-orange-600 text-white px-10 py-5 rounded-full font-bold text-xl hover:bg-orange-700 transition-all shadow-xl hover:shadow-orange-600/30 transform hover:-translate-y-1">
+                            Créer sa première histoire ✨
                         </Link>
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                         {books.map((book) => (
-                            <div key={book.id} className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg transition-shadow">
+                            <div key={book.id} className="bg-white rounded-3xl shadow-md border border-gray-100 overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 group">
                                 {/* Cover Helper */}
-                                <div className="aspect-square bg-gray-200 relative">
-                                    {/* Ideally we save a cover URL, or use the first image from content */}
-                                    {/* Placeholder for now */}
-                                    <div className="absolute inset-0 flex items-center justify-center text-gray-400">
-                                        <span className="text-4xl">📖</span>
-                                    </div>
+                                <div className="aspect-[4/5] bg-orange-50 relative overflow-hidden">
+                                    {book.cover_url ? (
+                                        <Image src={book.cover_url} alt={book.title} fill className="object-cover transition-transform duration-700 group-hover:scale-105" />
+                                    ) : (
+                                        <div className="absolute inset-0 flex items-center justify-center text-orange-200">
+                                            <span className="text-6xl group-hover:scale-110 transition-transform">📖</span>
+                                        </div>
+                                    )}
 
                                     {/* Lock Overlay if Locked */}
                                     {!canAccessBook(book) && (
-                                        <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] flex flex-col items-center justify-center text-white">
-                                            <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-md mb-2">
-                                                🔒
+                                        <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px] flex flex-col items-center justify-center text-white p-6 text-center">
+                                            <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-md mb-4 shadow-lg">
+                                                <span className="text-2xl">🔒</span>
                                             </div>
-                                            <span className="font-bold text-sm">Contenu Verrouillé</span>
+                                            <span className="font-bold text-lg mb-1">Histoire terminée</span>
+                                            <span className="text-sm opacity-80">Débloquez pour lire</span>
                                         </div>
                                     )}
                                 </div>
 
                                 <div className="p-6">
-                                    <h3 className="font-bold text-xl text-gray-900 mb-1">{book.child_name} et {book.title_template || 'l\'Aventure'}</h3>
-                                    <p className="text-gray-500 text-sm mb-6">Crée le {new Date(book.created_at).toLocaleDateString()}</p>
+                                    <h3 className="font-bold text-xl text-gray-900 mb-2 line-clamp-2 leading-tight">
+                                        {book.child_name ? `${book.child_name} et ` : ''}{book.title_template || book.title || 'l\'Aventure Magique'}
+                                    </h3>
+                                    <p className="text-gray-400 text-xs font-bold uppercase tracking-wider mb-6">
+                                        {new Date(book.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
+                                    </button>
 
                                     <div className="flex gap-3">
                                         <button
                                             onClick={() => handleAction(book, 'read')}
-                                            className={`flex-1 py-3 px-4 rounded-xl font-bold border-2 transition-colors ${canAccessBook(book)
-                                                ? 'border-orange-500 text-orange-600 hover:bg-orange-50'
-                                                : 'border-gray-200 text-gray-400 hover:border-gray-300'
+                                            className={`flex-1 py-3 px-4 rounded-xl font-bold border-2 transition-colors flex items-center justify-center gap-2 ${canAccessBook(book)
+                                                ? 'border-orange-500 bg-orange-500 text-white hover:bg-orange-600 hover:border-orange-600 shadow-lg hover:shadow-orange-500/30'
+                                                : 'border-orange-200 text-orange-500 hover:bg-orange-50'
                                                 }`}
                                         >
-                                            Lire 📖
+                                            {canAccessBook(book) ? 'Lire 📖' : 'Débloquer 🔓'}
                                         </button>
-                                        <button
-                                            onClick={() => handleAction(book, 'download')}
-                                            className={`py-3 px-4 rounded-xl font-bold border-2 border-transparent transition-colors ${canAccessBook(book)
-                                                ? 'bg-orange-100 text-orange-700 hover:bg-orange-200'
-                                                : 'bg-gray-100 text-gray-400 hover:bg-gray-200'
-                                                }`}
-                                            title="Télécharger PDF"
-                                        >
-                                            📥
-                                        </button>
+
+                                        {canAccessBook(book) && (
+                                            <button
+                                                onClick={() => handleAction(book, 'download')}
+                                                className="w-12 h-12 flex items-center justify-center rounded-xl font-bold border-2 border-orange-100 text-orange-400 hover:text-orange-600 hover:border-orange-300 hover:bg-orange-50 transition-colors"
+                                                title="Télécharger PDF"
+                                            >
+                                                📥
+                                            </button>
+                                        )}
                                     </div>
                                 </div>
                             </div>

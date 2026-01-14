@@ -122,13 +122,13 @@ function CheckoutContent() {
           });
 
           const saveData = await saveRes.json();
-          if (!saveRes.ok) throw new Error(saveData.error || "Erreur sauvegarde d'un livre");
+          if (!saveRes.ok) throw new Error(saveData.error || "Erreur sauvegarde de l'histoire");
           bookId = saveData.bookId;
           console.log(`✅ Saved: ${bookId}`);
 
         } catch (err) {
           console.error("Save Error:", err);
-          alert(`Erreur lors de la sauvegarde du livre "${item.bookTitle}". Veuillez réessayer.`);
+          alert(`Erreur lors de la sauvegarde de l'histoire "${item.bookTitle}". Veuillez réessayer.`);
           setProcessing(false);
           return; // Stop flow
         }

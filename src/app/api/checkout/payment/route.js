@@ -22,7 +22,7 @@ export async function POST(req) {
                     price_data: {
                         currency: 'xof', // FCFA
                         product_data: {
-                            name: `Livre: ${bookTitle || 'Histoire Personnalisée'}`,
+                            name: `Histoire: ${bookTitle || 'Histoire Personnalisée'}`,
                             description: `Pour ${childName || 'votre enfant'}`,
                             images: coverUrl ? [coverUrl] : [],
                         },

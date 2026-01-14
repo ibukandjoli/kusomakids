@@ -259,9 +259,12 @@ function CheckoutContent() {
                   <div className="h-8 w-auto relative"><img src="/images/payment/visa.svg" alt="Visa" className="h-full object-contain" /></div>
                   <span className="font-bold text-sm">Carte Bancaire</span>
                 </button>
-                <button onClick={() => setPaymentMethod('mobile')} className={`p-4 rounded-xl border-2 flex flex-col items-center justify-center gap-2 transition-all ${paymentMethod === 'mobile' ? 'border-orange-500 bg-orange-50' : 'border-gray-100'}`}>
-                  <div className="h-8 w-auto relative"><img src="/images/payment/wave.svg" alt="Wave" className="h-full object-contain" /></div>
-                  <span className="font-bold text-sm">Wave</span>
+                <button onClick={() => setPaymentMethod('mobile')} className={`p-4 rounded-xl border-2 flex flex-col items-center justify-center gap-2 transition-all overflow-hidden relative h-24 ${paymentMethod === 'mobile' ? 'border-orange-500 bg-orange-50' : 'border-gray-100'}`}>
+                  {/* Wave Card Image as Cover */}
+                  <div className="absolute inset-2">
+                    <img src="/images/payment/wave-card.png" alt="Carte Wave Visa" className="w-full h-full object-contain" />
+                  </div>
+                  {/* Overlay for selection state if needed, or just label below? Layout is tricky if image is bg. lets keep simplified card look */}
                 </button>
               </div>
               <p className="text-xs text-gray-500 text-center mb-6 bg-gray-50 p-3 rounded-lg border border-gray-100">

@@ -1,6 +1,5 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import { ArrowLeft } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
 export default function AuthLayout({ children, title, subtitle }) {

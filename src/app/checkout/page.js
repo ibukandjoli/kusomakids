@@ -160,11 +160,13 @@ function CheckoutContent() {
 
       const data = await res.json();
 
-      if (data.url) {
+      if (data.url && data.url.startsWith('http')) {
         // Redirect to Stripe
+        console.log("✈️ Redirecting to Stripe:", data.url);
         window.location.href = data.url;
       } else {
-        throw new Error(data.error || "Erreur lors de l'initialisation du paiement");
+        console.error("❌ Invalid Stripe URL:", data);
+        throw new Error(data.error || "L'URL de paiement est invalide. Veuillez réessayer.");
       }
 
     } catch (error) {
@@ -240,10 +242,11 @@ function CheckoutContent() {
                 </button>
                 <button onClick={() => setPaymentMethod('mobile')} className={`p-4 rounded-xl border-2 flex flex-col items-center justify-center gap-2 transition-all overflow-hidden relative h-24 ${paymentMethod === 'mobile' ? 'border-orange-500 bg-orange-50' : 'border-gray-100'}`}>
                   {/* Wave Card Image as Cover */}
-                  <div className="absolute inset-2">
-                    <img src="/images/payment/wave-card.png" alt="Carte Wave Visa" className="w-full h-full object-contain" />
+                  <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#1dc4ff]/10">
+                    <img src="/images/payment/wave.svg" alt="Wave" className="h-12 w-auto mb-1" />
+                    <span className="font-bold text-sm text-[#1dc4ff]">Carte Wave</span>
                   </div>
-                  {/* Overlay for selection state if needed, or just label below? Layout is tricky if image is bg. lets keep simplified card look */}
+                  {/* Overlay for selection state if needed */}
                 </button>
               </div>
               <p className="text-xs text-gray-500 text-center mb-6 bg-gray-50 p-3 rounded-lg border border-gray-100">

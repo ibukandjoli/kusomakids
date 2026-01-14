@@ -99,21 +99,14 @@ function DashboardContent() {
 
             <div className="container mx-auto px-4 relative z-10">
 
-                {/* Header */}
-                <div className="flex flex-col md:flex-row justify-between items-center mb-12 gap-6">
-                    <div>
-                        <h1 className="text-3xl font-black text-gray-900">Mon Espace Parents</h1>
-                        <p className="text-gray-600 font-medium pt-1">Bienvenue, {profile?.full_name || user?.email}</p>
-                        {profile?.subscription_status === 'active' && (
-                            <span className="inline-block mt-2 px-3 py-1 bg-gradient-to-r from-orange-400 to-pink-500 text-white rounded-full text-xs font-bold uppercase tracking-wider shadow-md">
-                                Membre Club VIP 🌟
-                            </span>
-                        )}
+                {/* Title & Context */}
+                {books.length > 0 && (
+                    <div className="mb-10 mt-6">
+                        <h1 className="text-3xl font-black text-gray-900 border-l-8 border-orange-500 pl-4 py-1">
+                            La Bibliothèque de {profile?.full_name?.split(' ')[0] || user?.email?.split('@')[0]}
+                        </h1>
                     </div>
-                    <Link href="/books" className="bg-white text-orange-600 px-6 py-3 rounded-xl font-bold border-2 border-orange-100 hover:border-orange-500 hover:bg-orange-50 transition-all shadow-sm">
-                        + Nouvelle Histoire
-                    </Link>
-                </div>
+                )}
 
                 {/* Content */}
                 {books.length === 0 ? (
@@ -136,9 +129,9 @@ function DashboardContent() {
                         </Link>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 pb-32">
                         {books.map((book) => (
-                            <div key={book.id} className="bg-white rounded-3xl shadow-md border border-gray-100 overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 group">
+                            <div key={book.id} className="bg-white rounded-3xl shadow-md border border-gray-100 overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 group flex flex-col h-full">
                                 {/* Cover Helper */}
                                 <div className="aspect-[4/5] bg-orange-50 relative overflow-hidden">
                                     {book.cover_url ? (
@@ -161,7 +154,7 @@ function DashboardContent() {
                                     )}
                                 </div>
 
-                                <div className="p-6">
+                                <div className="p-6 flex flex-col flex-grow">
                                     <h3 className="font-bold text-xl text-gray-900 mb-2 line-clamp-2 leading-tight">
                                         {book.child_name ? `${book.child_name} et ` : ''}{book.title_template || book.title || 'l\'Aventure Magique'}
                                     </h3>
@@ -169,24 +162,40 @@ function DashboardContent() {
                                         {new Date(book.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
                                     </p>
 
-                                    <div className="flex gap-3">
-                                        <button
-                                            onClick={() => handleAction(book, 'read')}
-                                            className={`flex-1 py-3 px-4 rounded-xl font-bold border-2 transition-colors flex items-center justify-center gap-2 ${canAccessBook(book)
-                                                ? 'border-orange-500 bg-orange-500 text-white hover:bg-orange-600 hover:border-orange-600 shadow-lg hover:shadow-orange-500/30'
-                                                : 'border-orange-200 text-orange-500 hover:bg-orange-50'
-                                                }`}
-                                        >
-                                            {canAccessBook(book) ? 'Lire 📖' : 'Débloquer 🔓'}
-                                        </button>
+                                    <div className="mt-auto space-y-3">
+                                        <div className="flex gap-3">
+                                            <button
+                                                onClick={() => handleAction(book, 'read')}
+                                                className={`flex-1 py-3 px-4 rounded-xl font-bold border-2 transition-colors flex items-center justify-center gap-2 ${canAccessBook(book)
+                                                    ? 'border-orange-500 bg-orange-500 text-white hover:bg-orange-600 hover:border-orange-600 shadow-lg hover:shadow-orange-500/30'
+                                                    : 'border-orange-200 text-orange-500 hover:bg-orange-50'
+                                                    }`}
+                                            >
+                                                {canAccessBook(book) ? (
+                                                    <><span className="text-lg">📖</span> Lire</>
+                                                ) : (
+                                                    <><span className="text-lg">🔓</span> Débloquer</>
+                                                )}
+                                            </button>
 
+                                            {canAccessBook(book) && (
+                                                <button
+                                                    onClick={() => handleAction(book, 'download')}
+                                                    className="w-12 h-12 flex items-center justify-center rounded-xl font-bold border-2 border-orange-100 text-orange-400 hover:text-orange-600 hover:border-orange-300 hover:bg-orange-50 transition-colors"
+                                                    title="Télécharger PDF"
+                                                >
+                                                    📥
+                                                </button>
+                                            )}
+                                        </div>
+
+                                        {/* "Commander en papier" - Only if unlocked */}
                                         {canAccessBook(book) && (
                                             <button
-                                                onClick={() => handleAction(book, 'download')}
-                                                className="w-12 h-12 flex items-center justify-center rounded-xl font-bold border-2 border-orange-100 text-orange-400 hover:text-orange-600 hover:border-orange-300 hover:bg-orange-50 transition-colors"
-                                                title="Télécharger PDF"
+                                                className="w-full py-2 px-4 rounded-xl font-bold text-sm bg-gray-50 text-gray-400 border border-gray-100 hover:bg-gray-100 transition-colors flex items-center justify-center gap-2"
+                                                onClick={() => alert("Bientôt disponible ! L'imprimerie magique se prépare...")}
                                             >
-                                                📥
+                                                <span>🖨️</span> Commander en papier
                                             </button>
                                         )}
                                     </div>

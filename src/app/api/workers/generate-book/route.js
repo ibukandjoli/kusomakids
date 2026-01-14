@@ -71,14 +71,17 @@ export async function POST(req) {
                 // Dynamic Gender/Traits
                 const genderTerm = childGender === 'girl' ? 'girl' : 'boy';
                 const genderAdjective = childGender === 'girl' ? 'braided hair' : 'short hair';
+                const skinTone = 'dark skin';
 
                 // Construct Physical Description (DNA)
-                // Added "detailed face, looking at camera" to help Face Swap find a target
-                const physicalAttributes = `cute little african ${genderTerm}, dark skin, ${genderAdjective}, detailed face, looking at camera`;
+                // Added "middle shot" and refined description for Face Swap compatibility
+                const physicalAttributes = `cute little african ${genderTerm}, ${skinTone}, ${genderAdjective}, detailed face, looking at camera, middle shot`;
 
-                // Added "environmental shot, detailed background" to fix "too focused on character"
-                const composition = "wide shot, environmental shot, detailed background, centered composition";
-                const scenePrompt = `${physicalAttributes}, ${page.imagePrompt || page.text}, ${composition}, pixar style, 3d render, vibrant colors, masterpiece, best quality, cinematic lighting, 8k resolution`;
+                // "centered composition" and "detailed background"
+                const composition = "centered composition, detailed background, cinematic lighting, 8k";
+
+                // Added "high fidelity" and "3d render" to match Preview
+                const scenePrompt = `${physicalAttributes}, ${page.imagePrompt || page.text}, ${composition}, pixar style, 3d render, high fidelity, masterpiece, best quality, vibrant colors`;
 
                 // --- B. GENERATE SCENE (Flux) ---
                 let sceneUrl = null;

@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useState, useEffect, useRef } from 'react';
 import { useBookContext } from '../context/BookContext';
 import { usePathname } from 'next/navigation';
+import AppHeader from './AppHeader';
 
 import { supabase } from '@/lib/supabase';
 
@@ -108,8 +109,25 @@ export default function Header() {
     return () => window.removeEventListener('cart_updated', updateCount);
   }, []);
 
+  // PROFILE FETCHING (For AppHeader)
+  const [profile, setProfile] = useState(null);
+  useEffect(() => {
+    if (user) {
+      const fetchProfile = async () => {
+        const { data } = await supabase.from('profiles').select('*').eq('id', user.id).single();
+        setProfile(data);
+      };
+      fetchProfile();
+    }
+  }, [user]);
+
   // Hide Header on Auth Pages and Preview Page (for immersion)
   if (isAuthPage || isPreviewPage) return null;
+
+  // APP HEADER STRATEGY: Switch to Dashboard specific header
+  if (pathname && pathname.startsWith('/dashboard')) {
+    return <AppHeader user={user} profile={profile} />;
+  }
 
   return (
     <header

@@ -1,0 +1,74 @@
+'use client';
+
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import UserDropdown from './UserDropdown';
+
+export default function AppHeader({ user, profile }) {
+    const pathname = usePathname();
+
+    const isActive = (path) => {
+        if (path === '/dashboard') return pathname === '/dashboard';
+        return pathname.startsWith(path);
+    };
+
+    return (
+        <header className="fixed w-full top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-100 h-20">
+            <div className="container mx-auto px-4 h-full flex items-center justify-between">
+
+                {/* LEFT: Logo */}
+                <Link href="/" className="flex items-center gap-2 group">
+                    <span className="text-2xl font-black text-gray-900 tracking-tighter group-hover:text-orange-500 transition-colors">
+                        Kusoma<span className="text-orange-500 group-hover:text-gray-900 transition-colors">Kids</span>
+                    </span>
+                </Link>
+
+                {/* CENTER: Navigation */}
+                <nav className="hidden md:flex items-center gap-1 bg-gray-100/50 p-1.5 rounded-full border border-gray-200/50">
+                    <Link
+                        href="/dashboard"
+                        className={`px-5 py-2 rounded-full text-sm font-bold transition-all ${isActive('/dashboard') && !pathname.includes('purchased')
+                                ? 'bg-white shadow-sm text-gray-900'
+                                : 'text-gray-500 hover:text-gray-900 hover:bg-white/50'
+                            }`}
+                    >
+                        Mes Histoires
+                    </Link>
+                    <Link
+                        href="/dashboard/purchased"
+                        className={`px-5 py-2 rounded-full text-sm font-bold transition-all flex items-center gap-2 ${isActive('/dashboard/purchased')
+                                ? 'bg-white shadow-sm text-gray-900'
+                                : 'text-gray-500 hover:text-gray-900 hover:bg-white/50'
+                            }`}
+                    >
+                        <span>📚</span>
+                        Mes PDFs
+                    </Link>
+                </nav>
+
+                {/* RIGHT: Actions */}
+                <div className="flex items-center gap-4">
+                    <Link
+                        href="/books"
+                        className="hidden md:flex items-center gap-2 bg-orange-500 text-white px-5 py-2.5 rounded-full font-bold text-sm shadow-lg shadow-orange-500/20 hover:bg-orange-600 hover:shadow-orange-500/40 hover:-translate-y-0.5 transition-all"
+                    >
+                        <span>+</span>
+                        Nouvelle Histoire
+                    </Link>
+
+                    {/* Mobile Create Button (Icon only) */}
+                    <Link
+                        href="/books"
+                        className="md:hidden flex items-center justify-center w-10 h-10 bg-orange-500 text-white rounded-full font-bold shadow-lg"
+                    >
+                        +
+                    </Link>
+
+                    <div className="h-8 w-px bg-gray-200 mx-2 hidden md:block"></div>
+
+                    <UserDropdown user={user} profile={profile} />
+                </div>
+            </div>
+        </header>
+    );
+}

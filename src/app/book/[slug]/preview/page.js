@@ -203,40 +203,50 @@ export default function PreviewPage() {
 
             // PRIORITY 1: Authenticated/Database Template URL (Supabase) - Accessible by Fal AI
             // PRIORITY 2: Static Local Fallback (Dev/Offline)
+            // PRIORITY 1: Authenticated/Database Template URL
+            // PRIORITY 2: Static Local Fallback
             let coverUrl = data.coverUrl || STATIC_COVERS[themeSlug] || STATIC_COVERS['default'];
 
-            // FIX: Convert relative path to absolute URL for Fal.ai ONLY if it's relative
-            if (coverUrl && coverUrl.startsWith('/')) {
-                coverUrl = `${window.location.origin}${coverUrl}`;
+            console.log(`🖼️ Base Cover URL: ${coverUrl}`);
+
+            // Prepare Absolute URL for Fal (but don't overwrite display URL yet)
+            let falBaseUrl = coverUrl;
+            if (falBaseUrl && falBaseUrl.startsWith('/')) {
+                falBaseUrl = `${window.location.origin}${falBaseUrl}`;
             }
 
-            console.log(`🖼️ Generating Cover. Theme: ${themeSlug}, Base: ${coverUrl}`);
-
             // WARNING: Fal.ai cannot download images from localhost
-            if (coverUrl && coverUrl.includes('localhost')) {
-                console.warn("⚠️ FAL AI WARNING: Cannot Face Swap with local image. Image URL is localhost. usage of Supabase URL recommended.");
+            if (falBaseUrl && falBaseUrl.includes('localhost')) {
+                console.warn("⚠️ FAL AI WARNING: Cannot Face Swap with local image on localhost.");
             }
 
             if (hasPhoto) {
                 setProgressMessage("Personnalisation de la couverture...");
                 try {
+                    console.log("🎭 Swapping Cover Face...");
                     const swapInput = {
-                        base_image_url: coverUrl,
+                        base_image_url: falBaseUrl,
                         swap_image_url: data.personalization.photoUrl
                     };
+
                     const swapResult = await fal.subscribe("fal-ai/face-swap", {
                         input: swapInput,
                         logs: true,
                     });
+
                     const swapImages = swapResult.images || swapResult.data?.images;
                     if (Array.isArray(swapImages) && swapImages.length > 0) {
-                        coverUrl = swapImages[0].url;
-                        console.log("✅ Cover Face Swap Success:", coverUrl);
+                        const newCover = swapImages[0].url;
+                        console.log("✅ Cover Face Swap Success:", newCover);
+                        coverUrl = newCover; // ONLY update if success
+                    } else {
+                        console.warn("⚠️ Cover Face Swap returned no images.");
                     }
                 } catch (e) {
-                    console.error("Cover Swap Failed, using template:", e);
+                    console.error("❌ Cover Swap Failed, using template:", e);
                 }
             }
+
             setCoverImage(coverUrl);
 
 
@@ -290,12 +300,15 @@ export default function PreviewPage() {
                         const pHair = data.personalization.gender === 'girl' ? 'braided hair' : 'short hair';
 
                         // "looking at camera, detailed face" helps Face Swap
-                        const physicalAttributes = `cute little african ${pGender}, ${pSkin}, ${pHair}, detailed face, looking at camera`;
+                        // Added "middle shot" to ensure face is big enough for swap
+                        const physicalAttributes = `cute little african ${pGender}, ${pSkin}, ${pHair}, detailed face, looking at camera, middle shot`;
 
-                        // "wide shot, environmental shot" fixes monotonous close-ups
-                        const composition = "wide shot, environmental shot, detailed background, centered composition";
+                        // "wide shot" removed from physical to allow scene variety, but kept in Composition
+                        const composition = "centered composition, detailed background, cinematic lighting, 8k";
 
-                        const scenePrompt = `${physicalAttributes}, ${page.imagePrompt || page.text}, ${composition}, pixar style, vibrant colors, masterpiece, best quality, cinematic lighting, 8k`;
+                        const scenePrompt = `${physicalAttributes}, ${page.imagePrompt || page.text}, ${composition}, pixar style, 3d render, high fidelity, masterpiece, best quality, vibrant colors`;
+
+                        console.log(`🎨 Prompting Page ${i + 1}: ${scenePrompt}`);
 
                         const sceneInput = {
                             prompt: scenePrompt,
@@ -305,6 +318,7 @@ export default function PreviewPage() {
                             enable_safety_checker: false
                         };
 
+                        // Use the correct model ID (T2I for scene generation)
                         const sceneResult = await fal.subscribe("fal-ai/flux/dev", {
                             input: sceneInput,
                             logs: true,

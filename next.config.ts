@@ -25,6 +25,26 @@ const nextConfig: NextConfig = {
       {
         protocol: "https",
         hostname: "**.supabase.co",
+      },
+      {
+        protocol: "https",
+        hostname: "items.kusomakids.com",
+      },
+      {
+        protocol: "https",
+        hostname: "kusomakids.com",
+      },
+      {
+        protocol: "https",
+        hostname: "www.kusomakids.com",
+      },
+      {
+        protocol: "https",
+        hostname: "*.vercel.app",
+      },
+      {
+        protocol: "https",
+        hostname: "files.fal.ai",
       }
     ],
   },

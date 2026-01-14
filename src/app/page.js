@@ -1,5 +1,6 @@
-
 import HomeClient from '@/app/components/HomeClient';
+import { createClient } from '@/lib/supabase-server';
+import { fetchBooksGeneric } from '@/app/services/bookShared';
 
 export const metadata = {
   title: 'KusomaKids - Livres personnalisés pour enfants africains',
@@ -22,6 +23,8 @@ export const metadata = {
   },
 };
 
-export default function Home() {
-  return <HomeClient />;
+export default async function Home() {
+  const supabase = await createClient();
+  const books = await fetchBooksGeneric(supabase);
+  return <HomeClient initialBooks={books} />;
 }

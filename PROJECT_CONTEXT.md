@@ -113,7 +113,11 @@ CREATE TABLE story_templates (
   theme_title TEXT NOT NULL,
   content_json JSONB NOT NULL,
   page_count INTEGER DEFAULT 10,
+  content_json JSONB NOT NULL,
+  page_count INTEGER DEFAULT 10,
   base_image_urls JSONB, -- [v1.2] Cache images (Page 1-10)
+  age_range TEXT, -- [v1.5] "3-5 ans", "4-8 ans"
+  tagline TEXT, -- [v1.5] Short description for card
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 ```
@@ -248,6 +252,13 @@ Gère le paiement one-time via Stripe.
 - **Feature** : **SEO URLs** pour les pages de détails d'histoires.
 - **UX** : Refonte des terminologies ("Histoire" vs "Livre") et des templates emails.
 - **Tech** : Séparation des workers et clean up du Payment Flow.
+
+### Janvier 2026 (v1.5.2) - Launch Candidate Polish
+-   **Fix Critical** : **Cover Generation** : Utilisation forcée des URLs Supabase pour le Face Swap (Fal AI fix).
+-   **Fix Critical** : **Ressemblance** : Prompts dynamiques (Boy/Girl, Hair, Skin) et "Looking at camera".
+-   **Fix Critical** : **Flickering** : Correction du re-render loop sur la Prévisualisation.
+-   **Fix Critical** : **Filtres** : Correction du filtrage par âge sur la page Bibliothèque.
+-   **UX** : **Composition** : "Wide shot" et "Centered composition" pour éviter les plans trop serrés.
 
 ### Janvier 2026 (v1.5.1) - Pre-Launch Fixes
 - **Fix** : **Server Error** : Correction référence ID sur page détail histoire.

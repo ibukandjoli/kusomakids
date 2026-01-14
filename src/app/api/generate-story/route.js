@@ -80,6 +80,7 @@ REGLES CRITIQUES POUR LES PROMPTS D'IMAGES (imagePrompt) :
 3. FORMAT : Commence TOUJOURS par : "A medium shot 3D Pixar style illustration of..."
 4. PERSONNAGE : Inclure systématiquement : "${physicalTraits}, ${genderEn} named ${childName}".
 5. AMBIANCE : Ajoute toujours : "warm cinematic lighting, magical atmosphere, vibrant colors, 8k".
+6. INTERDIT : Ne JAMAIS utiliser les mots : "bokeh", "blur", "depth of field", "macro". On veut des arrière-plans détaillés.
 
 Thème : "${theme}"
 Héros : ${childName}, ${childAge} ans, ${gender}.

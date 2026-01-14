@@ -37,7 +37,7 @@ function HeroVisual(props) {
     useEffect(() => {
         const timer = setInterval(() => {
             setIndex((prev) => (prev + 1) % images.length);
-        }, 3000);
+        }, 6000);
         return () => clearInterval(timer);
     }, [images.length]);
 
@@ -92,19 +92,21 @@ function HeroVisual(props) {
     );
 }
 
-export default function HomeClient() {
-    const [books, setBooks] = useState([]);
+export default function HomeClient({ initialBooks }) {
+    const [books, setBooks] = useState(initialBooks || []);
     const { scrollY } = useScroll();
     const y1 = useTransform(scrollY, [0, 500], [0, 200]);
     const y2 = useTransform(scrollY, [0, 500], [0, -150]);
 
     useEffect(() => {
-        const fetchBooks = async () => {
-            const fetchedBooks = await bookService.getBooks();
-            setBooks(fetchedBooks);
-        };
-        fetchBooks();
-    }, []);
+        if (!initialBooks) {
+            const fetchBooks = async () => {
+                const fetchedBooks = await bookService.getBooks();
+                setBooks(fetchedBooks);
+            };
+            fetchBooks();
+        }
+    }, [initialBooks]);
 
     return (
         <div className="w-full bg-noise">

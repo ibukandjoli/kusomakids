@@ -69,15 +69,16 @@ export async function POST(req) {
             try {
                 // --- A. PREPARE PROMPT ---
                 // Dynamic Gender/Traits
-                // Default fallback if gender missing
                 const genderTerm = childGender === 'girl' ? 'girl' : 'boy';
                 const genderAdjective = childGender === 'girl' ? 'braided hair' : 'short hair';
 
                 // Construct Physical Description (DNA)
-                // We could enhance this with DB stored description if we had it
-                const physicalAttributes = `cute little african ${genderTerm}, dark skin, ${genderAdjective}`;
+                // Added "detailed face, looking at camera" to help Face Swap find a target
+                const physicalAttributes = `cute little african ${genderTerm}, dark skin, ${genderAdjective}, detailed face, looking at camera`;
 
-                const scenePrompt = `${physicalAttributes}, ${page.imagePrompt || page.text}, pixar style, vibrant colors, masterpiece, best quality, wide shot, cinematic lighting`;
+                // Added "environmental shot, detailed background" to fix "too focused on character"
+                const composition = "wide shot, environmental shot, detailed background, centered composition";
+                const scenePrompt = `${physicalAttributes}, ${page.imagePrompt || page.text}, ${composition}, pixar style, 3d render, vibrant colors, masterpiece, best quality, cinematic lighting, 8k resolution`;
 
                 // --- B. GENERATE SCENE (Flux) ---
                 let sceneUrl = null;
@@ -92,7 +93,7 @@ export async function POST(req) {
                         input: {
                             prompt: scenePrompt,
                             image_size: "landscape_4_3",
-                            num_inference_steps: 28,
+                            num_inference_steps: 30, // Slightly increased steps for quality
                             guidance_scale: 3.5,
                             enable_safety_checker: false
                         },
@@ -126,13 +127,11 @@ export async function POST(req) {
                 // Update Page Logic
                 updatedPages[i] = {
                     ...page,
-                    image: finalImageUrl
+                    image: finalImageUrl,
+                    base_image_url: sceneUrl // Cache the base image (Flux) to save money/time on re-runs
                 };
                 hasChanges = true;
                 generatedCount++;
-
-                // Optional: Early save/update to DB (streaming progress) could be done here
-                // if we fear timeout. For now, we update at the end or if we hit a batch limit.
 
             } catch (pErr) {
                 console.error(`❌ Failed to generate Page ${i + 1}:`, pErr);
@@ -142,12 +141,21 @@ export async function POST(req) {
 
         // 3. Save Context & Send Email
         if (hasChanges) {
+            // Determine Cover Image if missing
+            let updates = {
+                content_json: { ...book.content_json, pages: updatedPages },
+                status: 'completed'
+            };
+
+            // If book has no cover, use the first page's image
+            if (!book.cover_url && updatedPages.length > 0 && updatedPages[0].image) {
+                console.log("🖼️ Setting missing cover image from Page 1");
+                updates.cover_url = updatedPages[0].image;
+            }
+
             const { error: updateError } = await supabase
                 .from('generated_books')
-                .update({
-                    content_json: { ...book.content_json, pages: updatedPages },
-                    status: 'completed' // Mark as fully complete
-                })
+                .update(updates)
                 .eq('id', bookId);
 
             if (updateError) {

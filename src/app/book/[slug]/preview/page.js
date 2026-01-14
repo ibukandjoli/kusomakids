@@ -43,6 +43,9 @@ export default function PreviewPage() {
     const [story, setStory] = useState(null);
     const [coverImage, setCoverImage] = useState(null); // New Cover State
     const hasStartedRef = useRef(false); // Prevent double firing
+    const statusRef = useRef(status); // Track status for intervals
+
+    useEffect(() => { statusRef.current = status; }, [status]);
 
     useEffect(() => {
         const init = async () => {
@@ -120,16 +123,14 @@ export default function PreviewPage() {
 
             const startTime = Date.now();
             const timerInterval = setInterval(() => {
+                if (statusRef.current === 'complete') return; // STOP if complete
+
                 const elapsedSec = (Date.now() - startTime) / 1000;
 
                 // Find current step
                 const currentStep = steps.slice().reverse().find(s => elapsedSec >= s.t) || steps[0];
 
                 setProgressMessage(currentStep.text);
-                // Optionally update a visual icon state if you want (using setProgressIcon, but we can reuse status for icons if we map them)
-                // Here we just update the text message as requested. 
-                // To update icon/progress bar visually, we might need new states or refactor loadingSteps logic.
-                // Let's rely on the text for now as it's the primary request.
             }, 1000);
 
             // 5. Rotating Tips (Keep existing)
@@ -143,6 +144,8 @@ export default function PreviewPage() {
             ];
             let tipIndex = 0;
             const tipInterval = setInterval(() => {
+                if (statusRef.current === 'complete') return; // STOP if complete
+
                 tipIndex = (tipIndex + 1) % tips.length;
                 setLoadingTip(tips[tipIndex]);
             }, 3500);
@@ -197,18 +200,21 @@ export default function PreviewPage() {
 
             // --- COVER STRATEGY: STATIC TEMPLATE + FACE SWAP ---
             const hasPhoto = !!data.personalization?.photoUrl;
-            let coverUrl = STATIC_COVERS[themeSlug] || STATIC_COVERS['default'];
 
-            // FIX: Convert relative path to absolute URL for Fal.ai
-            if (coverUrl.startsWith('/')) {
+            // PRIORITY 1: Authenticated/Database Template URL (Supabase) - Accessible by Fal AI
+            // PRIORITY 2: Static Local Fallback (Dev/Offline)
+            let coverUrl = data.coverUrl || STATIC_COVERS[themeSlug] || STATIC_COVERS['default'];
+
+            // FIX: Convert relative path to absolute URL for Fal.ai ONLY if it's relative
+            if (coverUrl && coverUrl.startsWith('/')) {
                 coverUrl = `${window.location.origin}${coverUrl}`;
             }
 
             console.log(`🖼️ Generating Cover. Theme: ${themeSlug}, Base: ${coverUrl}`);
 
             // WARNING: Fal.ai cannot download images from localhost
-            if (coverUrl.includes('localhost')) {
-                console.warn("⚠️ FAL AI WARNING: Cannot Face Swap with local image. Image URL is localhost.");
+            if (coverUrl && coverUrl.includes('localhost')) {
+                console.warn("⚠️ FAL AI WARNING: Cannot Face Swap with local image. Image URL is localhost. usage of Supabase URL recommended.");
             }
 
             if (hasPhoto) {
@@ -278,14 +284,23 @@ export default function PreviewPage() {
                         // 💸 FALLBACK: Generate New Scene (Expensive)
                         console.log(`🖌️ Step 1: Generating Scene for Page ${i + 1}...`);
 
-                        // CRITICAL: Inject Physical Attributes to prevent "Body Mismatch"
-                        const physicalattributes = "cute little african girl, dark skin, braided hair";
-                        const scenePrompt = `${physicalattributes}, ${page.imagePrompt || page.text}, pixar style, vibrant colors, masterpiece, best quality, wide shot, cinematic lighting`;
+                        // CRITICAL: DYNAMIC PROMPT ENGINEERING (Resemblance & Composition)
+                        const pGender = data.personalization.gender === 'girl' ? 'girl' : 'boy';
+                        const pSkin = 'dark skin'; // Brand DNA
+                        const pHair = data.personalization.gender === 'girl' ? 'braided hair' : 'short hair';
+
+                        // "looking at camera, detailed face" helps Face Swap
+                        const physicalAttributes = `cute little african ${pGender}, ${pSkin}, ${pHair}, detailed face, looking at camera`;
+
+                        // "wide shot, environmental shot" fixes monotonous close-ups
+                        const composition = "wide shot, environmental shot, detailed background, centered composition";
+
+                        const scenePrompt = `${physicalAttributes}, ${page.imagePrompt || page.text}, ${composition}, pixar style, vibrant colors, masterpiece, best quality, cinematic lighting, 8k`;
 
                         const sceneInput = {
                             prompt: scenePrompt,
                             image_size: "landscape_4_3", // Wide shot for immersion
-                            num_inference_steps: 28,
+                            num_inference_steps: 30, // Increased for better quality
                             guidance_scale: 3.5,
                             enable_safety_checker: false
                         };

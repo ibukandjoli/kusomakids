@@ -84,10 +84,10 @@ export default function BookDetailClient({ initialBook, initialRelatedBooks }) {
 
                     {/* Left Column: Cover Image & Gallery */}
                     <div>
-                        <div className="relative aspect-square rounded-3xl overflow-hidden shadow-2xl mb-6 bg-white transform rotate-1 hover:rotate-0 transition-all duration-500">
-                            {book.cover_url ? (
+                        <div className="relative aspect-square rounded-3xl overflow-hidden shadow-2xl mb-6 bg-white transition-all duration-500">
+                            {book.cover_url || STATIC_COVERS[book.theme_slug] ? (
                                 <Image
-                                    src={book.cover_url}
+                                    src={book.cover_url || STATIC_COVERS[book.theme_slug] || '/images/covers/cover_school.jpg'}
                                     alt={book.title}
                                     fill
                                     className="object-cover"
@@ -190,7 +190,7 @@ export default function BookDetailClient({ initialBook, initialRelatedBooks }) {
                             href={`/book/${book.id}/personalize`}
                             className="block w-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white font-bold text-xl py-5 rounded-2xl text-center shadow-lg shadow-orange-500/30 transition-all transform hover:-translate-y-1 mb-6 uppercase tracking-wide"
                         >
-                            JE PERSONNALISE (3 min) ⚡️
+                            Je Personnalise (3 min) ⚡️
                         </Link>
 
                         <div className="flex flex-col items-center gap-4">

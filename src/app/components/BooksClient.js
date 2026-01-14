@@ -29,7 +29,7 @@ export default function BooksClient() {
                     }
                 }
 
-                // 2. Fetch Books
+                // 2. Fetch Books ONCE
                 let query = supabase.from('story_templates').select('*');
                 const { data, error } = await query;
 
@@ -46,7 +46,7 @@ export default function BooksClient() {
         }
 
         fetchData();
-    }, [filterAge]);
+    }, []); // Empty dependency array: Fetch only once on mount
 
     // Helper to personalize text
     const personalize = (text) => {
@@ -71,7 +71,7 @@ export default function BooksClient() {
 
         // Parse Book Range (e.g. "3-6 ans", "4-8")
         // If string format is loose, we extract first and second numbers.
-        const matches = book.age_range ? book.age_range.match(/(\d+)/g) : null;
+        const matches = book.age_range ? String(book.age_range).match(/(\d+)/g) : null;
         if (!matches) return true; // Show if no age defined
 
         const bMin = parseInt(matches[0]);
@@ -120,62 +120,63 @@ export default function BooksClient() {
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-10">
-                        {filteredBooks.map((book) => (
-                            <Link href={`/book/${book.theme_slug || book.id}`} key={book.id} className="group">
-                                <div className="bg-white rounded-[2rem] overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 h-full flex flex-col border border-gray-100">
-                                    {/* Image Container */}
-                                    <div className="relative aspect-square overflow-hidden bg-gray-100">
-                                        {book.cover_url ? (
-                                            <Image
-                                                src={book.cover_url}
-                                                alt={book.title}
-                                                fill
-                                                className="object-cover group-hover:scale-110 transition-transform duration-500"
-                                            />
-                                        ) : (
-                                            <div className="absolute inset-0 flex items-center justify-center text-gray-300 font-bold text-lg">
-                                                Pas d'image
+                        {filteredBooks.length > 0 ? (
+                            filteredBooks.map((book) => (
+                                <Link href={`/book/${book.theme_slug || book.id}`} key={book.id} className="group">
+                                    <div className="bg-white rounded-[2rem] overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 h-full flex flex-col border border-gray-100">
+                                        {/* Image Container */}
+                                        <div className="relative aspect-square overflow-hidden bg-gray-100">
+                                            {book.cover_url ? (
+                                                <Image
+                                                    src={book.cover_url}
+                                                    alt={book.title}
+                                                    fill
+                                                    className="object-cover group-hover:scale-110 transition-transform duration-500"
+                                                />
+                                            ) : (
+                                                <div className="absolute inset-0 flex items-center justify-center text-gray-300 font-bold text-lg">
+                                                    Pas d'image
+                                                </div>
+                                            )}
+
+                                            {/* Badge */}
+                                            {book.age_range && (
+                                                <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-orange-600 shadow-sm">
+                                                    {book.age_range.replace(/\s*ans$/i, '')} ans
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {/* Content */}
+                                        <div className="p-6 flex flex-col flex-grow">
+                                            <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-orange-600 transition-colors">
+                                                {personalize(book.title)}
+                                            </h3>
+                                            <p className="text-gray-500 text-sm italic mb-4 flex-grow">
+                                                {book.tagline || book.description}
+                                            </p>
+                                            <div className="flex justify-between items-center mt-auto">
+                                                <span className="text-orange-500 font-bold group-hover:translate-x-1 transition-transform">
+                                                    Découvrir →
+                                                </span>
                                             </div>
-                                        )}
-
-                                        {/* Badge */}
-                                        <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-orange-600 shadow-sm">
-                                            {book.age_range.replace(/\s*ans$/i, '')} ans
                                         </div>
                                     </div>
-
-                                    {/* Content */}
-                                    <div className="p-6 flex flex-col flex-grow">
-                                        <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-orange-600 transition-colors">
-                                            {personalize(book.title)}
-                                        </h3>
-                                        <p className="text-gray-500 text-sm italic mb-4 flex-grow">
-                                            {book.tagline || book.description}
-                                        </p>
-                                        <div className="flex justify-between items-center mt-auto">
-                                            <span className="text-orange-500 font-bold group-hover:translate-x-1 transition-transform">
-                                                Découvrir →
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </Link>
-                        ))}
+                                </Link>
+                            ))
+                        ) : (
+                            <div className="col-span-full text-center py-20">
+                                <p className="text-xl text-gray-500">Aucune histoire trouvée pour cette tranche d'âge.</p>
+                                <button
+                                    onClick={() => setFilterAge('all')}
+                                    className="mt-4 text-orange-600 font-bold hover:underline"
+                                >
+                                    Voir toutes les histoires
+                                </button>
+                            </div>
+                        )}
                     </div>
                 )}
-
-                {!loading && filteredBooks.length === 0 && (
-                    <div className="text-center py-20">
-                        <p className="text-xl text-gray-500">Aucune histoire trouvée pour cette tranche d'âge.</p>
-                        <button
-                            onClick={() => setFilterAge('all')}
-                            className="mt-4 text-orange-600 font-bold hover:underline"
-                        >
-                            Voir toutes les histoires
-                        </button>
-                    </div>
-                )}
-
             </div>
         </div>
     );

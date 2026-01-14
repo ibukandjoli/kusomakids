@@ -133,7 +133,7 @@ export default function HomeClient() {
                             <span className="inline-block py-2 px-4 rounded-full bg-white/80 border border-orange-100 text-orange-600 font-bold text-xs md:text-sm mb-6 shadow-sm backdrop-blur-sm">
                                 🎁 Le cadeau qui donne le goût de lire
                             </span>
-                            <h1 className="text-3xl lg:text-6xl font-black text-gray-900 leading-tight mb-6">
+                            <h1 className="text-4xl lg:text-6xl font-black text-gray-900 leading-tight mb-6">
                                 Donnez à votre enfant le pouvoir d'être le <span className="text-orange-600 relative inline-block">
                                     Héros
                                     <svg className="absolute w-full h-3 md:h-4 -bottom-1 md:-bottom-2 left-0 text-orange-200 -z-10" viewBox="0 0 100 10" preserveAspectRatio="none"><path d="M0 5 Q 50 10 100 5" stroke="currentColor" strokeWidth="12" fill="none" /></svg>
@@ -144,7 +144,7 @@ export default function HomeClient() {
                             </p>
 
                             {/* MOBILE VISUAL (Restored visibility, reduced badge) */}
-                            <div className="lg:hidden mb-8 w-full px-4">
+                            <div className="lg:hidden mb-14 w-full px-4">
                                 <HeroVisual isMobile={true} />
                             </div>
 

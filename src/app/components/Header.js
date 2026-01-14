@@ -33,14 +33,14 @@ export default function Header() {
       try {
         const books = JSON.parse(stored);
         if (Array.isArray(books) && books.length > 0) {
-          console.log("🔄 Syncing guest books...");
+          console.log("Syncing guest books...");
           const res = await fetch('/api/books/sync', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ guestBooks: books })
           });
           if (res.ok) {
-            console.log("✅ Sync success");
+            console.log("Sync success");
             localStorage.removeItem('guest_books');
             setGuestCount(0);
             window.dispatchEvent(new Event('guest_books_updated'));

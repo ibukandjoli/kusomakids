@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { useState, useEffect } from 'react';
-import { motion, useScroll, useTransform } from 'framer-motion';
+import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion';
 import { formatTitle } from '@/utils/format';
 import { bookService } from '@/app/services/bookService';
 import Testimonials from '@/app/components/Testimonials';
@@ -31,6 +31,16 @@ function MotionSection({ children, className, delay = 0, id = '' }) {
 // Hero Visual Component (Shapes, Image, Badge)
 function HeroVisual(props) {
     const { className } = props;
+    const images = ['/images/ayana_book.png', '/images/salif_book.jpg'];
+    const [index, setIndex] = useState(0);
+
+    useEffect(() => {
+        const timer = setInterval(() => {
+            setIndex((prev) => (prev + 1) % images.length);
+        }, 3000);
+        return () => clearInterval(timer);
+    }, [images.length]);
+
     return (
         <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
@@ -43,22 +53,33 @@ function HeroVisual(props) {
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[110%] h-[110%] bg-purple-200/50 mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-2000 -z-10"></div>
 
             <div className="relative transform hover:scale-[1.02] transition-transform duration-500 max-w-xl mx-auto">
-                <div className="rounded-[3rem] overflow-hidden shadow-2xl border-8 border-white transform rotate-2 hover:rotate-0 transition-all duration-500 relative aspect-square w-full">
-                    <Image
-                        src="/images/ayana_book.png"
-                        alt="Livre personnalisé Kusoma Kids"
-                        fill
-                        className="object-cover"
-                        priority
-                        sizes="(max-width: 768px) 100vw, 800px"
-                    />
+                <div className="rounded-[3rem] overflow-hidden shadow-2xl border-8 border-white transform rotate-2 hover:rotate-0 transition-all duration-500 relative aspect-square w-full bg-gray-100">
+                    <AnimatePresence>
+                        <motion.div
+                            key={index}
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: 1.5, ease: "easeInOut" }}
+                            className="absolute inset-0 z-10"
+                        >
+                            <Image
+                                src={images[index]}
+                                alt="Livre personnalisé Kusoma Kids"
+                                fill
+                                className="object-cover"
+                                priority
+                                sizes="(max-width: 768px) 100vw, 800px"
+                            />
+                        </motion.div>
+                    </AnimatePresence>
                 </div>
 
                 {/* Floating Badge (Scaled down on mobile) */}
                 <motion.div
                     animate={{ y: [0, -10, 0] }}
                     transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }}
-                    className={`absolute -bottom-6 -left-6 bg-white p-3 md:p-4 rounded-2xl shadow-xl flex items-center gap-3 border border-orange-100 ${props.isMobile ? 'scale-75 origin-bottom-left' : ''}`}
+                    className={`absolute -bottom-6 -left-6 bg-white p-3 md:p-4 rounded-2xl shadow-xl flex items-center gap-3 border border-orange-100 ${props.isMobile ? 'scale-75 origin-bottom-left' : ''} z-20`}
                 >
                     <div className="bg-yellow-100 w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center text-xl md:text-2xl">✨</div>
                     <div>
@@ -199,13 +220,13 @@ export default function HomeClient() {
             </section>
 
             {/* --- BOOKS PREVIEW --- (White) */}
-            <MotionSection className="pt-32 pb-48 bg-white relative z-20">
+            <MotionSection className="pt-6 pb-48 bg-white relative z-20">
 
                 <div className="container mx-auto px-4 mt-12">
                     <div className="flex justify-between items-end mb-12">
                         <div>
-                            <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-2">Nos dernières créations 🦁</h2>
-                            <p className="text-gray-600 text-lg">Découvrez les aventures qui font rêver.</p>
+                            <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-2">Nos Dernières Histoires</h2>
+                            <p className="text-gray-600 text-lg">Découvrez les aventures qui font rêver les enfants.</p>
                         </div>
                         <Link href="/books" className="text-orange-600 font-bold hover:text-orange-700 hidden md:block">
                             Voir tout →
@@ -431,7 +452,7 @@ export default function HomeClient() {
             </MotionSection>
 
             {/* --- FAQ SECTION --- (Orange-50) */}
-            <MotionSection className="bg-orange-50 relative pt-32 pb-24">
+            <MotionSection className="bg-orange-50 relative pt-6 pb-24">
                 {/* Footer next is usually white, if we want a transition to footer we could add one here, but keeping standard for now */}
                 <FAQ />
             </MotionSection>

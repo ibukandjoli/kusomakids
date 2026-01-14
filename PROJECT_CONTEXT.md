@@ -1,5 +1,5 @@
 # KUSOMA KIDS - TECH & PRODUCT BIBLE
-*Version : 1.2 | Dernière mise à jour : Janvier 2026*
+*Version : 1.4 | Dernière mise à jour : Janvier 2026*
 
 ---
 
@@ -53,6 +53,7 @@ Web App de génération de livres d'histoires personnalisés pour enfants africa
   - Base de données PostgreSQL
   - Edge Functions (si nécessaire)
   - Storage (pour images générées)
+  - **Admin Client** : Utilisé server-side pour les opérations privilégiées (Guest Checkout)
 - **IA Texte** : OpenAI GPT-4o-mini
 - **IA Images** : FLUX.1 via Fal.ai (Image-to-Image avec forte ressemblance)
 
@@ -61,8 +62,8 @@ Web App de génération de livres d'histoires personnalisés pour enfants africa
 - **Local Afrique** : Wave/Orange Money (intégration future)
 
 ### Services Additionnels
-- **Emailing** : Resend
-- **Monitoring** : Vercel Analytics (ou Sentry pour les erreurs)
+- **Emailing** : Resend (via API Route / Supabase Auth)
+- **Monitoring** : Vercel Analytics
 
 ---
 
@@ -87,13 +88,6 @@ CREATE TABLE profiles (
 );
 ```
 
-**Colonnes Clés** :
-- `subscription_tier` : Détermine le niveau d'accès (guest vs club)
-- `stripe_customer_id` : ID client Stripe pour gérer les abonnements
-- `credits` : Nombre de livres débloquables (Club = 1/mois)
-
----
-
 #### 3.2 `children`
 **Description** : Profils des enfants créés par les parents.
 
@@ -109,47 +103,20 @@ CREATE TABLE children (
 );
 ```
 
-**Relations** :
-- `user_id` → `profiles.id` (Un parent peut avoir plusieurs enfants)
-
----
-
 #### 3.3 `story_templates`
 **Description** : Templates d'histoires pré-générés pour économiser les appels OpenAI.
 
 ```sql
 CREATE TABLE story_templates (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  theme_slug TEXT UNIQUE NOT NULL, -- Ex: 'cheveux-magiques', 'lapin-astronaute'
+  theme_slug TEXT UNIQUE NOT NULL,
   theme_title TEXT NOT NULL,
-  content_json JSONB NOT NULL, -- Structure : { title, synopsis, pages: [{pageNumber, text, imagePrompt}] }
+  content_json JSONB NOT NULL,
   page_count INTEGER DEFAULT 10,
+  base_image_urls JSONB, -- [v1.2] Cache images (Page 1-10)
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 ```
-
-**Structure `content_json`** :
-```json
-{
-  "title": "Les Cheveux Magiques de {childName}",
-  "synopsis": "Une histoire sur...",
-  "pages": [
-    {
-      "pageNumber": 1,
-      "text": "Il était une fois {childName}, {childAge} ans...",
-      "imagePrompt": "Pixar style illustration of a {gender_en} child with magical glowing hair..."
-    }
-  ]
-}
-```
-
-**Variables dynamiques** :
-- `{childName}` : Prénom de l'enfant
-- `{childAge}` : Âge de l'enfant
-- `{gender}` : Genre (Garçon/Fille)
-- `{gender_en}` : Genre en anglais pour prompts IA (boy/girl)
-
----
 
 #### 3.4 `generated_books`
 **Description** : Livres générés pour chaque enfant.
@@ -157,26 +124,24 @@ CREATE TABLE story_templates (
 ```sql
 CREATE TABLE generated_books (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  child_id UUID REFERENCES children(id) ON DELETE CASCADE, -- (Peut être NULL si généré en Guest/Preview)
+  child_id UUID REFERENCES children(id) ON DELETE CASCADE,
   user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
-  theme_slug TEXT, -- Optionnel si custom
-  title TEXT, -- [NOUVEAU]
-  child_name TEXT, -- [NOUVEAU] Sauvegarde contexte
-  content_json JSONB NOT NULL, -- Histoire complète avec images
-  cover_url TEXT, -- [NOUVEAU]
-  status TEXT DEFAULT 'draft', -- 'draft' | 'completed' | 'purchased'
-  is_unlocked BOOLEAN DEFAULT FALSE, -- [NOUVEAU] Acheté?
-  template_id UUID REFERENCES story_templates(id), -- [NOUVEAU] Lien parent
-  pdf_url TEXT, -- URL Supabase Storage du PDF généré
+  theme_slug TEXT,
+  title TEXT,
+  child_name TEXT,
+  child_age INTEGER, -- [v1.4] Context preservation for Worker
+  child_gender TEXT, -- [v1.4] Context preservation for Worker
+  child_photo_url TEXT, -- [v1.4] Context preservation for Worker
+  content_json JSONB NOT NULL, 
+  cover_url TEXT,
+  status TEXT DEFAULT 'draft', -- 'draft' | 'completed' | 'purchased' | 'generating'
+  is_unlocked BOOLEAN DEFAULT FALSE,
+  template_id UUID REFERENCES story_templates(id),
+  pdf_url TEXT,
   purchase_date TIMESTAMPTZ,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 ```
-
-**Statuts** :
-- `draft` : Livre en cours de création (preview accessible pages 1-3)
-- `completed` : Génération terminée, en attente d'achat
-- `purchased` : Acheté par l'utilisateur (accès complet)
 
 ---
 
@@ -186,220 +151,99 @@ CREATE TABLE generated_books (
 
 #### 4.1 Guest (Achat unique)
 - **Prix** : 3000 FCFA par livre
-- **Accès** : 
-  - Lecture en ligne illimitée du livre acheté
-  - Audio inclus (si implémenté)
-  - Téléchargement PDF à vie
-- **Limite** : 1 livre = 1 paiement
+- **Flow** : Checkout sans login préalable -> Création compte automatique (Shadow User) -> Paiement -> Livraison.
 
 #### 4.2 Club (Abonnement)
 - **Prix** : 6500 FCFA/mois
-- **Avantages** :
-  - Création illimitée de livres
-  - 1 PDF offert par mois
-  - Accès anticipé aux nouveaux thèmes
-  - Bibliothèque complète
-
----
-
-### Logique d'Accès (Soft Paywall) & Contextual Signup
-
-#### Flow Utilisateur (Guest -> Member)
-
-```
-1. PREVIEW : Guest génère un livre
-   ↓
-   Pages 1-3 visibles
-   Pages 4+ bloquées par Paywall
-   ↓
-   Clic "Rejoindre le Club"
-   ↓
-2. SIGNUP CONTEXTUEL :
-   URL : /signup?plan=club&redirect_book_id=...
-   ↓
-   Création Compte + Login
-   (Contexte conservé en localStorage)
-   ↓
-3. CHECKOUT CLUB :
-   Détection Plan Club
-   ↓
-   API: Sauvegarde du livre en Draft (DB)
-   ↓
-   Paiement Stripe (Metadata: target_book_id)
-   ↓
-4. ONBOARDING DASHBOARD :
-   Succès Stripe -> Redirect Dashboard?action=club_welcome
-   ↓
-   Modale : "Bienvenue ! Débloquer votre livre ? (1 crédit)"
-   ↓
-   API: Unlock Book -> Status 'purchased' -> Redirect Reader
-```
-
-#### Règles de Déverrouillage
-
-| Action | Guest (Non-payé) | Guest (Livre Acheté) | Club |
-|--------|------------------|----------------------|------|
-| Voir pages 1-3 | ✅ | ✅ | ✅ |
-| Lire pages 4+ | ❌ | ✅ (ce livre) | ✅ (tous) |
-| Télécharger PDF | ❌ | ✅ (ce livre) | ✅ (tous) |
-| Créer nouveau livre | ✅ (preview only) | ✅ (preview only) | ✅ (illimité) |
+- **Avantages** : Accès illimité streaming + 1 PDF/mois.
 
 ---
 
 ## 5. ARCHITECTURE TECHNIQUE
 
-### Structure de Dossiers Next.js (App Router)
+### Structure Principale
 
 ```
-kusoma-kids/
-├── src/
-│   ├── app/
-│   │   ├── (auth)/
-│   │   │   ├── login/
-│   │   │   └── signup/
-│   │   ├── (dashboard)/
-│   │   │   ├── dashboard/
-│   │   │   ├── create/
-│   │   │   └── library/
-│   │   ├── checkout/             ← [NOUVEAU] Page Checkout
-│   │   ├── api/
-│   │   │   ├── generate-story/   ← Génération texte OpenAI
-│   │   │   ├── fal/proxy/        ← Proxy Fal.ai
-│   │   │   ├── books/
-│   │   │   │   ├── create/       ← [NOUVEAU] Save Draft
-│   │   │   │   └── unlock/       ← [NOUVEAU] Unlock w/ Credits
-│   │   │   ├── checkout/
-│   │   │   │   └── subscription/ ← Stripe Subscription
-│   │   │   └── webhooks/stripe/
-│   │   ├── layout.js
-│   │   └── page.js
-│   ├── components/
-│   │   ├── BookReader.js         ← [UPDATED] Paywall Logic
-│   │   ├── PaymentModal.js       ← [NOUVEAU] Choix formule
-│   │   └── ...
-│   ├── lib/
-│   │   ├── supabase.js
-│   │   └── stripe.js
-│   └── ...
-```
-kusoma-kids/
-├── src/
-│   ├── app/
-│   │   ├── (auth)/
-│   │   ├── (dashboard)/
-│   │   ├── api/
-│   │   │   ├── generate-story/   ← [UPDATED] Hybrid Mode (OpenAI + Base Images)
-│   │   │   └── ...
-│   │   ├── book/
-│   │   │   └── [id]/
-│   │   │       ├── page.js       ← [UPDATED] Server Component (SEO)
-│   │   │       └── ...
+src/
+├── app/
+│   ├── (auth)/         # Login, Signup
+│   ├── (dashboard)/    # Dashboard, Library
+│   ├── checkout/       # [v1.4] Multi-item Cart Checkout
+│   ├── club/           # [v1.4] Landing Page Club
+│   ├── faq/, support/, legal/ # [v1.4] Pages légales
+│   ├── api/
+│   │   ├── workers/    # [v1.4] Async Tasks
+│   │   │   └── generate-book/ # Worker de génération post-achat
+│   │   ├── webhooks/stripe/   # Stripe Events
 │   │   ├── books/
-│   │   │   ├── page.js           ← [UPDATED] Server Component (SEO)
-│   │   │   └── ...
-│   │   ├── components/
-│   │   │   ├── BookDetailClient.js ← [NEW] Client Logic
-│   │   │   ├── BooksClient.js      ← [NEW] Client Logic
-│   │   │   ├── HomeClient.js       ← [NEW] Client Logic
-│   │   │   └── ...
-│   │   ├── layout.js             ← [UPDATED] Global SEO Metadata
-│   │   └── page.js               ← [UPDATED] Server Component (SEO)
-│   └── ...
+│   │   │   ├── create/ # [v1.4] Guest & Auth creation
 ```
-
-### Optimisation SEO (v1.2)
-- **Server Components** : Les pages principales (`/`, `/books`, `/book/[id]`) sont maintenant des Server Components par défaut.
-- **Metadonnées Dynamiques** : `generateMetadata` est utilisé pour injecter le titre et l'image de couverture spécifiques à chaque livre pour le partage social.
-- **Metadonnées Globales** : OpenGraph, Twitter Cards et descriptions par défaut configurés dans `layout.js`.
 
 ---
 
 ## 6. API ENDPOINTS
 
-### 6.1 `/api/generate-story` (POST)
-Génère le texte (OpenAI) ou le récupère (Template DB).
-Ne **sauvegarde pas** en DB (mode "volatil" pour Guest).
+### 6.1 `POST /api/workers/generate-book` [NEW v1.4]
+Worker asynchrone déclenché après le paiement.
+- Récupère le livre (status=purchased).
+- Génère les pages manquantes (3-10) via Fal.ai (Flux + FaceSwap).
+- Met à jour `generated_books` au fur et à mesure.
 
-### 6.2 `/api/books/create` (POST) [NOUVEAU]
-Sauvegarde un livre "volatil" (localStorage) en base de données (`generated_books`) avec statut `draft`.
-Requis avant le paiement pour avoir un ID fiable.
+### 6.2 `POST /api/webhooks/stripe` [NEW v1.4]
+Gère les événements Stripe `checkout.session.completed`.
+- Déverrouille les livres achetés.
+- Active les abonnements Club.
+- Déclenche le worker de génération.
 
-### 6.3 `/api/books/unlock` (POST) [NOUVEAU]
-Déclenche l'achat avec un crédit Club.
-- Vérifie `profiles.credits > 0`.
-- Décrémente 1 crédit.
-- Update `generated_books.is_unlocked = true`.
-- Update `generated_books.status = 'purchased'`.
-
-### 6.4 `/api/checkout/subscription` (POST) [UPDATED]
-Crée une session Stripe.
-- Accepte `target_book_id`.
-- Passe `target_book_id` dans `metadata` Stripe.
-- `success_url` pointe vers Dashboard avec params.
+### 6.3 `POST /api/books/create` [UPDATED v1.4]
+Gère la création de livre pour les invités (Guest).
+- Si pas de session : Utilise `supabase-admin` pour check/create user via Email.
+- Associe le livre à ce User ID.
 
 ---
 
 ## 7. FLOW DE GÉNÉRATION IA
 
-(Voir section 7 originale mais noter l'optimisation "Partial Generation")
-
-### Optimisation "Partial Generation" (Mode Preview)
-Pour réduire les coûts API :
-1. **Preview** : Seules les pages 1 et 2 sont générées via Fal.ai.
-2. **Pages 3-10** : Placeholder visuel (Cover floutée) affiché.
-3. **Achat/Unlock** : Déclenchement d'un Worker (à faire) pour générer les images manquantes.
-
-### Optimisation "Base Image Caching" (v1.2)
-Pour réduire drastiquement les coûts Fal.ai (Flux/Dev) :
-1.  **Champs DB** : La table `story_templates` contient désormais des URLs `base_image_url` pour chaque page (optionnel).
-2.  **Hybrid Merge** : L'API `generate-story` fusionne le texte généré par OpenAI avec ces `base_image_url` si elles existent.
-3.  **Frontend Logic** :
-    - Si `base_image_url` présent : On saute l'étape `Flux/Dev` (coûteuse). On utilise l'image directement pour le Face Swap.
-    - Si absent : On génère l'image complète (Mode Fallback).
-4.  **Localhost** : Attention, Fal.ai ne peut pas accéder aux images sur `localhost`. Le Face Swap échouera en local si vous utilisez des images locales, mais l'erreur est gérée (affichage sans swap). En prod, utiliser des URLs Supabase Storage publiques.
-
-### Optimisation "Partial Generation" (Mode Preview)
-Pour réduire les coûts API :
-1.  **Preview** : Seules les pages 1 et 2 sont générées via Fal.ai.
-2.  **Pages 3-10** : Placeholder visuel (Cover floutée) affiché.
-3.  **Achat/Unlock** : Déclenchement d'un Worker (à faire) pour générer les images manquantes.
-
-## 8. UI/UX GUIDELINES
-(Voir section 8 originale)
+1.  **Preview** : Génération Pages 1-2 only (Optimisation coûts).
+2.  **Checkout** : Paiement du livre (ou abonnement).
+3.  **Post-Purchase** : 
+    - Webhook confirm payment.
+    - Trigger `/api/workers/generate-book`.
+    - Génération Pages 3-10 en background.
+    - Notification User (Email/App).
 
 ---
 
 ## 9. BUGS CRITIQUES À FIXER / TODO LIST
 
-### ✅ Résolus
-- **Génération IA** : Corrigé (Fal Proxy fonctionnel).
-- **Template Lapin** : Corrigé (Passage correct du Thème).
-- **Preview Full-Width** : Optimisé.
-- **Contextual Signup** : Implémenté.
-- **Checkout Flow** : Implémenté.
+### ✅ Résolus (v1.4)
+- **Multi-Item Cart** : Support de plusieurs livres dans le panier (`localStorage array`).
+- **Guest Checkout 401** : Corrigé via Admin Client et Shadow Users.
+- **Mobile UI** : Nombreux correctifs (Hero, Forms, Checkout, Nav).
+- **Club Page** : Redesign complet.
+- **Legal Pages** : 100% implémentées.
+- **Title Placeholder** : Correction `{childName}` dans le Checkout.
 
 ### 🚧 Reste à Faire
-- **[CRITIQUE] Worker de Génération Post-Achat** : Actuellement, l'unlock marque le livre comme acheté mais ne génère pas encore *physiquement* les images manquantes (pages 3+). Il faut créer un script/endpoint asynchrone pour ça.
-- **Webhook Stripe** : Vérifier que le webhook gère bien le cas où l'utilisateur ferme l'onglet avant le retour au Dashboard (unlock automatique via serveur).
-- **Mobile Payment** : Intégrer Wave/Orange Money (actuellement simulé/Stripe only).
+- **Emails Transactionnels** : Intégrer Resend pour envoyer "Livre prêt" ou "Bienvenue au Club".
+- **Mobile Money** : Intégration réelle Wave/OM (actuellement simulé).
 
 ---
 
 ## 12. JOURNAL DES MODIFICATIONS (Changelog)
 
-### Janvier 2026 (v1.3) - UI Polish & Hybrid Mode
-- **UI Rewrite** : Passage généralisé au **Format Carré (1:1)** pour les livres. Grille Desktop 3 colonnes, Tablette 2 colonnes, Mobile 1 colonne.
-- **Hybrid Preview** : Mode "Text First". Navigation débloquée pour toutes les pages. Textes visibles et éditables même si l'image est verrouillée (floutée) pour les pages 3+.
-- **Experience** : Header/Footer masqués en prévisualisation ("Mode Cinéma").
-- **Consistency** : Limitation à 3 items pour les sections "Dernières créations" pour un alignement parfait.
+### Janvier 2026 (v1.4) - The "Production Ready" Update
+- **Feature** : **Panier Multi-Produits** complet avec totaux dynamiques.
+- **Feature** : **Guest Checkout** fluide sans friction de création de compte explicite (création silencieuse par email).
+- **Feature** : **Worker de Génération Asynchrone** pour livrer le livre complet post-achat sans bloquer l'utilisateur.
+- **UI** : Nouvelle page **Club** (Design Magique).
+- **Compliance** : Ajout de toutes les pages légales (**FAQ, Support, CGV, Privacy, Mentions Légales**).
+- **Fix** : UI Mobile polie sur l'ensemble du parcours.
 
-### Janvier 2026 (v1.2) - SEO & Performance
-- **SEO** : Refactor complet en Server Components pour `/`, `/books`, et `/book/[id]`. Ajout des balises OpenGraph dynamiques.
-- **Cost Optimization** : Implémentation du "Base Image Caching". Les templates peuvent avoir des images pré-générées pour éviter les appels Flux/Dev onéreux.
-- **Stability** : Fix du crash lors de la génération si le template est vide. Warning ajouté pour les tests Face Swap en localhost.
+### Janvier 2026 (v1.3)
+- **UI Rewrite** : Format Carré (1:1), Grilles responsives.
+- **Hybrid Preview** : Mode Text-First avec navigation débloquée.
 
-### Janvier 2026 (v1.1)
-- **Feature** : Mise en place du "Contextual Signup". Un utilisateur peut commencer en Guest, prévisualiser, et s'inscrire pour payer sans perdre son livre.
-- **Tech** : Création API `/books/create` et `/books/unlock` pour gérer le cycle de vie Draft -> Purchased.
-- **Optimisation** : "Partial Generation Strategy" pour ne générer les images coûteuses qu'après l'achat.
-- **UX** : Ajout feedback visuel "Photo validée" et nouvelle Modale de Bienvenue Club.
+### Janvier 2026 (v1.2)
+- **SEO** : Server Components & OpenGraph.
+- **Optim** : Base Image Caching.

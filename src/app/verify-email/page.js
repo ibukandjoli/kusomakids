@@ -22,7 +22,7 @@ function VerifyContent() {
             const { error } = await supabase.auth.verifyOtp({
                 email,
                 token,
-                type: 'email',
+                type: 'signup',
             });
 
             if (error) throw error;

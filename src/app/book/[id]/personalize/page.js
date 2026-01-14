@@ -112,19 +112,22 @@ export default function PersonalizePage() {
 
                         <div className="space-y-8">
 
-                            {/* Photo Upload */}
+                            {/* Photo Upload - Centered Mobile Stack */}
                             <div className="bg-orange-50/50 p-6 rounded-3xl border border-orange-100">
-                                <label className="block text-lg font-bold text-gray-800 mb-3">Photo du petit héros 📸</label>
-                                <div className="flex items-center gap-6">
-                                    <div className="w-24 h-24 rounded-full bg-white shadow-sm flex-shrink-0 flex items-center justify-center overflow-hidden border-4 border-white ring-2 ring-orange-100 relative group">
+                                <label className="block text-lg font-bold text-gray-800 mb-4 text-center md:text-left">Photo du petit héros 📸</label>
+                                <div className="flex flex-col md:flex-row items-center gap-6 md:gap-8">
+                                    {/* Preview Circle - Larger */}
+                                    <div className="w-32 h-32 md:w-28 md:h-28 rounded-full bg-white shadow-sm flex-shrink-0 flex items-center justify-center overflow-hidden border-4 border-white ring-2 ring-orange-100 relative group transition-transform hover:scale-105">
                                         {previewUrl ? (
                                             <Image src={previewUrl} alt="Preview" fill className="object-cover" />
                                         ) : (
-                                            <span className="text-4xl group-hover:scale-110 transition-transform">😊</span>
+                                            <span className="text-5xl md:text-4xl text-gray-300">😊</span>
                                         )}
                                     </div>
-                                    <div className="flex-1">
-                                        <label className="cursor-pointer inline-block px-5 py-2.5 bg-white border-2 border-orange-200 text-orange-700 font-bold rounded-xl hover:bg-orange-500 hover:text-white hover:border-orange-500 transition-all shadow-sm">
+
+                                    {/* Controls */}
+                                    <div className="flex-1 w-full text-center md:text-left">
+                                        <label className="cursor-pointer inline-block px-8 py-3 bg-white border-2 border-orange-200 text-orange-700 font-bold rounded-2xl hover:bg-orange-500 hover:text-white hover:border-orange-500 transition-all shadow-sm active:scale-95">
                                             Choisir une photo
                                             <input
                                                 type="file"
@@ -133,72 +136,74 @@ export default function PersonalizePage() {
                                                 className="hidden"
                                             />
                                         </label>
-                                        {/* Photo Tips - 2 cols on mobile, 4 on desktop */}
-                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mt-6">
-                                            <div className="text-center bg-white/50 p-3 rounded-2xl border border-orange-50/50">
-                                                <div className="text-2xl mb-1">👤</div>
-                                                <p className="text-xs text-gray-600 font-bold">Solo & De face</p>
-                                            </div>
-                                            <div className="text-center bg-white/50 p-3 rounded-2xl border border-orange-50/50">
-                                                <div className="text-2xl mb-1">🌞</div>
-                                                <p className="text-xs text-gray-600 font-bold">Bien éclairé</p>
-                                            </div>
-                                            <div className="text-center bg-white/50 p-3 rounded-2xl border border-orange-50/50">
-                                                <div className="text-2xl mb-1">🚫</div>
-                                                <p className="text-xs text-gray-600 font-bold">Pas de cache</p>
-                                            </div>
-                                            <div className="text-center bg-white/50 p-3 rounded-2xl border border-orange-50/50">
-                                                <div className="text-2xl mb-1">✨</div>
-                                                <p className="text-xs text-gray-600 font-bold">Visage entier</p>
-                                            </div>
+
+                                        {/* Photo Tips - Horizontal Row Centered */}
+                                        <div className="flex flex-wrap justify-center md:justify-start gap-2 mt-6">
+                                            {[
+                                                { icon: "👤", text: "Solo" },
+                                                { icon: "🌞", text: "Lumière" },
+                                                { icon: "🚫", text: "No Cache" },
+                                                { icon: "✨", text: "Visage" }
+                                            ].map((tip, i) => (
+                                                <div key={i} className="flex flex-col items-center bg-white/60 p-2 rounded-xl border border-orange-50 w-16 md:w-20">
+                                                    <span className="text-xl mb-1">{tip.icon}</span>
+                                                    <span className="text-[10px] font-bold text-gray-500 uppercase leading-none">{tip.text}</span>
+                                                </div>
+                                            ))}
                                         </div>
                                     </div>
                                 </div>
                             </div>
 
-                            {/* Name */}
-                            <div>
-                                <label className="block text-lg font-bold text-gray-800 mb-3">Quel est le prénom de votre petit héros ?</label>
-                                <input
-                                    type="text"
-                                    value={formData.childName}
-                                    onChange={(e) => setFormData({ ...formData, childName: e.target.value })}
-                                    className="w-full px-5 py-4 text-lg rounded-2xl border-2 border-gray-100 bg-white focus:border-orange-400 focus:ring-4 focus:ring-orange-100 outline-none transition-all placeholder:text-gray-300 font-bold text-gray-700"
-                                    placeholder="Ex: Aminata, Kofi..."
-                                />
-                            </div>
+                            {/* Identity Section - Name & Age Inline */}
+                            <div className="space-y-6">
+                                <label className="block text-lg font-bold text-gray-800 mb-2">Son identité</label>
 
-                            <div className="grid grid-cols-2 gap-4 md:gap-6">
-                                {/* Age */}
-                                <div>
-                                    <label className="block text-base md:text-lg font-bold text-gray-800 mb-2 md:mb-3">Son âge</label>
-                                    <input
-                                        type="number"
-                                        value={formData.age}
-                                        onChange={(e) => setFormData({ ...formData, age: e.target.value })}
-                                        className="w-full px-4 py-3 md:px-5 md:py-4 text-base md:text-lg rounded-2xl border-2 border-gray-100 bg-white focus:border-orange-400 focus:ring-4 focus:ring-orange-100 outline-none transition-all placeholder:text-gray-300 font-bold text-gray-700"
-                                        placeholder="Age"
-                                    />
+                                <div className="flex gap-4">
+                                    {/* Name (70%) */}
+                                    <div className="flex-[7]">
+                                        <input
+                                            type="text"
+                                            value={formData.childName}
+                                            onChange={(e) => setFormData({ ...formData, childName: e.target.value })}
+                                            className="w-full px-5 py-4 text-lg rounded-2xl border-2 border-gray-100 bg-white focus:border-orange-400 focus:ring-4 focus:ring-orange-100 outline-none transition-all placeholder:text-gray-300 font-bold text-gray-700"
+                                            placeholder="Prénom"
+                                        />
+                                    </div>
+
+                                    {/* Age (30%) */}
+                                    <div className="flex-[3]">
+                                        <input
+                                            type="number"
+                                            value={formData.age}
+                                            onChange={(e) => setFormData({ ...formData, age: e.target.value })}
+                                            className="w-full px-2 py-4 text-center text-lg rounded-2xl border-2 border-gray-100 bg-white focus:border-orange-400 focus:ring-4 focus:ring-orange-100 outline-none transition-all placeholder:text-gray-300 font-bold text-gray-700"
+                                            placeholder="Âge"
+                                        />
+                                    </div>
                                 </div>
 
-                                {/* Gender */}
+                                {/* Gender - Full Width Blocks */}
                                 <div>
-                                    <label className="block text-base md:text-lg font-bold text-gray-800 mb-2 md:mb-3">C'est...</label>
-                                    <div className="flex bg-gray-100 p-1 rounded-2xl md:rounded-2xl h-full items-center gap-2"> {/* Added gap and removed h-full from inner items */}
+                                    <div className="flex gap-4">
                                         <button
-                                            type="button" // Explicit type
+                                            type="button"
                                             onClick={() => setFormData({ ...formData, gender: 'girl' })}
-                                            className={`flex-1 h-32 md:h-auto md:py-3 rounded-xl font-bold text-sm md:text-base transition-all whitespace-nowrap flex flex-col md:flex-row items-center justify-center gap-2 ${formData.gender === 'girl' ? 'bg-orange-500 text-white shadow-md' : 'bg-white text-gray-400 hover:text-gray-600 border border-gray-200'}`}
+                                            className={`flex-1 py-4 px-4 rounded-2xl font-bold text-lg transition-all flex items-center justify-center gap-3 border-2 ${formData.gender === 'girl'
+                                                ? 'bg-orange-500 border-orange-500 text-white shadow-lg transform scale-[1.02]'
+                                                : 'bg-white border-gray-100 text-gray-400 hover:border-gray-200'}`}
                                         >
-                                            <span className="text-4xl md:text-2xl">👧🏾</span>
+                                            <span className="text-3xl">👧🏾</span>
                                             <span>Fille</span>
                                         </button>
                                         <button
-                                            type="button" // Explicit type
+                                            type="button"
                                             onClick={() => setFormData({ ...formData, gender: 'boy' })}
-                                            className={`flex-1 h-32 md:h-auto md:py-3 rounded-xl font-bold text-sm md:text-base transition-all whitespace-nowrap flex flex-col md:flex-row items-center justify-center gap-2 ${formData.gender === 'boy' ? 'bg-orange-500 text-white shadow-md' : 'bg-white text-gray-400 hover:text-gray-600 border border-gray-200'}`}
+                                            className={`flex-1 py-4 px-4 rounded-2xl font-bold text-lg transition-all flex items-center justify-center gap-3 border-2 ${formData.gender === 'boy'
+                                                ? 'bg-orange-500 border-orange-500 text-white shadow-lg transform scale-[1.02]'
+                                                : 'bg-white border-gray-100 text-gray-400 hover:border-gray-200'}`}
                                         >
-                                            <span className="text-4xl md:text-2xl">👦🏾</span>
+                                            <span className="text-3xl">👦🏾</span>
                                             <span>Garçon</span>
                                         </button>
                                     </div>

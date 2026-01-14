@@ -200,37 +200,54 @@ Gère la création de livre pour les invités (Guest).
 - Si pas de session : Utilise `supabase-admin` pour check/create user via Email.
 - Associe le livre à ce User ID.
 
+### 6.4 `api/emails/welcome` [NEW v1.5]
+Envoie l'email de bienvenue après vérification OTP.
+- Uses: Resend API.
+- Sender: Ibuka (Papa de Soraya).
+
+### 6.5 `api/checkout/payment` [NEW v1.5]
+Gère le paiement one-time via Stripe.
+- Remplace la simulation précédente.
+- Supporte: Cartes, Apple Pay, Google Pay.
+
 ---
 
 ## 7. FLOW DE GÉNÉRATION IA
 
 1.  **Preview** : Génération Pages 1-2 only (Optimisation coûts).
-2.  **Checkout** : Paiement du livre (ou abonnement).
+2.  **Checkout** : Paiement Sécurisé via Stripe (Redirection).
 3.  **Post-Purchase** : 
-    - Webhook confirm payment.
+    - Webhook confirm payment / Retour Success.
     - Trigger `/api/workers/generate-book`.
     - Génération Pages 3-10 en background.
-    - Notification User (Email/App).
+    - Notification Email "Histoire Prête" (La Malle aux Trésors).
 
 ---
 
 ## 9. BUGS CRITIQUES À FIXER / TODO LIST
 
-### ✅ Résolus (v1.4)
+### ✅ Résolus (v1.5)
+- **Stripe Integration** : Paiements réels pour achats uniques.
+- **Emails Personnalisés** : "Bienvenue" (Ibuka) et "Histoire Prête" (La Malle aux Trésors).
+- **SEO URLs** : Migration vers `/book/[slug]` (basé sur theme_slug).
+- **Terminologie** : Remplacement de "Livre" par "Histoire/Aventure" pour warm brand voice.
+- **OTP Template** : Template HTML chaleureux pour Supabase Auth.
 - **Multi-Item Cart** : Support de plusieurs livres dans le panier (`localStorage array`).
 - **Guest Checkout 401** : Corrigé via Admin Client et Shadow Users.
-- **Mobile UI** : Nombreux correctifs (Hero, Forms, Checkout, Nav).
-- **Club Page** : Redesign complet.
-- **Legal Pages** : 100% implémentées.
-- **Title Placeholder** : Correction `{childName}` dans le Checkout.
 
 ### 🚧 Reste à Faire
-- **Emails Transactionnels** : Intégrer Resend pour envoyer "Livre prêt" ou "Bienvenue au Club".
-- **Mobile Money** : Intégration réelle Wave/OM (actuellement simulé).
+- **Mobile Money** : Intégration native Wave/OM (actuellement redirigé vers Stripe Card ou à venir).
 
 ---
 
 ## 12. JOURNAL DES MODIFICATIONS (Changelog)
+
+### Janvier 2026 (v1.5) - Payments & Emotions Update
+- **Feature** : **Stripe Checkout** intégré pour les paiements réels.
+- **Feature** : **Emails Personnalisés** avec "personas" (Ibuka, Trésor) pour une relation client chaleureuse.
+- **Feature** : **SEO URLs** pour les pages de détails d'histoires.
+- **UX** : Refonte des terminologies ("Histoire" vs "Livre") et des templates emails.
+- **Tech** : Séparation des workers et clean up du Payment Flow.
 
 ### Janvier 2026 (v1.4) - The "Production Ready" Update
 - **Feature** : **Panier Multi-Produits** complet avec totaux dynamiques.

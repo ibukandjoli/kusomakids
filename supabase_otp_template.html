@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Votre Code Magique KusomaKids</title>
+  <style>
+    body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #fff7ed; margin: 0; padding: 0; -webkit-font-smoothing: antialiased; }
+    .container { max-width: 600px; margin: 40px auto; background-color: #ffffff; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 25px rgba(234, 88, 12, 0.1); border: 1px solid #fed7aa; }
+    
+    .header { background: linear-gradient(135deg, #fb923c 0%, #ea580c 100%); padding: 40px 20px; text-align: center; }
+    .logo-circle { width: 80px; height: 80px; background-color: rgba(255, 255, 255, 0.2); border-radius: 50%; margin: 0 auto 10px; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(5px); }
+    .logo-text { font-size: 40px; color: #ffffff; font-weight: bold; }
+    
+    .content { padding: 40px 30px; text-align: center; color: #4b5563; }
+    .title { font-size: 26px; font-weight: 800; color: #1f2937; margin: 0 0 15px; letter-spacing: -0.5px; }
+    .emoji { font-size: 40px; display: block; margin-bottom: 20px; }
+    
+    .message { font-size: 16px; line-height: 1.6; color: #4b5563; margin-bottom: 30px; }
+    
+    .code-box { background-color: #fff7ed; border: 2px dashed #f97316; border-radius: 16px; padding: 25px; margin: 30px auto; display: inline-block; }
+    .code { font-family: 'Courier New', Courier, monospace; font-size: 36px; font-weight: 800; letter-spacing: 8px; color: #ea580c; display: block; }
+    .code-label { display: block; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: #9a3412; font-weight: bold; margin-bottom: 5px; }
+    
+    .footer { background-color: #fff7ed; padding: 30px 20px; text-align: center; border-top: 1px solid #fed7aa; }
+    .footer p { margin: 5px 0; font-size: 13px; color: #9ca3af; }
+    .expiration { color: #f59e0b; font-weight: bold; font-size: 14px; margin-top: 20px; display: block; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+       <div class="logo-circle">
+         <span class="logo-text">K</span>
+       </div>
+       <div style="color: rgba(255,255,255,0.9); font-weight: 600; letter-spacing: 1px; font-size: 14px;">KUSOMAKIDS</div>
+    </div>
+    
+    <div class="content">
+      <span class="emoji">🦁✨</span>
+      <h1 class="title">Sésame, ouvre-toi !</h1>
+      
+      <p class="message">
+        Une aventure extraordinaire attend votre enfant.<br>
+        Pour ouvrir les portes du <strong>Club Kusoma</strong> et commencer à créer des histoires magiques, voici votre clé secrète :
+      </p>
+      
+      <div class="code-box">
+        <span class="code-label">VOTRE CODE</span>
+        <span class="code">{{ .Token }}</span>
+      </div>
+      
+      <span class="expiration">⏳ Ce code magique expire dans 10 minutes.</span>
+      
+      <p style="margin-top: 40px; font-size: 16px;">
+        À tout de suite,<br>
+        <strong>La Famille KusomaKids</strong>
+      </p>
+    </div>
+    
+    <div class="footer">
+      <p>Si vous n'avez pas demandé ce code, c'est peut-être qu'un petit lutin s'est trompé d'adresse. Ignorez simplement ce message.</p>
+      <p>© KusomaKids - Des histoires dont votre enfant est le héros.</p>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,49 +1,59 @@
 import Image from 'next/image';
 import Link from 'next/link';
+import { ArrowLeft } from 'lucide-react';
+import { useState, useEffect } from 'react';
 
-export default function AuthLayout({ children }) {
-    // Use the auto-generated image if available in public folder, or a placeholder if not moved yet.
-    // Since I generated it as artifact, I need to assume it is moved to public/images/auth-bg.png by the user or me.
-    // I will use a relative path assuming I will move it.
+export default function AuthLayout({ children, title, subtitle }) {
+    // 1. Array of images
+    const backgroundImages = [
+        '/images/auth-bg.jpg',   // Maman & Fille
+        '/images/auth-bg-2.jpg'  // Papa & Fils
+    ];
+
+    // 2. Client-side random selection
+    const [currentImage, setCurrentImage] = useState(backgroundImages[0]);
+
+    useEffect(() => {
+        const randomIndex = Math.floor(Math.random() * backgroundImages.length);
+        setCurrentImage(backgroundImages[randomIndex]);
+    }, []);
 
     return (
-        <div className="min-h-screen flex flex-col md:flex-row bg-white">
-            {/* Left Column: Immersion (Image + Overlay) */}
-            <div className="w-full md:w-1/2 relative min-h-[300px] md:min-h-screen order-first">
-                <Image
-                    src="/images/auth-bg.jpg"
-                    alt="Magical Storytelling"
-                    fill
-                    className="object-cover"
-                    priority
-                />
-                {/* Dark Overlay - strengthened for readability */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/50 to-black/30 flex flex-col justify-center items-center p-8 text-center backdrop-blur-[2px]">
-                    <div className="max-w-md">
-                        <h2 className="text-3xl md:text-5xl font-black text-white leading-tight mb-6 drop-shadow-2xl">
-                            "Un enfant qui lit est un adulte qui pense."
-                        </h2>
-                        <p className="text-lg md:text-xl text-white/95 font-medium drop-shadow-xl text-shadow-sm">
-                            Offrons-leur des histoires où ils sont les héros de leur propre magie.
+        <div className="min-h-screen flex items-center justify-center bg-[#fff8f1] p-4 relative overflow-hidden">
+            {/* Background Pattern */}
+            <div className="absolute inset-0 opacity-40 pointer-events-none" style={{ backgroundImage: 'url(/images/pattern_bg.png)', backgroundSize: '400px' }}></div>
+
+            <div className="w-full max-w-5xl bg-white rounded-[2rem] shadow-2xl overflow-hidden flex flex-col md:flex-row relative z-10 min-h-[600px]">
+
+                {/* Left Side: Image & Brand */}
+                <div className="hidden md:block w-1/2 relative bg-orange-100">
+                    <Image
+                        src={currentImage}
+                        alt="KusomaKids Moment"
+                        fill
+                        className="object-cover transition-opacity duration-1000"
+                        priority
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex flex-col justify-end p-12 text-white">
+                        <Link href="/" className="inline-block mb-4">
+                            <span className="text-3xl font-bold tracking-tight">KusomaKids.</span>
+                        </Link>
+                        <p className="text-lg font-medium leading-relaxed opacity-90">
+                            "L'héritage le plus précieux que vous pouvez donner à votre enfant, c'est la fierté de son identité."
                         </p>
                     </div>
                 </div>
 
-                {/* Logo overlay on mobile only if needed, but usually redundant if header exists. 
-            Design requested: "Colone de gauche ... Contenu" -> Desktop. 
-            Mobile: "Empiler les éléments".
-        */}
-            </div>
+                {/* Right Column: Form */}
+                <div className="w-full md:w-1/2 flex items-center justify-center p-6 md:p-12 bg-orange-50/30">
+                    <div className="w-full max-w-md">
+                        {children}
 
-            {/* Right Column: Form */}
-            <div className="w-full md:w-1/2 flex items-center justify-center p-6 md:p-12 bg-orange-50/30">
-                <div className="w-full max-w-md">
-                    {children}
-
-                    <div className="mt-8 text-center">
-                        <Link href="/" className="inline-flex items-center text-sm font-medium text-gray-500 hover:text-orange-600 transition-colors gap-2 group">
-                            <span className="group-hover:-translate-x-1 transition-transform">←</span> Retour à l'accueil
-                        </Link>
+                        <div className="mt-8 text-center">
+                            <Link href="/" className="inline-flex items-center text-sm font-medium text-gray-500 hover:text-orange-600 transition-colors gap-2 group">
+                                <span className="group-hover:-translate-x-1 transition-transform">←</span> Retour à l'accueil
+                            </Link>
+                        </div>
                     </div>
                 </div>
             </div>

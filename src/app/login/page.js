@@ -41,8 +41,11 @@ function LoginContent() {
                 nextUrl = `/checkout?plan=club${bookId ? `&book_id=${bookId}` : ''}`;
             }
 
+            console.log("Login success, redirecting to:", nextUrl);
+            router.refresh(); // Force refresh to update server-side session state
             router.push(nextUrl);
         } catch (err) {
+            console.error("Login Error:", err);
             setError(err.message);
         } finally {
             setLoading(false);

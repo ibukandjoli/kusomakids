@@ -11,7 +11,7 @@ export default function AuthLayout({ children }) {
             {/* Left Column: Immersion (Image + Overlay) */}
             <div className="w-full md:w-1/2 relative min-h-[300px] md:min-h-screen order-first">
                 <Image
-                    src="/images/auth-bg.png"
+                    src="/images/auth-bg.jpg"
                     alt="Magical Storytelling"
                     fill
                     className="object-cover"
@@ -39,6 +39,12 @@ export default function AuthLayout({ children }) {
             <div className="w-full md:w-1/2 flex items-center justify-center p-6 md:p-12 bg-orange-50/30">
                 <div className="w-full max-w-md">
                     {children}
+
+                    <div className="mt-8 text-center">
+                        <Link href="/" className="inline-flex items-center text-sm font-medium text-gray-500 hover:text-orange-600 transition-colors gap-2 group">
+                            <span className="group-hover:-translate-x-1 transition-transform">←</span> Retour à l'accueil
+                        </Link>
+                    </div>
                 </div>
             </div>
         </div>

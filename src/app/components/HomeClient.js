@@ -226,7 +226,7 @@ export default function HomeClient() {
                     <div className="flex justify-between items-end mb-12">
                         <div>
                             <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-2">Nos Dernières Histoires</h2>
-                            <p className="text-gray-600 text-lg">Découvrez les aventures qui font rêver les enfants.</p>
+                            <p className="text-gray-600 text-lg">Découvrez les futures aventures de votre enfant</p>
                         </div>
                         <Link href="/books" className="text-orange-600 font-bold hover:text-orange-700 hidden md:block">
                             Voir tout →

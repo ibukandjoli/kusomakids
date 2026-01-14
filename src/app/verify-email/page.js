@@ -3,6 +3,7 @@
 import { useState, Suspense } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter, useSearchParams } from 'next/navigation';
+import AuthLayout from '../components/AuthLayout';
 
 function VerifyContent() {
     const [token, setToken] = useState('');
@@ -36,14 +37,14 @@ function VerifyContent() {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
-            <div className="max-w-md w-full bg-white p-10 rounded-3xl shadow-xl text-center">
-                <div className="w-16 h-16 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center text-3xl mx-auto mb-6">
+        <AuthLayout>
+            <div className="text-center">
+                <div className="w-16 h-16 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center text-3xl mx-auto mb-6 shadow-md">
                     🔐
                 </div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">Vérifiez votre email</h2>
+                <h2 className="text-3xl font-extrabold text-gray-900 mb-2">Vérifiez votre email</h2>
                 <p className="text-gray-600 mb-8">
-                    Un code à 6 chiffres a été envoyé à <strong>{email}</strong>.
+                    Un code de vérification a été envoyé à <strong>{email}</strong>.
                 </p>
 
                 <form onSubmit={handleVerify} className="space-y-6">
@@ -51,30 +52,32 @@ function VerifyContent() {
                         type="text"
                         value={token}
                         onChange={(e) => setToken(e.target.value)}
-                        placeholder="123456"
-                        className="w-full text-center text-2xl tracking-widest p-4 border-2 border-gray-200 rounded-xl focus:border-orange-500 outline-none font-mono"
-                        maxLength={6}
+                        placeholder="Code reçu"
+                        className="w-full text-center text-3xl tracking-[1rem] p-4 border-2 border-gray-200 rounded-xl focus:border-orange-500 outline-none font-mono transition-all focus:ring-4 focus:ring-orange-100 bg-white"
+                        maxLength={8}
                         required
                     />
 
                     {error && (
-                        <div className="text-red-500 text-sm">{error}</div>
+                        <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm flex items-center justify-center gap-2">
+                            ⚠️ {error}
+                        </div>
                     )}
 
                     <button
                         type="submit"
                         disabled={loading}
-                        className="w-full bg-orange-500 text-white py-3 rounded-xl font-bold hover:bg-orange-600 transition-colors"
+                        className="w-full bg-orange-500 text-white py-4 rounded-xl font-bold text-lg hover:bg-orange-600 transition-all shadow-lg hover:shadow-orange-500/30 disabled:opacity-50"
                     >
-                        {loading ? 'Vérification...' : 'Valider'}
+                        {loading ? 'Vérification...' : 'Valider mon code'}
                     </button>
 
-                    <p className="text-xs text-gray-400 mt-4">
-                        Pas reçu ? Vérifiez vos spams.
+                    <p className="text-sm text-gray-500 mt-6">
+                        Pas reçu ? <button type="button" className="text-orange-600 font-bold hover:underline">Renvoyer le code</button>
                     </p>
                 </form>
             </div>
-        </div>
+        </AuthLayout>
     );
 }
 

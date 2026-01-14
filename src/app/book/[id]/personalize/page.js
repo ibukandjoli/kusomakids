@@ -184,18 +184,22 @@ export default function PersonalizePage() {
                                 {/* Gender */}
                                 <div>
                                     <label className="block text-base md:text-lg font-bold text-gray-800 mb-2 md:mb-3">C'est...</label>
-                                    <div className="flex bg-gray-100 p-1 rounded-2xl md:rounded-2xl h-full items-center">
+                                    <div className="flex bg-gray-100 p-1 rounded-2xl md:rounded-2xl h-full items-center gap-2"> {/* Added gap and removed h-full from inner items */}
                                         <button
+                                            type="button" // Explicit type
                                             onClick={() => setFormData({ ...formData, gender: 'girl' })}
-                                            className={`flex-1 py-3 rounded-xl font-bold text-sm md:text-base transition-all whitespace-nowrap flex items-center justify-center gap-1 ${formData.gender === 'girl' ? 'bg-orange-500 text-white shadow-md' : 'text-gray-400 hover:text-gray-600'}`}
+                                            className={`flex-1 h-32 md:h-auto md:py-3 rounded-xl font-bold text-sm md:text-base transition-all whitespace-nowrap flex flex-col md:flex-row items-center justify-center gap-2 ${formData.gender === 'girl' ? 'bg-orange-500 text-white shadow-md' : 'bg-white text-gray-400 hover:text-gray-600 border border-gray-200'}`}
                                         >
-                                            Fille 👧🏿
+                                            <span className="text-4xl md:text-2xl">👧🏾</span>
+                                            <span>Fille</span>
                                         </button>
                                         <button
+                                            type="button" // Explicit type
                                             onClick={() => setFormData({ ...formData, gender: 'boy' })}
-                                            className={`flex-1 py-3 rounded-xl font-bold transition-all ${formData.gender === 'boy' ? 'bg-orange-500 text-white shadow-md transform scale-105' : 'text-gray-400 hover:text-gray-600'}`}
+                                            className={`flex-1 h-32 md:h-auto md:py-3 rounded-xl font-bold text-sm md:text-base transition-all whitespace-nowrap flex flex-col md:flex-row items-center justify-center gap-2 ${formData.gender === 'boy' ? 'bg-orange-500 text-white shadow-md' : 'bg-white text-gray-400 hover:text-gray-600 border border-gray-200'}`}
                                         >
-                                            Garçon 👦🏿
+                                            <span className="text-4xl md:text-2xl">👦🏾</span>
+                                            <span>Garçon</span>
                                         </button>
                                     </div>
                                 </div>

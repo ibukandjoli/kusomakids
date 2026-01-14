@@ -8,6 +8,7 @@ import { supabase } from '@/lib/supabase';
 import { fal } from '@fal-ai/client';
 import BookReader from '@/app/components/BookReader';
 import { STATIC_COVERS } from '@/lib/static-covers';
+import { formatTitle } from '@/utils/format';
 
 fal.config({
     proxyUrl: '/api/fal/proxy',
@@ -99,6 +100,11 @@ export default function PreviewPage() {
                     // Update title if needed
                     parsed.bookTitle = template.title;
                 }
+            }
+
+            // PRE-SET COVER if available in cart
+            if (parsed.coverUrl) {
+                setCoverImage(parsed.coverUrl);
             }
 
             // 4. Start Generation with Real Theme
@@ -440,7 +446,10 @@ export default function PreviewPage() {
                     <span className="hidden md:inline font-bold">Retour</span>
                 </button>
                 <div className="text-center">
-                    <h1 className="text-lg md:text-2xl font-black text-gray-900 font-serif leading-none truncate max-w-[200px] md:max-w-none">{orderData?.bookTitle}</h1>
+                    <h1 className="text-lg md:text-2xl font-black text-gray-900 font-serif leading-none truncate max-w-[200px] md:max-w-none">
+                        {/* DYNAMIC TITLE REPLACEMENT */}
+                        {orderData ? formatTitle(orderData.bookTitle).replace('[Son prénom]', orderData.personalization?.childName) : '...'}
+                    </h1>
                     <p className="text-xs text-gray-500 font-medium tracking-wide uppercase">Pour {orderData?.personalization?.childName}</p>
                 </div>
                 <div className="w-10 md:w-20"></div> {/* Spacer */}

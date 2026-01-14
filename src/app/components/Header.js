@@ -14,8 +14,8 @@ export default function Header() {
   const [user, setUser] = useState(null);
   const pathname = usePathname();
 
-  // Hide Header on Auth Pages and Preview Page
-  const isAuthPage = ['/login', '/signup', '/forgot-password', '/reset-password'].includes(pathname) || pathname.includes('/preview');
+  // Hide Header on Auth Pages ONLY (Show on Preview now)
+  const isAuthPage = ['/login', '/signup', '/forgot-password', '/reset-password'].includes(pathname);
 
   const [guestCount, setGuestCount] = useState(0);
 

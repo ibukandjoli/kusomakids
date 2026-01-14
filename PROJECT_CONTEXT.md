@@ -238,7 +238,10 @@ Gère la création de livre pour les invités (Guest).
 - **Feature** : **Worker de Génération Asynchrone** pour livrer le livre complet post-achat sans bloquer l'utilisateur.
 - **UI** : Nouvelle page **Club** (Design Magique).
 - **Compliance** : Ajout de toutes les pages légales (**FAQ, Support, CGV, Privacy, Mentions Légales**).
-- **Fix** : UI Mobile polie sur l'ensemble du parcours.
+- **Fix** : UI Mobile polie sur l'ensemble du parcours (Hero, Forms, Checkout, Nav).
+- **Fix** : **Auth Flow** : Amélioration UX Login/Signup/Verify (Textes, Backgrounds, Redirections).
+- **Fix** : **Personnalisation** : Boutons Fille/Garçon optimisés pour le tactile.
+- **Fix** : **Preview** : Titre dynamique sur la couverture et mode "Livre".
 
 ### Janvier 2026 (v1.3)
 - **UI Rewrite** : Format Carré (1:1), Grilles responsives.

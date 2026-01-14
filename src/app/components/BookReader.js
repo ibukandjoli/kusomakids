@@ -48,13 +48,13 @@ export default function BookReader({ book, user, onUnlock, isEditable = false, o
                     ) : (
                         <div className="absolute inset-0 flex items-center justify-center flex-col text-orange-300 animate-pulse">
                             <span className="text-4xl mb-2">✨</span>
-                            <span className="text-xs font-bold uppercase">Création en cours...</span>
+                            <span className="text-xs font-bold uppercase">Création...</span>
                         </div>
                     )}
 
-                    {/* CSS Overlay Title */}
-                    <div className="absolute inset-0 flex items-center justify-center p-4 bg-black/10">
-                        <h1 className="text-2xl md:text-3xl font-black text-white font-serif text-center leading-tight drop-shadow-md"
+                    {/* CSS Overlay Title (Mobile) - Top Position */}
+                    <div className="absolute top-0 left-0 right-0 p-4 pt-6 flex justify-center bg-gradient-to-b from-black/20 to-transparent">
+                        <h1 className="text-2xl md:text-3xl font-black text-white font-serif text-center leading-tight drop-shadow-md transform -rotate-1"
                             style={{ textShadow: '2px 2px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000' }}>
                             {book.title}
                         </h1>
@@ -161,17 +161,17 @@ export default function BookReader({ book, user, onUnlock, isEditable = false, o
                                 </div>
                             )}
 
-                            {/* CSS Overlay Title (Desktop) */}
-                            <div className="absolute inset-0 flex items-center justify-center p-12 bg-black/10">
-                                <h1 className="text-5xl font-black text-white font-serif text-center leading-tight drop-shadow-2xl"
+                            {/* CSS Overlay Title (Desktop) - MOVED TO TOP */}
+                            <div className="absolute top-0 left-0 right-0 pt-16 px-12 flex justify-center z-20">
+                                <h1 className="text-4xl lg:text-5xl font-black text-white font-serif text-center leading-tight drop-shadow-2xl tracking-wide transform -rotate-1"
                                     style={{
-                                        textShadow: '3px 3px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000',
+                                        textShadow: '2px 2px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000',
                                     }}>
                                     {book.title}
                                 </h1>
                             </div>
                         </div>
-                        <div className="bg-white px-8 py-3 rounded-full shadow-lg border border-orange-100">
+                        <div className="bg-white px-8 py-3 rounded-full shadow-lg border border-orange-100 z-20 relative">
                             <p className="text-xl text-gray-600 italic font-serif">Une aventure magique écrite pour <span className="text-orange-600 font-bold">{book.child_name}</span></p>
                         </div>
                     </motion.div>
@@ -184,12 +184,12 @@ export default function BookReader({ book, user, onUnlock, isEditable = false, o
                         {/* LEFT: Image (Locked or Unlocked) */}
                         <div className="w-1/2 h-full relative bg-gray-100 border-r border-[#E0D0B0] overflow-hidden group">
                             {/* Page Index 0 is Page 1 */}
-                            {pages[currentPage - 1]?.image ? (
+                            {(pages[currentPage - 1]?.image || (!isUnlocked && currentPage >= 3)) ? (
                                 <Image
-                                    src={pages[currentPage - 1].image}
+                                    src={pages[currentPage - 1]?.image || book.cover_url} // Use Cover if locked/missing
                                     alt={`Page ${currentPage}`}
                                     fill
-                                    className={`object-cover transition-all duration-700 ${(!isUnlocked && currentPage >= 3) ? 'blur-xl scale-110 opacity-60' : 'group-hover:scale-105'}`}
+                                    className={`object-cover transition-all duration-700 ${(!isUnlocked && currentPage >= 3) ? 'blur-md scale-110 opacity-50' : 'group-hover:scale-105'}`}
                                 />
                             ) : (
                                 <div className="absolute inset-0 flex items-center justify-center flex-col text-gray-400">
@@ -200,37 +200,36 @@ export default function BookReader({ book, user, onUnlock, isEditable = false, o
 
                             {/* Hybrid Lock Overlay */}
                             {(!isUnlocked && currentPage >= 3) && (
-                                <div className="absolute inset-0 flex flex-col items-center justify-center z-10 bg-black/20">
-                                    <div className="bg-white/10 backdrop-blur-md p-6 rounded-3xl border border-white/20 text-center shadow-xl">
-                                        <div className="w-16 h-16 bg-white text-orange-500 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg text-2xl">
+                                <div className="absolute inset-0 flex flex-col items-center justify-center z-10 bg-black/10 backdrop-blur-[4px]">
+                                    <div className="bg-white/90 p-5 rounded-3xl border border-white/50 text-center shadow-xl backdrop-blur-md">
+                                        <div className="w-14 h-14 bg-orange-500 text-white rounded-full flex items-center justify-center mx-auto mb-3 shadow-lg text-2xl">
                                             🔒
                                         </div>
-                                        <h3 className="text-xl font-bold text-white mb-1 drop-shadow-md">Illustration Verrouillée</h3>
-                                        <p className="text-white/90 text-sm font-medium drop-shadow-sm">Sera générée en haute qualité après paiement</p>
+                                        <p className="text-gray-900 font-bold text-sm">Illustration à débloquer</p>
                                     </div>
                                 </div>
                             )}
 
                             {/* Watermark */}
-                            <div className="absolute inset-0 flex items-center justify-center opacity-40 pointer-events-none">
-                                <span className="text-white font-black text-6xl -rotate-12 uppercase tracking-widest drop-shadow-lg mix-blend-overlay">Kusoma Kids</span>
+                            <div className="absolute inset-0 flex items-center justify-center opacity-30 pointer-events-none">
+                                <span className="text-white font-black text-5xl -rotate-12 uppercase tracking-widest drop-shadow-lg mix-blend-overlay">Kusoma Kids</span>
                             </div>
                         </div>
 
-                        {/* RIGHT: Text (Always Editable) */}
-                        <div className="w-1/2 h-full p-16 flex flex-col justify-center bg-[#FFFEFA] relative shadow-inner">
-                            <span className="absolute top-8 right-8 text-gray-300 font-bold font-mono">PAGE {currentPage}</span>
+                        {/* RIGHT: Text (Always Editable & Centered) */}
+                        <div className="w-1/2 h-full flex flex-col items-center justify-center bg-[#FFFEFA] relative shadow-inner p-10">
+                            <span className="absolute top-6 right-6 text-gray-400 text-xs font-bold font-mono tracking-widest uppercase">PAGE {currentPage}</span>
 
                             {isEditable && onTextChange ? (
-                                <div className="relative group">
-                                    <div className="absolute -top-10 left-0 bg-orange-100 text-orange-600 text-xs font-bold px-3 py-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
-                                        <span>✏️</span> Vous pouvez modifier ce texte
+                                <div className="relative group w-full max-w-md">
+                                    <div className="absolute -top-8 left-0 text-orange-400 text-xs font-bold uppercase tracking-wide opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
+                                        <span>✏️</span> Modifier le texte
                                     </div>
                                     <textarea
                                         value={pages[currentPage - 1]?.text}
                                         onChange={(e) => onTextChange(currentPage - 1, e.target.value)}
-                                        className="w-full h-[60vh] p-6 bg-transparent rounded-2xl border-2 border-transparent hover:border-orange-100 focus:border-orange-300 focus:bg-white text-2xl font-serif leading-relaxed text-gray-800 outline-none resize-none transition-all placeholder:text-gray-300"
-                                        style={{ fontFamily: '"Georgia", serif' }} // Using Georgia as safe fallback for book font
+                                        className="w-full h-[50vh] p-0 bg-transparent rounded-none border-none text-2xl text-center font-serif leading-relaxed text-gray-800 outline-none resize-none placeholder:text-gray-300 focus:ring-0"
+                                        style={{ fontFamily: '"Georgia", serif' }}
                                         spellCheck="false"
                                     />
                                 </div>

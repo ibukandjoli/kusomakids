@@ -167,7 +167,7 @@ function DashboardContent() {
                                     </h3>
                                     <p className="text-gray-400 text-xs font-bold uppercase tracking-wider mb-6">
                                         {new Date(book.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
-                                    </button>
+                                    </p>
 
                                     <div className="flex gap-3">
                                         <button

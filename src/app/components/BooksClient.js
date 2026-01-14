@@ -10,12 +10,27 @@ export default function BooksClient() {
     const [books, setBooks] = useState([]);
     const [loading, setLoading] = useState(true);
     const [filterAge, setFilterAge] = useState('all');
+    const [childName, setChildName] = useState(null);
 
     useEffect(() => {
-        async function fetchBooks() {
+        async function fetchData() {
             try {
-                let query = supabase.from('story_templates').select('*');
+                // 1. Fetch User & Children (for personalization)
+                const { data: { session } } = await supabase.auth.getSession();
+                if (session) {
+                    const { data: children } = await supabase
+                        .from('children')
+                        .select('first_name')
+                        .eq('user_id', session.user.id)
+                        .limit(1);
 
+                    if (children && children.length > 0) {
+                        setChildName(children[0].first_name);
+                    }
+                }
+
+                // 2. Fetch Books
+                let query = supabase.from('story_templates').select('*');
                 const { data, error } = await query;
 
                 if (error) {
@@ -30,8 +45,17 @@ export default function BooksClient() {
             }
         }
 
-        fetchBooks();
+        fetchData();
     }, [filterAge]);
+
+    // Helper to personalize text
+    const personalize = (text) => {
+        if (!text) return '';
+        const name = childName || 'Votre Enfant'; // Fallback if not logged in
+        return formatTitle(text)
+            .replace(/\[Son prénom\]/gi, name)
+            .replace(/\{childName\}/gi, name);
+    };
 
     // Clientside filtering
     const filteredBooks = filterAge === 'all'
@@ -49,7 +73,7 @@ export default function BooksClient() {
                 <div className="text-center mb-16">
                     <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">Notre Bibliothèque Magique</h1>
                     <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-                        Des histoires uniques où votre enfant devient le héros. Choisissez une histoire et personnalisez-la avec le prénom et la photo de votre enfant.
+                        Des histoires uniques où <span className="text-orange-600 font-bold">{childName || 'votre enfant'}</span> devient le héros.
                     </p>
                 </div>
 
@@ -77,7 +101,7 @@ export default function BooksClient() {
                 ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-10">
                         {filteredBooks.map((book) => (
-                            <Link href={`/book/${book.id}`} key={book.id} className="group">
+                            <Link href={`/book/${book.theme_slug || book.id}`} key={book.id} className="group">
                                 <div className="bg-white rounded-[2rem] overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 h-full flex flex-col border border-gray-100">
                                     {/* Image Container */}
                                     <div className="relative aspect-square overflow-hidden bg-gray-100">
@@ -103,7 +127,7 @@ export default function BooksClient() {
                                     {/* Content */}
                                     <div className="p-6 flex flex-col flex-grow">
                                         <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-orange-600 transition-colors">
-                                            {formatTitle(book.title)}
+                                            {personalize(book.title)}
                                         </h3>
                                         <p className="text-gray-500 text-sm italic mb-4 flex-grow">
                                             {book.tagline || book.description}

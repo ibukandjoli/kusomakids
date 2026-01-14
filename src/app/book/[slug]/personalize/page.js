@@ -24,15 +24,23 @@ export default function PersonalizePage() {
     const [previewUrl, setPreviewUrl] = useState(null);
     const [loading, setLoading] = useState(true);
 
+    // Helper to check UUID
+    const isUUID = (str) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
+
     useEffect(() => {
         async function fetchBook() {
-            if (!params?.id) return;
+            if (!params?.slug) return;
             try {
-                const { data, error } = await supabase
-                    .from('story_templates')
-                    .select('*')
-                    .eq('id', params.id)
-                    .single();
+                let query = supabase.from('story_templates').select('*').single();
+
+                if (isUUID(params.slug)) {
+                    query = query.eq('id', params.slug);
+                } else {
+                    query = query.eq('theme_slug', params.slug);
+                }
+
+                const { data, error } = await query;
+
                 if (error) throw error;
                 setBook(data);
             } catch (err) {
@@ -42,7 +50,7 @@ export default function PersonalizePage() {
             }
         }
         fetchBook();
-    }, [params.id]);
+    }, [params.slug]);
 
     const [uploadSuccess, setUploadSuccess] = useState(false);
 

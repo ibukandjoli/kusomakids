@@ -4,17 +4,25 @@ import BookDetailClient from '@/app/components/BookDetailClient';
 import { formatTitle } from '@/utils/format';
 
 // 1. Generate Dynamic Metadata for SEO
+// Helper to check UUID
+const isUUID = (str) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
+
+// 1. Generate Dynamic Metadata for SEO
 export async function generateMetadata({ params }) {
   const resolvedParams = await params;
-  const id = resolvedParams?.id;
+  const slug = resolvedParams?.slug;
 
-  if (!id) return {};
+  if (!slug) return {};
 
-  const { data: book } = await supabase
-    .from('story_templates')
-    .select('title, description, cover_url, theme_slug')
-    .eq('id', id)
-    .single();
+  let query = supabase.from('story_templates').select('title, description, cover_url, theme_slug').single();
+
+  if (isUUID(slug)) {
+    query = query.eq('id', slug);
+  } else {
+    query = query.eq('theme_slug', slug);
+  }
+
+  const { data: book } = await query;
 
   if (!book) {
     return {
@@ -32,7 +40,7 @@ export async function generateMetadata({ params }) {
     openGraph: {
       title: `${title} - Le héros c'est votre enfant`,
       description: description,
-      url: `https://kusomakids.com/book/${id}`,
+      url: `https://kusomakids.com/book/${slug}`,
       images: [
         {
           url: coverUrl,
@@ -49,16 +57,20 @@ export async function generateMetadata({ params }) {
 // 2. Server Component fetches data and passes to Client Component
 export default async function BookDetailPage({ params }) {
   const resolvedParams = await params;
-  const id = resolvedParams?.id;
+  const slug = resolvedParams?.slug;
 
-  if (!id) return <BookDetailClient initialBook={null} />;
+  if (!slug) return <BookDetailClient initialBook={null} />;
 
   // Fetch Book Details
-  const { data: book } = await supabase
-    .from('story_templates')
-    .select('*')
-    .eq('id', id)
-    .single();
+  let query = supabase.from('story_templates').select('*').single();
+
+  if (isUUID(slug)) {
+    query = query.eq('id', slug);
+  } else {
+    query = query.eq('theme_slug', slug);
+  }
+
+  const { data: book } = await query;
 
   // Fetch Related Books
   let relatedBooks = [];

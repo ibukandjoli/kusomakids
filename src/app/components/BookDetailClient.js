@@ -12,19 +12,45 @@ export default function BookDetailClient({ initialBook, initialRelatedBooks }) {
     const [book, setBook] = useState(initialBook || null);
     const [relatedBooks, setRelatedBooks] = useState(initialRelatedBooks || []);
     const [loading, setLoading] = useState(!initialBook);
+    const [childName, setChildName] = useState(null);
 
     useEffect(() => {
-        // If we already have the book (from Server), don't re-fetch unless ID changed (handled by key usually) 
-        // or if we want to support client-side navigation updates
-        if (initialBook) {
-            setLoading(false);
-            return;
-        }
+        async function init() {
+            // Fetch User Child Name
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session) {
+                const { data: children } = await supabase
+                    .from('children')
+                    .select('first_name')
+                    .eq('user_id', session.user.id)
+                    .limit(1);
 
-        // Fallback: Fetch Fetch logic if no initial data
-        // (This part might be redundant if we always pass props, but good for safety)
+                if (children && children.length > 0) {
+                    setChildName(children[0].first_name);
+                }
+            }
+
+            if (!initialBook) {
+                // Fetch logic if needed, skipped for MVP as we rely on SSR mainly
+                setLoading(false);
+            } else {
+                setLoading(false);
+            }
+        }
+        init();
     }, [initialBook]);
 
+    // Helper to personalize text
+    const personalize = (text) => {
+        if (!text) return '';
+        // If not logged in, we still want to show a generic placeholder or keep it cleaner
+        // Current formatTitle keeps placeholders? formatTitle handles formatting but regex replacement handles content.
+        const name = childName || 'Votre Enfant';
+        // Note: Replace both brackets style
+        return formatTitle(text)
+            .replace(/\[Son prénom\]/gi, name)
+            .replace(/\{childName\}/gi, name);
+    };
 
     if (loading) {
         return (
@@ -51,7 +77,7 @@ export default function BookDetailClient({ initialBook, initialRelatedBooks }) {
                 <div className="mb-8 text-sm text-gray-500">
                     <Link href="/" className="hover:text-orange-500">Accueil</Link> &gt;
                     <Link href="/books" className="hover:text-orange-500 mx-1">Bibliothèque</Link> &gt;
-                    <span className="text-gray-900 mx-1 font-medium">{formatTitle(book.title)}</span>
+                    <span className="text-gray-900 mx-1 font-medium">{personalize(book.title)}</span>
                 </div>
 
                 <div className="grid md:grid-cols-2 gap-12 lg:gap-20 items-start">
@@ -112,7 +138,7 @@ export default function BookDetailClient({ initialBook, initialRelatedBooks }) {
                         </div>
 
                         <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4 leading-tight">
-                            {formatTitle(book.title)}
+                            {personalize(book.title)}
                         </h1>
 
                         <p className="text-lg md:text-xl text-gray-500 italic mb-6 font-serif">"{book.tagline}"</p>
@@ -187,7 +213,7 @@ export default function BookDetailClient({ initialBook, initialRelatedBooks }) {
                     {relatedBooks.length > 0 ? (
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
                             {relatedBooks.slice(0, 3).map((related) => (
-                                <Link href={`/book/${related.id}`} key={related.id} className="group block">
+                                <Link href={`/book/${related.theme_slug || related.id}`} key={related.id} className="group block">
                                     <div className="relative aspect-square rounded-[2rem] overflow-hidden mb-4 shadow-md group-hover:shadow-lg transition-all border border-gray-100">
                                         <Image
                                             src={related.cover_url || STATIC_COVERS[related.theme_slug] || '/images/covers/cover_school.jpg'}
@@ -197,7 +223,7 @@ export default function BookDetailClient({ initialBook, initialRelatedBooks }) {
                                         />
                                     </div>
                                     <h3 className="font-bold text-gray-900 text-lg leading-tight group-hover:text-orange-600 transition-colors mb-1">
-                                        {formatTitle(related.title)}
+                                        {personalize(related.title)}
                                     </h3>
                                     <p className="text-sm text-gray-500">{related.age_range.replace(/\s*ans$/i, '')} ans</p>
                                 </Link>

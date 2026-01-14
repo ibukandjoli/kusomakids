@@ -218,7 +218,7 @@ function DashboardContent() {
                         </p>
 
                         <div className="bg-orange-50 p-6 rounded-2xl mb-8 border border-orange-100">
-                            <p className="font-bold text-gray-800 mb-2">Voulez-vous débloquer votre livre maintenant ?</p>
+                            <p className="font-bold text-gray-800 mb-2">Voulez-vous débloquer votre histoire maintenant ?</p>
                             <p className="text-sm text-gray-500">Cela utilisera 1 crédit pour générer le reste de l'histoire.</p>
                         </div>
 

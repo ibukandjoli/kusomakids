@@ -137,62 +137,41 @@ function CheckoutContent() {
       if (bookId) processedBookIds.push(bookId);
     }
 
-    // 2. CHECK SUBSCRIPTION
-    const clubItem = cartItems.find(i => i.type === 'club');
-    if (clubItem) {
-      // Existing Club logic...
-      // Assuming mixed cart not supported yet, or Club takes precedence?
-      // User specific request was about Multiple Stories (6000F). 
-      try {
-        const res = await fetch('/api/checkout/subscription', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            userId: user?.id,
-            email: email,
-            target_book_id: processedBookIds[0] || clubItem.targetBookId, // Link first book?
-            priceId: 'price_1Q...'
-          })
-        });
-        const data = await res.json();
-        if (data.url) {
-          window.location.href = data.url;
-        } else {
-          alert("Erreur Stripe: " + data.error);
-          setProcessing(false);
-        }
-      } catch (error) {
-        console.error("Payment Error:", error);
-        alert("Erreur de connexion paiement.");
-        setProcessing(false);
-      }
-      return;
-    }
+    // 2. TRIGGER STRIPE PAYMENT
+    try {
+      // We currently handle Single Item Checkout primarily for the flow
+      // If multiple items, we might need a cart implementation in Stripe or loop.
+      // MVP: Pay for the FIRST book in the list (most common case: 1 book).
+      const itemToPay = cartItems[0];
+      const targetBookId = processedBookIds[0] || itemToPay.bookId;
 
-    // 3. NORMAL PAYMENT (SIMULATED FOR NOW)
-    setTimeout(() => {
-      setProcessing(false);
-
-      // Trigger Generation for ALL books
-      processedBookIds.forEach(bId => {
-        console.log("🚀 Triggering Worker for:", bId);
-        fetch('/api/workers/generate-book', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ bookId: bId }),
-          keepalive: true
-        }).catch(e => console.error(e));
+      const res = await fetch('/api/checkout/payment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: user?.id,
+          email: email,
+          bookId: targetBookId,
+          bookTitle: itemToPay.bookTitle,
+          childName: itemToPay.personalization?.childName,
+          coverUrl: itemToPay.coverImage || itemToPay.coverUrl
+        })
       });
 
-      alert("Paiement simulé réussi ! Vos livres sont en cours de finition.");
+      const data = await res.json();
 
-      // Clear Cart
-      localStorage.removeItem('cart_item');
-      localStorage.removeItem('cart_items');
-      window.dispatchEvent(new Event('cart_updated')); // Update Header count
+      if (data.url) {
+        // Redirect to Stripe
+        window.location.href = data.url;
+      } else {
+        throw new Error(data.error || "Erreur lors de l'initialisation du paiement");
+      }
 
-      router.push('/');
-    }, 2000);
+    } catch (error) {
+      console.error("Payment Error:", error);
+      alert("Erreur de paiement: " + error.message);
+      setProcessing(false);
+    }
   };
 
   if (loading) return <div className="min-h-screen pt-32 text-center">Chargement...</div>;

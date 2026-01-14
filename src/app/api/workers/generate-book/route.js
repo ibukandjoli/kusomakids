@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase-server';
 import { fal } from '@fal-ai/serverless-client';
 import { sendEmail } from '@/lib/resend';
 import { BookReadyEmail } from '@/lib/emails/BookReadyEmail';
+import { SENDERS } from '@/lib/senders';
 
 // Force dynamic to allow long-running processes (though Vercel has limits)
 export const dynamic = 'force-dynamic';
@@ -167,6 +168,7 @@ export async function POST(req) {
 
                     const emailRes = await sendEmail({
                         to: book.email,
+                        from: SENDERS.TREASURE, // Updated Sender
                         subject: `L'histoire de ${book.child_name || 'votre enfant'} est prête ! 📖✨`,
                         html: emailHtml
                     });

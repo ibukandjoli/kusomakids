@@ -27,7 +27,13 @@ function VerifyContent() {
 
             if (error) throw error;
 
-            // Success -> Go to Onboarding
+            // Success -> Send Welcome Email & Go to Onboarding
+            await fetch('/api/emails/welcome', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: email })
+            }).catch(e => console.error("Failed to send welcome email:", e));
+
             router.push('/onboarding');
         } catch (err) {
             setError(err.message);

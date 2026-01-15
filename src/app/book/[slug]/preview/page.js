@@ -518,6 +518,7 @@ export default function PreviewPage() {
                         if (pageId) handleEditSave(pageId, newText);
                     }}
                     onUnlock={handleUnlock}
+                    enableAudio={false}
                 />
             </div>
 

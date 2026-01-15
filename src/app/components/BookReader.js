@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 
-export default function BookReader({ book, user, onUnlock, isEditable = false, onTextChange, extraPages = [] }) {
+export default function BookReader({ book, user, onUnlock, isEditable = false, onTextChange, extraPages = [], enableAudio = true }) {
     const [currentPage, setCurrentPage] = useState(0); // 0 = Cover
 
     // Normalize pages to objects { text, image }
@@ -319,20 +319,22 @@ export default function BookReader({ book, user, onUnlock, isEditable = false, o
         <div className="w-full h-full flex flex-col md:items-center md:justify-center bg-[#FDFBF7] overflow-hidden relative">
 
             {/* Audio Button (Floating) */}
-            <button
-                onClick={handlePlayAudio}
-                className={`absolute top-20 right-4 z-50 md:top-8 md:right-8 bg-white/90 backdrop-blur shadow-xl border border-gray-100 p-3 rounded-full transition-all hover:scale-110 group ${isPlaying ? 'text-orange-500 ring-2 ring-orange-500' : 'text-gray-600'}`}
-                title="Écouter l'histoire"
-            >
-                {isPlaying ? (
-                    <span className="animate-pulse">🔊</span>
-                ) : (
-                    <span>🔈</span>
-                )}
-                <span className="absolute right-full mr-2 bg-black/80 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
-                    {isPlaying ? 'Pause' : 'Écouter'}
-                </span>
-            </button>
+            {enableAudio && (
+                <button
+                    onClick={handlePlayAudio}
+                    className={`absolute top-20 right-4 z-50 md:top-8 md:right-8 bg-white/90 backdrop-blur shadow-xl border border-gray-100 p-3 rounded-full transition-all hover:scale-110 group ${isPlaying ? 'text-orange-500 ring-2 ring-orange-500' : 'text-gray-600'}`}
+                    title="Écouter l'histoire"
+                >
+                    {isPlaying ? (
+                        <span className="animate-pulse">🔊</span>
+                    ) : (
+                        <span>🔈</span>
+                    )}
+                    <span className="absolute right-full mr-2 bg-black/80 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                        {isPlaying ? 'Pause' : 'Écouter'}
+                    </span>
+                </button>
+            )}
 
             {/* Mobile: Scrollable container handles its own overflow */}
             <div className="md:hidden w-full h-full overflow-y-auto">

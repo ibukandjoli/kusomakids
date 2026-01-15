@@ -141,7 +141,7 @@ export default function BookDetailClient({ initialBook, initialRelatedBooks }) {
                             {personalize(book.title)}
                         </h1>
 
-                        <p className="text-lg md:text-xl text-gray-500 italic mb-6 font-serif">"{book.tagline}"</p>
+                        <p className="text-lg md:text-xl text-gray-500 italic mb-6 font-serif">"{personalize(book.tagline)}"</p>
 
                         <div className="flex flex-wrap items-end gap-x-3 gap-y-1 mb-8">
                             <div className="flex items-end gap-2">
@@ -154,7 +154,7 @@ export default function BookDetailClient({ initialBook, initialRelatedBooks }) {
                         </div>
 
                         <div className="prose prose-lg text-gray-700 leading-relaxed mb-8">
-                            <p>{formatTitle(book.description)}</p>
+                            <p>{personalize(book.description)}</p>
                         </div>
 
                         {/* BENEFITS SECTION */}

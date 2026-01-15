@@ -301,7 +301,9 @@ export default function PreviewPage() {
 
                         // "looking at camera, detailed face" helps Face Swap
                         // Added "middle shot" to ensure face is big enough for swap
-                        const physicalAttributes = `cute little african ${pGender}, ${pSkin}, ${pHair}, detailed face, looking at camera, middle shot`;
+                        // V1.5.3: Added specific features for better resemblance (beads, braids)
+                        const pGenderTraits = data.personalization.gender === 'girl' ? 'cornrows, colorful beads, detailed african features' : '';
+                        const physicalAttributes = `cute little african ${pGender}, ${pSkin}, ${pHair}, ${pGenderTraits}, detailed face, looking at camera, middle shot`;
 
                         // "wide shot" removed from physical to allow scene variety, but kept in Composition
                         const composition = "centered composition, detailed background, cinematic lighting, 8k";
@@ -395,7 +397,13 @@ export default function PreviewPage() {
     };
 
     const handleConfirm = () => {
-        const updatedOrder = { ...orderData, finalizedPages: pages, cartId: Date.now() };
+        // FIX: Persist the Swapped Cover Image (coverImage state) instead of the initial orderData.coverUrl
+        const updatedOrder = {
+            ...orderData,
+            coverUrl: coverImage || orderData.coverUrl, // Use state first 
+            finalizedPages: pages,
+            cartId: Date.now()
+        };
 
         // Retrieve existing cart
         let currentCart = [];
@@ -425,6 +433,14 @@ export default function PreviewPage() {
     const handleUnlock = () => {
         router.push(`/signup?plan=club&redirect_book_id=${orderData?.bookId}`);
     };
+
+    // PAYWALL LOGIC: Only Active Subscribers can read freely during Draft mode.
+    // Others must buy or join.
+    // NOTE: In 'Preview' mode, the book is usually a Draft.
+    // If it was already purchased, we probably wouldn't be in this creation flow (or we'd check status).
+    // Assuming this page is for Creation/Draft only.
+    const isSubscriber = user?.subscription_status === 'active';
+    const showReadButton = isSubscriber;
 
     if (status !== "complete") {
         const currentStep = loadingSteps[status] || loadingSteps.init;
@@ -492,7 +508,8 @@ export default function PreviewPage() {
                         title: orderData?.bookTitle || story?.title,
                         child_name: orderData?.personalization?.childName,
                         cover_url: coverImage, // Use the generated/swapped cover
-                        is_unlocked: false
+                        is_unlocked: false, // Always locked in preview until bought
+                        id: orderData?.bookId // REQUIRED for Audio API
                     }}
                     extraPages={pages}
                     isEditable={true}
@@ -515,7 +532,7 @@ export default function PreviewPage() {
                     </div>
 
                     <div className="flex flex-col md:flex-row items-center gap-3 w-full md:w-auto">
-                        {user ? (
+                        {showReadButton ? (
                             <button
                                 onClick={handleRead}
                                 className="w-full md:w-auto bg-orange-500 text-white px-8 py-3 rounded-full font-bold text-lg hover:bg-orange-600 transition-all shadow-xl flex items-center justify-center gap-2"

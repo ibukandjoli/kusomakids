@@ -161,9 +161,9 @@ export default function BookReader({ book, user, onUnlock, isEditable = false, o
                                 </div>
                             )}
 
-                            {/* CSS Overlay Title (Desktop) - MOVED TO TOP */}
-                            <div className="absolute top-0 left-0 right-0 pt-16 px-12 flex justify-center z-20">
-                                <h1 className="text-4xl lg:text-5xl font-black text-white font-serif text-center leading-tight drop-shadow-2xl tracking-wide transform -rotate-1"
+                            {/* CSS Overlay Title (Desktop) - REFINED TOP POSITION */}
+                            <div className="absolute top-0 left-0 right-0 pt-8 px-12 flex justify-center z-20">
+                                <h1 className="text-3xl lg:text-4xl font-black text-white font-sans text-center leading-tight drop-shadow-2xl tracking-wide transform -rotate-1"
                                     style={{
                                         textShadow: '2px 2px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000',
                                     }}>
@@ -221,20 +221,20 @@ export default function BookReader({ book, user, onUnlock, isEditable = false, o
                             <span className="absolute top-6 right-6 text-gray-400 text-xs font-bold font-mono tracking-widest uppercase">PAGE {currentPage}</span>
 
                             {isEditable && onTextChange ? (
-                                <div className="relative group w-full max-w-md">
+                                <div className="relative group w-full max-w-md my-auto">
                                     <div className="absolute -top-8 left-0 text-orange-400 text-xs font-bold uppercase tracking-wide opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
                                         <span>✏️</span> Modifier le texte
                                     </div>
                                     <textarea
                                         value={pages[currentPage - 1]?.text}
                                         onChange={(e) => onTextChange(currentPage - 1, e.target.value)}
-                                        className="w-full h-[50vh] p-0 bg-transparent rounded-none border-none text-2xl text-center font-serif leading-relaxed text-gray-800 outline-none resize-none placeholder:text-gray-300 focus:ring-0"
+                                        className="w-full h-[50vh] p-0 bg-transparent rounded-none border-none text-2xl text-center font-serif leading-relaxed text-gray-800 outline-none resize-none placeholder:text-gray-300 focus:ring-0 flex items-center justify-center"
                                         style={{ fontFamily: '"Georgia", serif' }}
                                         spellCheck="false"
                                     />
                                 </div>
                             ) : (
-                                <div className="prose prose-2xl font-serif text-gray-800 leading-relaxed">
+                                <div className="prose prose-2xl font-serif text-gray-800 leading-relaxed my-auto">
                                     <span className="text-7xl float-left mr-4 text-orange-500 font-bold leading-[0.8]">{pages[currentPage - 1]?.text?.charAt(0)}</span>
                                     {pages[currentPage - 1]?.text?.substring(1)}
                                 </div>
@@ -246,8 +246,94 @@ export default function BookReader({ book, user, onUnlock, isEditable = false, o
         </div>
     );
 
+    // Audio Logic
+    const [isPlaying, setIsPlaying] = useState(false);
+    const audioRef = useRef(null);
+
+    const handlePlayAudio = async () => {
+        if (isPlaying) {
+            audioRef.current?.pause();
+            setIsPlaying(false);
+            return;
+        }
+
+        const currentPageData = pages[currentPage > 0 ? currentPage - 1 : 0]; // Handle Cover (0) vs Pages
+        const textToRead = currentPage === 0 ? book.title : currentPageData?.text;
+
+        if (!textToRead) return;
+
+        // Check if audio URL already exists
+        let audioUrl = currentPageData?.audio_url;
+
+        // If not, call API to generate (and cache)
+        if (!audioUrl) {
+            try {
+                // Show loading state (optimistic or spinner)
+                // For now, change cursor or visual cue
+                document.body.style.cursor = 'wait';
+
+                const res = await fetch('/api/audio/generate-speech', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        text: textToRead,
+                        bookId: book.id, // Ensure book object has ID
+                        pageIndex: currentPage > 0 ? currentPage - 1 : 0 // 0 for Cover, etc.
+                    })
+                });
+
+                const data = await res.json();
+                document.body.style.cursor = 'default';
+
+                if (!res.ok) {
+                    console.error("Audio Error:", data);
+                    alert("Erreur lors de la génération audio. Vérifiez votre connexion.");
+                    return;
+                }
+
+                audioUrl = data.audioUrl;
+
+                // Optimistic Update (Optional: Update local pages array so we don't fetch again this session)
+                // We should ideally update the parent's state, but for this component:
+                if (currentPage > 0) {
+                    pages[currentPage - 1].audio_url = audioUrl;
+                }
+
+            } catch (e) {
+                document.body.style.cursor = 'default';
+                console.error(e);
+                return;
+            }
+        }
+
+        if (audioUrl) {
+            const audio = new Audio(audioUrl);
+            audioRef.current = audio;
+            audio.play();
+            setIsPlaying(true);
+            audio.onended = () => setIsPlaying(false);
+        }
+    };
+
     return (
-        <div className="w-full h-full flex flex-col md:items-center md:justify-center bg-[#FDFBF7] overflow-hidden">
+        <div className="w-full h-full flex flex-col md:items-center md:justify-center bg-[#FDFBF7] overflow-hidden relative">
+
+            {/* Audio Button (Floating) */}
+            <button
+                onClick={handlePlayAudio}
+                className={`absolute top-20 right-4 z-50 md:top-8 md:right-8 bg-white/90 backdrop-blur shadow-xl border border-gray-100 p-3 rounded-full transition-all hover:scale-110 group ${isPlaying ? 'text-orange-500 ring-2 ring-orange-500' : 'text-gray-600'}`}
+                title="Écouter l'histoire"
+            >
+                {isPlaying ? (
+                    <span className="animate-pulse">🔊</span>
+                ) : (
+                    <span>🔈</span>
+                )}
+                <span className="absolute right-full mr-2 bg-black/80 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                    {isPlaying ? 'Pause' : 'Écouter'}
+                </span>
+            </button>
+
             {/* Mobile: Scrollable container handles its own overflow */}
             <div className="md:hidden w-full h-full overflow-y-auto">
                 <MobileView />

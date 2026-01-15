@@ -69,19 +69,29 @@ export async function POST(req) {
             try {
                 // --- A. PREPARE PROMPT ---
                 // Dynamic Gender/Traits
+                // Dynamic Gender/Traits
                 const genderTerm = childGender === 'girl' ? 'girl' : 'boy';
-                const genderAdjective = childGender === 'girl' ? 'braided hair' : 'short hair';
                 const skinTone = 'dark skin';
 
+                let hairStyle = '';
+                if (childGender === 'girl') {
+                    // HACK FOR V1: Force specific African styles that work well with Face Swap
+                    // "Cornrows with beads" gives much better anchors for Soraya's photo than just "braids"
+                    hairStyle = 'cornrows with colorful beads, detailed african hair texture';
+                } else {
+                    hairStyle = 'short natural afro hair';
+                }
+
                 // Construct Physical Description (DNA)
-                // Added "middle shot" and refined description for Face Swap compatibility
-                const physicalAttributes = `cute little african ${genderTerm}, ${skinTone}, ${genderAdjective}, detailed face, looking at camera, middle shot`;
+                // 2. Add "High Fidelity" keywords specifically for the face
+                const physicalAttributes = `cute little african ${genderTerm}, ${skinTone}, ${hairStyle}, highly detailed face, symmetrical eyes, looking at camera, middle shot`;
 
-                // "centered composition" and "detailed background"
-                const composition = "centered composition, detailed background, cinematic lighting, 8k";
+                // "centered composition" removed to allow dynamic framing (Medium/Wide shots)
+                // Use "environmental portrait" elements
+                const composition = "cinematic lighting, detailed background, depth of field, 8k, pixar style, 3d render";
 
-                // Added "high fidelity" and "3d render" to match Preview
-                const scenePrompt = `${physicalAttributes}, ${page.imagePrompt || page.text}, ${composition}, pixar style, 3d render, high fidelity, masterpiece, best quality, vibrant colors`;
+                // Construct Final Prompt
+                const scenePrompt = `${physicalAttributes}, ${page.imagePrompt || page.text}, ${composition}, high fidelity, masterpiece, best quality, vibrant colors`;
 
                 // --- B. GENERATE SCENE (Flux) ---
                 let sceneUrl = null;
@@ -150,8 +160,19 @@ export async function POST(req) {
                 status: 'completed'
             };
 
-            // If book has no cover, use the first page's image
-            if (!book.cover_url && updatedPages.length > 0 && updatedPages[0].image) {
+            // Verify Cover Image Personalization
+            // If we have a child photo, the cover MUST be personalized (Fal URL). 
+            // If it looks like a static asset (e.g. /images/...), replace it with Page 1 (which is definitely swapped).
+            const isCoverPersonalized = book.cover_url && (book.cover_url.includes('fal.media') || book.cover_url.includes('fal.ai'));
+
+            if (photoUrl && !isCoverPersonalized) {
+                console.log("⚠️ Detected non-personalized cover with Child Photo. Attempting fix...");
+                if (updatedPages.length > 0 && updatedPages[0].image) {
+                    console.log("♻️ Fixing Cover: Overwriting static cover with personalized Page 1.");
+                    updates.cover_url = updatedPages[0].image;
+                }
+            } else if (!book.cover_url && updatedPages.length > 0 && updatedPages[0].image) {
+                // Fallback for missing cover
                 console.log("🖼️ Setting missing cover image from Page 1");
                 updates.cover_url = updatedPages[0].image;
             }

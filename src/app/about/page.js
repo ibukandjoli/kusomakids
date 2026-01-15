@@ -34,8 +34,8 @@ export default function AboutPage() {
                                 {/* Placeholder for founder image */}
                                 <div className="absolute inset-0 flex items-center justify-center text-3xl">👨🏾‍💻</div>
                             </div>
-                            <h3 className="font-bold text-gray-900">Tekki Group</h3>
-                            <p className="text-sm text-gray-500">Fondateurs</p>
+                            <h3 className="font-bold text-gray-900">Ibuka Ndjoli</h3>
+                            <p className="text-sm text-gray-500">Fondateur</p>
                         </div>
                     </div>
                 </div>

@@ -253,6 +253,13 @@ Gère le paiement one-time via Stripe.
 - **UX** : Refonte des terminologies ("Histoire" vs "Livre") et des templates emails.
 - **Tech** : Séparation des workers et clean up du Payment Flow.
 
+### Janvier 2026 (v1.5.3) - Launch Polish
+- **Fix Critical** : **Paywall** : Strict verification of subscription_status before showing Read button.
+- **Fix Critical** : **Cover Face Swap** : Enforced validation of swapped image URL.
+- **UX** : **Typography** : Switched Cover Title to Nunito, smaller size, Top alignment.
+- **UX** : **Ressemblance** : Tuning IP Adapter Scale + Specific keywords (Braids/Beads).
+- **Feature** : **Audio Reader** : OpenAI TTS integration with "Generate & Cache" strategy.
+
 ### Janvier 2026 (v1.5.2) - Launch Candidate Polish
 -   **Fix Critical** : **Cover Generation** : Utilisation forcée des URLs Supabase pour le Face Swap (Fal AI fix).
 -   **Fix Critical** : **Ressemblance** : Prompts dynamiques (Boy/Girl, Hair, Skin) et "Looking at camera".

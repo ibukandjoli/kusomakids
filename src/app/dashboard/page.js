@@ -113,10 +113,12 @@ function DashboardContent() {
                     <div className="bg-white/80 backdrop-blur-sm rounded-[2.5rem] shadow-xl border border-white/50 p-12 text-center max-w-4xl mx-auto mt-10">
                         <div className="mb-6 flex justify-center">
                             {/* Magic Book GIF */}
-                            <img
-                                src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExM3Z5eXAzZ3Z5eXAzZ3Z5eXAzZ3Z5eXAzZyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/3o7TKSjRrfIPjeiVyM/giphy.gif"
-                                alt="Magic Book"
-                                className="w-48 h-auto rounded-2xl mix-blend-multiply"
+                            <Image
+                                src="/images/magic_book_3d.png"
+                                width={200}
+                                height={200}
+                                alt="Livre Magique 3D"
+                                className="w-48 h-auto object-contain hover:scale-105 transition-transform"
                             />
                         </div>
                         <h2 className="text-3xl md:text-4xl font-black text-gray-900 mb-4">L'aventure commence ici !</h2>

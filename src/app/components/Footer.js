@@ -8,7 +8,7 @@ import { usePathname } from 'next/navigation';
 export default function Footer() {
   const pathname = usePathname();
   // Hide on Auth Pages and Preview Page
-  const isHidden = ['/login', '/signup', '/forgot-password', '/reset-password'].includes(pathname) || pathname.includes('/preview');
+  const isHidden = ['/login', '/signup', '/forgot-password', '/reset-password'].includes(pathname) || pathname.includes('/preview') || pathname.startsWith('/dashboard');
 
   if (isHidden) return null;
 

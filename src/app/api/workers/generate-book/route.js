@@ -50,12 +50,15 @@ export async function POST(req) {
         let generatedCount = 0;
 
         // [INSERTED FIX] 0. Handle Cover Personalization Explicitly
-        if (book.cover_url && photoUrl && !book.cover_url.includes('fal')) {
+        // Normalize cover URL key
+        let currentCoverUrl = book.cover_image_url || book.cover_url;
+
+        if (currentCoverUrl && photoUrl && !currentCoverUrl.includes('fal')) {
             console.log("🎨 Personalizing Cover Template...");
             try {
                 const coverSwap = await fal.subscribe("fal-ai/face-swap", {
                     input: {
-                        base_image_url: book.cover_url,
+                        base_image_url: currentCoverUrl,
                         swap_image_url: photoUrl
                     },
                     logs: true,
@@ -63,8 +66,7 @@ export async function POST(req) {
                 if (coverSwap.images?.[0]?.url) {
                     console.log("✅ Cover Swapped Successfully!");
                     // Update the book object in memory immediately so we don't overwrite it later
-                    // We need to persist this even if no pages are generated
-                    book.cover_url = coverSwap.images[0].url;
+                    currentCoverUrl = coverSwap.images[0].url;
 
                     // We must save this update to DB immediately or add to a "pending updates" object
                     // The loop below tracks "hasChanges". Let's assume we will save at the end.
@@ -143,16 +145,16 @@ export async function POST(req) {
             let updates = {
                 pages: updatedPages,
                 status: 'completed',
-                cover_url: book.cover_url // Ensure the swapped cover is saved
+                cover_image_url: currentCoverUrl // Ensure the swapped cover is saved to correct column
             };
 
             // Legacy Fallback (Only if we STILL don't have a personalized cover)
-            const isCoverPersonalized = book.cover_url && (book.cover_url.includes('fal.media') || book.cover_url.includes('fal.ai'));
+            const isCoverPersonalized = currentCoverUrl && (currentCoverUrl.includes('fal.media') || currentCoverUrl.includes('fal.ai'));
 
-            if (!book.cover_url && updatedPages.length > 0 && updatedPages[0].image) {
+            if (!currentCoverUrl && updatedPages.length > 0 && updatedPages[0].image) {
                 // Fallback for missing cover ENTIRELY
                 console.log("🖼️ Setting missing cover image from Page 1");
-                updates.cover_url = updatedPages[0].image;
+                updates.cover_image_url = updatedPages[0].image;
             }
             // Removed the aggressive "overwrite static cover" logic since we now handle it explicitly at start.
 

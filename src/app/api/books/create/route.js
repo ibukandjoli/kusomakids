@@ -94,39 +94,81 @@ export async function POST(req) {
         } = body;
 
         // Insert into generated_books
-        // Use Admin Client for insertion if Session Client fails? 
-        // Standard `supabase` client (SSR) might not have permission to insert for OTHER userId if RLS matches `auth.uid()`.
-        // If we are "Guest" (userId determined above), `supabase` (SSR) has no session (uid=null).
-        // RLS will block insert with `user_id = userId`.
-        // SOLUTION: Use Admin Client to insert the book.
+        // STRATEGY: Use Session Client if possible (Auth User), else Admin Client (Guest or Bypass)
 
-        const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-        const adminSupabase = createAdminClient(supabaseUrl, serviceRoleKey, {
-            auth: { autoRefreshToken: false, persistSession: false }
-        });
+        // Check if we have a valid session client and the user matches
+        let insertData, insertError;
 
-        const { data, error } = await adminSupabase
-            .from('generated_books')
-            .insert({
-                user_id: userId,
-                title: title || 'Mon Aventure',
-                child_name: childName,
-                child_age: childAge,
-                child_gender: childGender,
-                child_photo_url: childPhotoUrl,
-                content_json: content_json,
-                cover_url: coverUrl,
-                status: 'draft',
-                is_unlocked: false,
-                template_id: templateId
-            })
-            .select('id')
-            .single();
+        if (session && session.user.id === userId) {
+            console.log("💾 Using Session Client for Insert");
+            const result = await supabase
+                .from('generated_books')
+                .insert({
+                    user_id: userId,
+                    title: title || 'Mon Aventure',
+                    child_name: childName,
+                    child_age: childAge,
+                    child_gender: childGender,
+                    child_photo_url: childPhotoUrl,
+                    content_json: content_json,
+                    cover_url: coverUrl,
+                    status: 'draft',
+                    is_unlocked: false,
+                    template_id: templateId
+                })
+                .select('id')
+                .single();
 
-        if (error) throw error;
+            insertData = result.data;
+            insertError = result.error;
+        } else {
+            // FALLBACK: Admin Client (For Guest or Cross-User)
+            console.log("🛡️ Using Admin Client for Insert");
 
-        return NextResponse.json({ success: true, bookId: data.id });
+            const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+            const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+
+            if (!serviceRoleKey) {
+                // CRITICAL FALLBACK: If key is missing but we have userId, try standard client anyway?
+                // No, standard client without session (if guest) won't work. 
+                // But if we are here, we might be stuck.
+                if (userId) {
+                    console.warn("⚠️ Service Role Key missing, trying standard client as last resort (might fail RLS)...");
+                    // We can't really do anything if key is missing and no session. 
+                    // Exception: maybe RLS allows Anon insert? Unlikely.
+                    throw new Error("Server configuration error: Missing Service Role Key");
+                }
+            }
+
+            const adminSupabase = createAdminClient(supabaseUrl, serviceRoleKey, {
+                auth: { autoRefreshToken: false, persistSession: false }
+            });
+
+            const result = await adminSupabase
+                .from('generated_books')
+                .insert({
+                    user_id: userId,
+                    title: title || 'Mon Aventure',
+                    child_name: childName,
+                    child_age: childAge,
+                    child_gender: childGender,
+                    child_photo_url: childPhotoUrl,
+                    content_json: content_json,
+                    cover_url: coverUrl,
+                    status: 'draft',
+                    is_unlocked: false,
+                    template_id: templateId
+                })
+                .select('id')
+                .single();
+
+            insertData = result.data;
+            insertError = result.error;
+        }
+
+        if (insertError) throw insertError;
+
+        return NextResponse.json({ success: true, bookId: insertData.id });
 
     } catch (err) {
         console.error('Create Book API Error:', err);

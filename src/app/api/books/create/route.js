@@ -34,39 +34,17 @@ export async function POST(req) {
 
             const email = body.email;
 
-            // Try to find existing user or create new one
-            // We can't easily "find" by email without listing consumers (poor perf) or trying to create.
-            // Best bet: Try create, catch if exists.
-
-            // Generate a random password for shadow account (User can reset later)
+            // Generate a random password for shadow account
             const randomPassword = Math.random().toString(36).slice(-8) + "Kusoma1!";
 
             const { data: newUser, error: createError } = await adminSupabase.auth.admin.createUser({
                 email: email,
                 password: randomPassword,
-                email_confirm: true // Force confirm so they can use it
+                email_confirm: true
             });
 
             if (createError) {
-                // Assuming error message contains "already registered" or similar if user exists
-                // But we can't easily get the ID of an existing user due to security IF we don't have listUsers permission? 
-                // Service Role HAS listUsers permission.
-
                 console.log("⚠️ User creation failed (likely exists), looking up...", createError.message);
-
-                // Lookup user by email (Pagination 1, Filter email)
-                // listUsers() generally works for small batches. 
-                // Alternatively, admin.getUserById is only for ID.
-                // We have to use listUsers check.
-
-                // Note: listUsers is the only way in Supabase Admin API to find by email.
-                // Or generateLink({ type: 'magiclink', email }) returns user? No.
-
-                // Let's assume user exists. We need their ID to assign the book.
-                // Security Risk: Assigning a book to an existing user without their login? 
-                // Yes, but it's "Paid" content being added to their account. Low risk of harm.
-
-                // Find user logic
                 const { data: usersData, error: listError } = await adminSupabase.auth.admin.listUsers();
                 if (listError) throw listError;
 
@@ -94,9 +72,8 @@ export async function POST(req) {
         } = body;
 
         // Insert into generated_books
-        // STRATEGY: Use Session Client if possible (Auth User), else Admin Client (Guest or Bypass)
+        // Use 'pages' column instead of 'content_json' based on schema inference
 
-        // Check if we have a valid session client and the user matches
         let insertData, insertError;
 
         if (session && session.user.id === userId) {
@@ -110,7 +87,7 @@ export async function POST(req) {
                     child_age: childAge,
                     child_gender: childGender,
                     child_photo_url: childPhotoUrl,
-                    content_json: content_json,
+                    pages: content_json, // Corrected Column Name
                     cover_url: coverUrl,
                     status: 'draft',
                     is_unlocked: false,
@@ -122,20 +99,12 @@ export async function POST(req) {
             insertData = result.data;
             insertError = result.error;
         } else {
-            // FALLBACK: Admin Client (For Guest or Cross-User)
             console.log("🛡️ Using Admin Client for Insert");
-
             const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
             const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 
             if (!serviceRoleKey) {
-                // CRITICAL FALLBACK: If key is missing but we have userId, try standard client anyway?
-                // No, standard client without session (if guest) won't work. 
-                // But if we are here, we might be stuck.
                 if (userId) {
-                    console.warn("⚠️ Service Role Key missing, trying standard client as last resort (might fail RLS)...");
-                    // We can't really do anything if key is missing and no session. 
-                    // Exception: maybe RLS allows Anon insert? Unlikely.
                     throw new Error("Server configuration error: Missing Service Role Key");
                 }
             }
@@ -153,7 +122,7 @@ export async function POST(req) {
                     child_age: childAge,
                     child_gender: childGender,
                     child_photo_url: childPhotoUrl,
-                    content_json: content_json,
+                    pages: content_json, // Corrected Column Name
                     cover_url: coverUrl,
                     status: 'draft',
                     is_unlocked: false,

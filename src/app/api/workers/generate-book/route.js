@@ -36,12 +36,12 @@ export async function POST(req) {
         }
 
         // Validate Content
-        if (!book.content_json || !Array.isArray(book.content_json.pages)) {
+        if (!book.pages || !Array.isArray(book.pages)) {
             console.error("❌ Invalid book content structure");
             return NextResponse.json({ error: "Invalid content" }, { status: 400 });
         }
 
-        const pages = book.content_json.pages;
+        const pages = book.pages;
         const photoUrl = book.child_photo_url;
         const childGender = book.child_gender; // 'boy' or 'girl'
 
@@ -141,7 +141,7 @@ export async function POST(req) {
         if (hasChanges) {
             // Determine Cover Image if missing
             let updates = {
-                content_json: { ...book.content_json, pages: updatedPages },
+                pages: updatedPages,
                 status: 'completed',
                 cover_url: book.cover_url // Ensure the swapped cover is saved
             };

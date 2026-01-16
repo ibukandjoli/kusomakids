@@ -42,6 +42,7 @@ export default function PreviewPage() {
     // Loaded Content
     const [story, setStory] = useState(null);
     const [coverImage, setCoverImage] = useState(null); // New Cover State
+    const [savedBookId, setSavedBookId] = useState(null); // DB Persistence
     const hasStartedRef = useRef(false); // Prevent double firing
     const statusRef = useRef(status); // Track status for intervals
 
@@ -397,6 +398,42 @@ export default function PreviewPage() {
             }
 
             setStatus("complete");
+
+            // 3. AUTO-SAVE TO DB (If Logged In)
+            // This ensures the book appears in the Dashboard immediately as a Draft
+            if (user && user.id) {
+                console.log("💾 Auto-saving Draft to Database...");
+                try {
+                    const saveRes = await fetch('/api/books/create', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            title: data.bookTitle, // Use formatted title?
+                            childName: data.personalization.childName,
+                            childAge: data.personalization.age,
+                            childGender: data.personalization.gender,
+                            childPhotoUrl: data.personalization.photoUrl,
+                            content_json: pagesToGenerate.map((p, idx) => generatedPages[idx] || { text: p.text, image: null }), // Ensure we save the generated state
+                            coverUrl: coverUrl, // The swapped cover
+                            templateId: data.bookId // The template ID
+                        })
+                    });
+
+                    const saveData = await saveRes.json();
+                    if (saveRes.ok) {
+                        console.log("✅ Draft Saved to DB:", saveData.bookId);
+                        setSavedBookId(saveData.bookId);
+
+                        // Optional: Update URL to point to real ID? 
+                        // For now, keep as is.
+
+                    } else {
+                        console.error("❌ Failed to auto-save draft:", saveData);
+                    }
+                } catch (saveError) {
+                    console.error("❌ Auto-save Error:", saveError);
+                }
+            }
 
         } catch (error) {
             console.error("🚨 CRITICAL Generation Error:", error);

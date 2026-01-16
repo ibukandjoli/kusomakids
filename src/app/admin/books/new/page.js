@@ -8,13 +8,15 @@ import { supabase } from '@/lib/supabase';
 export default function NewBookPage() {
     const router = useRouter();
     const [loading, setLoading] = useState(false);
+    const [uploading, setUploading] = useState(false);
 
     // Initial State: 10 Empty Pages
     const [pages, setPages] = useState(
         Array.from({ length: 10 }, (_, i) => ({
             pageNumber: i + 1,
             base_image_url: "",
-            scene_context: `Scène ${i + 1}: `
+            text_template: "",
+            scene_context: ""
         }))
     );
 
@@ -26,11 +28,54 @@ export default function NewBookPage() {
         is_active: true
     });
 
+    // Helper: Upload Image to Supabase Storage
+    const uploadImage = async (file, bucket) => {
+        if (!file) return null;
+        try {
+            setUploading(true);
+            const fileExt = file.name.split('.').pop();
+            const fileName = `${Date.now()}-${Math.floor(Math.random() * 1000)}.${fileExt}`;
+            const filePath = `${fileName}`;
+
+            const { data, error } = await supabase.storage
+                .from(bucket)
+                .upload(filePath, file);
+
+            if (error) throw error;
+
+            const { data: { publicUrl } } = supabase.storage
+                .from(bucket)
+                .getPublicUrl(filePath);
+
+            return publicUrl;
+        } catch (error) {
+            console.error('Error uploading image:', error);
+            alert('Erreur lors de l\'upload de l\'image');
+            return null;
+        } finally {
+            setUploading(false);
+        }
+    };
+
     // Helper to update a specific page
     const updatePage = (index, field, value) => {
         const newPages = [...pages];
         newPages[index] = { ...newPages[index], [field]: value };
         setPages(newPages);
+    };
+
+    const handlePageImageUpload = async (index, file) => {
+        const url = await uploadImage(file, 'histoires');
+        if (url) {
+            updatePage(index, 'base_image_url', url);
+        }
+    };
+
+    const handleCoverUpload = async (file) => {
+        const url = await uploadImage(file, 'covers');
+        if (url) {
+            setForm(prev => ({ ...prev, cover_image_url: url }));
+        }
     };
 
     const handleSubmit = async (e) => {
@@ -112,14 +157,36 @@ export default function NewBookPage() {
                         </div>
 
                         <div>
-                            <label className="block text-sm font-bold text-gray-700 mb-2">Image de Couverture (URL)</label>
-                            <input
-                                type="url"
-                                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-orange-500 outline-none font-mono text-sm"
-                                value={form.cover_image_url}
-                                onChange={e => setForm({ ...form, cover_image_url: e.target.value })}
-                                placeholder="https://..."
-                            />
+                            <label className="block text-sm font-bold text-gray-700 mb-2">Image de Couverture</label>
+
+                            {/* Upload or URL */}
+                            <div className="space-y-3">
+                                <div className="flex gap-4">
+                                    <div className="flex-1">
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            onChange={(e) => handleCoverUpload(e.target.files[0])}
+                                            className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100"
+                                        />
+                                    </div>
+                                    <div className="flex-1">
+                                        <input
+                                            type="url"
+                                            className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:ring-2 focus:ring-orange-500 outline-none font-mono text-xs text-gray-500"
+                                            value={form.cover_image_url}
+                                            onChange={e => setForm({ ...form, cover_image_url: e.target.value })}
+                                            placeholder="Ou collez une URL directe..."
+                                        />
+                                    </div>
+                                </div>
+
+                                {form.cover_image_url && (
+                                    <div className="mt-2 w-32 h-40 bg-gray-100 rounded-lg overflow-hidden border border-gray-200 relative">
+                                        <img src={form.cover_image_url} alt="Cover Preview" className="w-full h-full object-cover" />
+                                    </div>
+                                )}
+                            </div>
                         </div>
 
                         <div className="flex items-center space-x-3">
@@ -144,14 +211,26 @@ export default function NewBookPage() {
                                 </div>
                                 <div className="flex-1 space-y-4">
                                     <div>
-                                        <label className="block text-xs font-bold text-gray-500 uppercase mb-1">URL de l'image (Master)</label>
-                                        <input
-                                            type="url"
-                                            className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:ring-1 focus:ring-orange-500 outline-none font-mono text-sm"
-                                            value={page.base_image_url}
-                                            onChange={e => updatePage(index, 'base_image_url', e.target.value)}
-                                            placeholder="https://..."
-                                        />
+                                        <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Image de la Page (Master)</label>
+                                        <div className="flex gap-4 items-start">
+                                            <div className="flex-1">
+                                                <input
+                                                    type="file"
+                                                    accept="image/*"
+                                                    onChange={(e) => handlePageImageUpload(index, e.target.files[0])}
+                                                    className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200"
+                                                />
+                                            </div>
+                                            <div className="flex-1">
+                                                <input
+                                                    type="url"
+                                                    className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:ring-1 focus:ring-orange-500 outline-none font-mono text-xs text-gray-400"
+                                                    value={page.base_image_url}
+                                                    onChange={e => updatePage(index, 'base_image_url', e.target.value)}
+                                                    placeholder="Ou URL directe..."
+                                                />
+                                            </div>
+                                        </div>
                                     </div>
                                     <div>
                                         <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Texte de l'Histoire (Master Script)</label>
@@ -186,10 +265,10 @@ export default function NewBookPage() {
                     <div className="sticky bottom-4">
                         <button
                             type="submit"
-                            disabled={loading}
+                            disabled={loading || uploading}
                             className="w-full bg-gray-900 text-white py-4 rounded-xl font-bold hover:bg-black transition-colors disabled:opacity-50 shadow-xl"
                         >
-                            {loading ? 'Création en cours...' : 'Sauvegarder l\'Histoire'}
+                            {loading ? 'Création en cours...' : uploading ? 'Upload en cours...' : 'Sauvegarder l\'Histoire'}
                         </button>
                     </div>
                 </form>

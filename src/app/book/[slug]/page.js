@@ -14,7 +14,7 @@ export async function generateMetadata({ params }) {
 
   if (!slug) return {};
 
-  let query = supabase.from('story_templates').select('title, description, cover_url, theme_slug').single();
+  let query = supabase.from('story_templates').select('title, description, cover_image_url, theme_slug').single();
 
   if (isUUID(slug)) {
     query = query.eq('id', slug);
@@ -32,7 +32,7 @@ export async function generateMetadata({ params }) {
 
   const title = formatTitle(book.title);
   const description = book.description || `Découvrez ${title}, une histoire personnalisée unique.`;
-  const coverUrl = book.cover_url || '/images/og-default.jpg';
+  const coverUrl = book.cover_image_url || '/images/og-default.jpg';
 
   return {
     title: `${title} - Livre Personnalisé`,
@@ -77,7 +77,7 @@ export default async function BookDetailPage({ params }) {
   if (book) {
     const { data: related } = await supabase
       .from('story_templates')
-      .select('id, title, cover_url, theme_slug, age_range')
+      .select('id, title, cover_image_url, theme_slug, age_range')
       .neq('id', book.id)
       .limit(4);
 

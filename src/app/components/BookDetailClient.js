@@ -85,9 +85,9 @@ export default function BookDetailClient({ initialBook, initialRelatedBooks }) {
                     {/* Left Column: Cover Image & Gallery */}
                     <div>
                         <div className="relative aspect-square rounded-3xl overflow-hidden shadow-2xl mb-6 bg-white transition-all duration-500">
-                            {book.cover_url || STATIC_COVERS[book.theme_slug] ? (
+                            {book.cover_image_url || STATIC_COVERS[book.theme_slug] ? (
                                 <Image
-                                    src={book.cover_url || STATIC_COVERS[book.theme_slug] || '/images/covers/cover_school.jpg'}
+                                    src={book.cover_image_url || STATIC_COVERS[book.theme_slug] || '/images/covers/cover_school.jpg'}
                                     alt={book.title}
                                     fill
                                     className="object-cover"
@@ -99,13 +99,18 @@ export default function BookDetailClient({ initialBook, initialRelatedBooks }) {
                                 </div>
                             )}
                         </div>
+                        {/* DEBUG: Show Image Source */}
+                        <div className="text-[10px] text-gray-400 mt-2 font-mono break-all hidden">
+                            Source: {book.cover_image_url ? '✅ DB' : '⚠️ STATIC'} ({book.cover_image_url || STATIC_COVERS[book.theme_slug]})
+                        </div>
+
                         {/* Placeholder for Gallery / Preview Pages - Hidden on Mobile */}
                         <div className="hidden md:grid grid-cols-3 gap-4">
                             {[1, 2, 3].map((i) => (
                                 <div key={i} className="aspect-square bg-gray-100 rounded-xl shadow-sm border border-gray-100 relative overflow-hidden">
                                     {/* Blurred Cover Background */}
                                     <Image
-                                        src={book.cover_url || STATIC_COVERS[book.theme_slug] || '/images/covers/cover_school.jpg'}
+                                        src={book.cover_image_url || STATIC_COVERS[book.theme_slug] || '/images/covers/cover_school.jpg'}
                                         alt="Aperçu verrouillé"
                                         fill
                                         className="object-cover filter blur-sm opacity-50"
@@ -216,7 +221,7 @@ export default function BookDetailClient({ initialBook, initialRelatedBooks }) {
                                 <Link href={`/book/${related.theme_slug || related.id}`} key={related.id} className="group block">
                                     <div className="relative aspect-square rounded-[2rem] overflow-hidden mb-4 shadow-md group-hover:shadow-lg transition-all border border-gray-100">
                                         <Image
-                                            src={related.cover_url || STATIC_COVERS[related.theme_slug] || '/images/covers/cover_school.jpg'}
+                                            src={related.cover_image_url || STATIC_COVERS[related.theme_slug] || '/images/covers/cover_school.jpg'}
                                             alt={related.title}
                                             fill
                                             className="object-cover group-hover:scale-105 transition-transform duration-500"

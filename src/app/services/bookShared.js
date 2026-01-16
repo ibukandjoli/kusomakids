@@ -223,7 +223,7 @@ export async function fetchBooksGeneric(supabaseClient, filters = {}) {
                 longDescription: b.description, // Ou champ dédié
                 features: ["Personnalisable", "Héros Africain", "Éducatif"], // Valeurs par défaut
                 previewPages: [], // À gérer plus tard ou via un champ JSON
-                coverUrl: b.cover_url || STATIC_COVERS[b.theme_slug] || '/images/covers/cover_school.jpg',
+                coverUrl: b.cover_image_url || STATIC_COVERS[b.theme_slug] || '/images/covers/cover_school.jpg',
                 tagline: b.tagline,
                 ...b.content_json // Merge extra data if stored in JSON
             }));

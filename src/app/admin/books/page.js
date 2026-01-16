@@ -71,10 +71,10 @@ export default function AdminBooksPage() {
                         <Link href="/admin" className="text-gray-500 hover:text-orange-600 mb-2 inline-block">
                             ← Retour au Dashboard
                         </Link>
-                        <h1 className="text-3xl font-bold text-gray-900">Gestion des Livres</h1>
+                        <h1 className="text-3xl font-bold text-gray-900">Gestion des Histoires</h1>
                     </div>
                     <Link href="/admin/books/new" className="bg-orange-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-orange-700 transition-colors shadow-lg shadow-orange-200">
-                        + Nouveau Livre
+                        + Nouvelle Histoire
                     </Link>
                 </div>
 

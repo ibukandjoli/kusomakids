@@ -282,7 +282,14 @@ export default function PreviewPage() {
 
                     // ⚡️ COST OPTIMIZATION: Check for Cached Base Image
                     if (page.base_image_url) {
-                        console.log(`⚡️ Using Cached Base Image for Page ${i + 1}`);
+                        console.log(`⚡️ Using Cached Base Image for Page ${i + 1}: ${page.base_image_url}`);
+                        // DEBUG: To helper user verify source
+                        if (page.base_image_url.includes('supabase')) {
+                            console.log("✅ GOOD: Using Supabase Storage for Page " + (i + 1));
+                        } else {
+                            console.warn("⚠️ WARNING: Using Local/External Path for Page " + (i + 1));
+                        }
+
                         sceneUrl = page.base_image_url;
 
                         // FIX: Ensure absolute URL for Fal

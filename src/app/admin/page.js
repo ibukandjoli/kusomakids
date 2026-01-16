@@ -106,7 +106,7 @@ export default function AdminDashboard() {
                         <h2 className="text-xl font-bold text-gray-900 mb-4">Gestion du Catalogue</h2>
                         <p className="text-gray-600 mb-6">Ajouter, modifier ou supprimer des histoires de la bibliothèque.</p>
                         <Link href="/admin/books" className="inline-block bg-gray-900 text-white px-6 py-3 rounded-xl font-bold hover:bg-black transition-colors">
-                            Gérer les livres
+                            Gérer les histoires
                         </Link>
                     </div>
 

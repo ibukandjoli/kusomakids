@@ -87,7 +87,7 @@ export default function PersonalizePage() {
                     age: formData.age,
                     photoUrl: photoUrl // usage of real URL
                 },
-                coverUrl: book.cover_url // Pass the cover URL for checkout display
+                coverUrl: book.cover_image_url // Pass the cover URL for checkout display
             };
 
             // Simplistic cart management
@@ -231,8 +231,8 @@ export default function PersonalizePage() {
                                     Best-Seller ⭐
                                 </div>
                                 <div className="aspect-[3/4] relative overflow-hidden rounded-[2rem] bg-orange-50 mb-6 shadow-inner">
-                                    {book && book.cover_url ? (
-                                        <Image src={book.cover_url} alt={book.title} fill className="object-cover transition-transform duration-700 group-hover:scale-105" />
+                                    {book && book.cover_image_url ? (
+                                        <Image src={book.cover_image_url} alt={book.title} fill className="object-cover transition-transform duration-700 group-hover:scale-105" />
                                     ) : (
                                         <div className="absolute inset-0 flex items-center justify-center text-orange-200">
                                             <span className="text-6xl">📖</span>

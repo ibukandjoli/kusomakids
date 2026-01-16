@@ -134,10 +134,10 @@ function DashboardContent() {
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 pb-32">
                         {books.map((book) => (
                             <div key={book.id} className="bg-white rounded-3xl shadow-md border border-gray-100 overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 group flex flex-col h-full">
-                                {/* Cover Helper */}
+                                {/* Cover Helper - Use story_content */}
                                 <div className="aspect-[4/5] bg-orange-50 relative overflow-hidden">
-                                    {book.cover_image_url || book.cover_url || (book.pages?.[0]?.image) ? (
-                                        <Image src={book.cover_image_url || book.cover_url || book.pages?.[0]?.image} alt={book.title} fill className="object-cover transition-transform duration-700 group-hover:scale-105" />
+                                    {book.story_content?.cover || book.story_content?.pages?.[0]?.image || book.cover_url ? (
+                                        <Image src={book.story_content?.cover || book.story_content?.pages?.[0]?.image || book.cover_url} alt={book.title} fill className="object-cover transition-transform duration-700 group-hover:scale-105" />
                                     ) : (
                                         <div className="absolute inset-0 flex items-center justify-center text-orange-200">
                                             <span className="text-6xl group-hover:scale-110 transition-transform">📖</span>

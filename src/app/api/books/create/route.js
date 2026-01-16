@@ -87,8 +87,10 @@ export async function POST(req) {
                     child_age: childAge,
                     child_gender: childGender,
                     child_photo_url: childPhotoUrl,
-                    pages: content_json, // Corrected Column Name
-                    cover_image_url: coverUrl, // Restored column
+                    child_gender: childGender,
+                    child_photo_url: childPhotoUrl,
+                    story_content: content_json, // Corrected to match DB schema (jsonb)
+                    cover_image_url: coverUrl,
                     status: 'draft',
                     is_unlocked: false,
                     template_id: templateId
@@ -122,8 +124,10 @@ export async function POST(req) {
                     child_age: childAge,
                     child_gender: childGender,
                     child_photo_url: childPhotoUrl,
-                    pages: content_json, // Corrected Column Name
-                    cover_image_url: coverUrl, // Restored column
+                    child_gender: childGender,
+                    child_photo_url: childPhotoUrl,
+                    story_content: content_json, // Corrected to match DB schema (jsonb)
+                    cover_image_url: coverUrl,
                     status: 'draft',
                     is_unlocked: false,
                     template_id: templateId

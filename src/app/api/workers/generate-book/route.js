@@ -35,13 +35,17 @@ export async function POST(req) {
             return NextResponse.json({ error: "Book not found" }, { status: 404 });
         }
 
-        // Validate Content
-        if (!book.pages || !Array.isArray(book.pages)) {
-            console.error("❌ Invalid book content structure");
+        // Validate Content - Correct Schema is 'story_content'
+        // story_content might be an array (pages) or an object wrapper. 
+        // Based on create route: story_content = content_json (which is { pages: [...] } usually?)
+        // Let's safe check both.
+        const rawContent = book.story_content || {};
+        const pages = Array.isArray(rawContent) ? rawContent : (rawContent.pages || []);
+
+        if (!pages || !Array.isArray(pages) || pages.length === 0) {
+            console.error("❌ Invalid book content structure: story_content is empty or invalid");
             return NextResponse.json({ error: "Invalid content" }, { status: 400 });
         }
-
-        const pages = book.pages;
         const photoUrl = book.child_photo_url;
         const childGender = book.child_gender; // 'boy' or 'girl'
 
@@ -143,9 +147,12 @@ export async function POST(req) {
         if (hasChanges) {
             // Determine Cover Image if missing
 
-            // Determine Cover Image if missing
+            // Reconstruct story_content with updates
+            // Keep structure consistent (if it was {pages:[]}, keep it. if it was [], keep it.)
+            let newStoryContent = Array.isArray(book.story_content) ? updatedPages : { ...book.story_content, pages: updatedPages };
+
             let updates = {
-                pages: updatedPages,
+                story_content: newStoryContent,
                 status: 'completed',
                 cover_image_url: currentCoverUrl
             };

@@ -201,11 +201,22 @@ export default function EditBookPage({ params }) {
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Contexte de la Scène (Prompt IA)</label>
+                                        <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Texte de l'Histoire (Master Script)</label>
+                                        <div className="text-xs text-gray-400 mb-2">Variables: {'{childName}'}, {'{childAge}'}, {'{gender}'}, {'{city}'}</div>
                                         <textarea
-                                            className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:ring-1 focus:ring-orange-500 outline-none text-sm h-20"
+                                            className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:ring-1 focus:ring-500 outline-none text-sm h-32 font-medium text-gray-800"
+                                            value={page.text_template || ''}
+                                            onChange={e => updatePage(index, 'text_template', e.target.value)}
+                                            placeholder="Ce matin-là, {childName}..."
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Contexte de la Scène (Prompt IA - Optionnel)</label>
+                                        <textarea
+                                            className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:ring-1 focus:ring-orange-500 outline-none text-sm h-20 text-gray-500"
                                             value={page.scene_context}
                                             onChange={e => updatePage(index, 'scene_context', e.target.value)}
+                                            placeholder="Décrivez la scène..."
                                         />
                                     </div>
                                 </div>

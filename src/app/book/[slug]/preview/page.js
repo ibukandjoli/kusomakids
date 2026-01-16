@@ -238,7 +238,9 @@ export default function PreviewPage() {
                     // DEBUG: Log Full Result
                     console.log("🔍 Full Face Swap Result:", JSON.stringify(swapResult, null, 2));
 
-                    const swapImages = swapResult.images || swapResult.data?.images;
+                    // Handle various Fal response formats (Arrays or Single Object)
+                    const swapImages = swapResult.images || swapResult.data?.images || (swapResult.image ? [swapResult.image] : []) || (swapResult.data?.image ? [swapResult.data.image] : []);
+
                     if (Array.isArray(swapImages) && swapImages.length > 0) {
                         const newCover = swapImages[0].url;
                         console.log("✅ Cover Face Swap Success:", newCover);
@@ -371,7 +373,8 @@ export default function PreviewPage() {
                         // DEBUG: Log Full Result
                         console.log("🔍 Page Face Swap Result:", JSON.stringify(swapResult, null, 2));
 
-                        const swapImages = swapResult.images || swapResult.data?.images;
+                        const swapImages = swapResult.images || swapResult.data?.images || (swapResult.image ? [swapResult.image] : []) || (swapResult.data?.image ? [swapResult.data.image] : []);
+
                         if (Array.isArray(swapImages) && swapImages.length > 0) {
                             finalImageUrl = swapImages[0].url;
                             console.log(`✅ Step 2 Success! Face Swapped.`);

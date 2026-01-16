@@ -54,7 +54,7 @@ export default function BookReader({ book, user, onUnlock, isEditable = false, o
 
                     {/* CSS Overlay Title (Mobile) - Top Position */}
                     <div className="absolute top-0 left-0 right-0 p-4 pt-8 flex justify-center bg-gradient-to-b from-black/20 to-transparent">
-                        <h1 className="text-3xl md:text-4xl font-black text-yellow-400 font-[var(--font-fredoka)] text-center leading-tight drop-shadow-xl transform -rotate-1">
+                        <h1 className="text-3xl md:text-4xl font-black text-white font-[var(--font-fredoka)] text-center leading-tight drop-shadow-xl transform -rotate-1">
                             {book.title}
                         </h1>
                     </div>
@@ -162,7 +162,7 @@ export default function BookReader({ book, user, onUnlock, isEditable = false, o
 
                             {/* CSS Overlay Title (Desktop) - REFINED TOP POSITION */}
                             <div className="absolute top-0 left-0 right-0 pt-10 px-12 flex justify-center z-20">
-                                <h1 className="text-4xl lg:text-5xl font-black text-yellow-400 font-[var(--font-fredoka)] text-center leading-tight drop-shadow-2xl tracking-wide transform -rotate-1">
+                                <h1 className="text-4xl lg:text-5xl font-black text-white font-[var(--font-fredoka)] text-center leading-tight drop-shadow-2xl tracking-wide transform -rotate-1">
                                     {book.title}
                                 </h1>
                             </div>

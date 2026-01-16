@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { createClient } from '@/lib/supabase-client';
+import { supabase } from '@/lib/supabase';
 
 export default function AdminDashboard() {
     const [stats, setStats] = useState({
@@ -13,7 +13,6 @@ export default function AdminDashboard() {
         clubMembers: 0
     });
     const [loading, setLoading] = useState(true);
-    const supabase = createClient();
 
     useEffect(() => {
         async function fetchStats() {

@@ -3,7 +3,7 @@
 import { useState, useEffect, use } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { createClient } from '@/lib/supabase-client';
+import { supabase } from '@/lib/supabase';
 
 export default function EditBookPage({ params }) {
     // Unwrap params using React.use()
@@ -11,7 +11,6 @@ export default function EditBookPage({ params }) {
     const { id } = resolvedParams;
 
     const router = useRouter();
-    const supabase = createClient();
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
 

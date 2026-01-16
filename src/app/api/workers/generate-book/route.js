@@ -145,7 +145,7 @@ export async function POST(req) {
             let updates = {
                 pages: updatedPages,
                 status: 'completed',
-                cover_image_url: currentCoverUrl // Ensure the swapped cover is saved to correct column
+                // cover_image_url removed to avoid 500 error
             };
 
             // Legacy Fallback (Only if we STILL don't have a personalized cover)
@@ -153,8 +153,8 @@ export async function POST(req) {
 
             if (!currentCoverUrl && updatedPages.length > 0 && updatedPages[0].image) {
                 // Fallback for missing cover ENTIRELY
-                console.log("🖼️ Setting missing cover image from Page 1");
-                updates.cover_image_url = updatedPages[0].image;
+                console.log("🖼️ Setting missing cover image from Page 1 (Skipped saving to DB)");
+                // updates.cover_image_url = updatedPages[0].image;
             }
             // Removed the aggressive "overwrite static cover" logic since we now handle it explicitly at start.
 

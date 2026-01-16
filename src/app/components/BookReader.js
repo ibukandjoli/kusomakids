@@ -43,8 +43,8 @@ export default function BookReader({ book, user, onUnlock, isEditable = false, o
             {/* Cover */}
             <div className="bg-white rounded-[2rem] shadow-xl overflow-hidden p-2 flex flex-col items-center text-center border-4 border-orange-100 relative">
                 <div className="w-full aspect-square relative rounded-2xl overflow-hidden shadow-lg border-2 border-white mb-2 bg-orange-50">
-                    {book.cover_image_url || book.cover_url ? (
-                        <Image src={book.cover_image_url || book.cover_url} alt="Cover" fill className="object-cover" />
+                    {book.cover_image_url || book.cover_url || (book.pages?.[0]?.image) ? (
+                        <Image src={book.cover_image_url || book.cover_url || book.pages?.[0]?.image} alt="Cover" fill className="object-cover" />
                     ) : (
                         <div className="absolute inset-0 flex items-center justify-center flex-col text-orange-300 animate-pulse">
                             <span className="text-4xl mb-2">✨</span>
@@ -151,8 +151,8 @@ export default function BookReader({ book, user, onUnlock, isEditable = false, o
                         className="w-full h-full flex flex-col items-center justify-center p-8 relative z-10 bg-[url('/images/pattern_bg.png')] bg-repeat"
                     >
                         <div className="w-[500px] h-[500px] relative rounded-3xl overflow-hidden shadow-2xl border-[12px] border-white mb-8 group transform hover:scale-[1.02] transition-transform duration-700 bg-orange-50">
-                            {book.cover_image_url || book.cover_url ? (
-                                <Image src={book.cover_image_url || book.cover_url} alt="Cover" fill className="object-cover" />
+                            {book.cover_image_url || book.cover_url || (book.pages?.[0]?.image) ? (
+                                <Image src={book.cover_image_url || book.cover_url || book.pages?.[0]?.image} alt="Cover" fill className="object-cover" />
                             ) : (
                                 <div className="absolute inset-0 flex items-center justify-center flex-col text-orange-300 animate-pulse">
                                     <span className="text-6xl mb-4">✨</span>
@@ -182,7 +182,7 @@ export default function BookReader({ book, user, onUnlock, isEditable = false, o
                             {/* Page Index 0 is Page 1 */}
                             {(pages[currentPage - 1]?.image || (!isUnlocked && currentPage >= 3)) ? (
                                 <Image
-                                    src={pages[currentPage - 1]?.image || (book.cover_image_url || book.cover_url)} // Use Cover if locked/missing
+                                    src={pages[currentPage - 1]?.image || (book.cover_image_url || book.cover_url || book.pages?.[0]?.image)} // Use Cover if locked/missing
                                     alt={`Page ${currentPage}`}
                                     fill
                                     className={`object-cover transition-all duration-700 ${(!isUnlocked && currentPage >= 3) ? 'blur-md scale-110 opacity-50' : 'group-hover:scale-105'}`}

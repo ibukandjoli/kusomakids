@@ -2,13 +2,12 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { createClient } from '@/lib/supabase-client';
+import { supabase } from '@/lib/supabase';
 import Image from 'next/image';
 
 export default function AdminBooksPage() {
     const [books, setBooks] = useState([]);
     const [loading, setLoading] = useState(true);
-    const supabase = createClient();
 
     useEffect(() => {
         fetchBooks();

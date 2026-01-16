@@ -8,11 +8,11 @@ export default function BookReader({ book, user, onUnlock, isEditable = false, o
     const [currentPage, setCurrentPage] = useState(0); // 0 = Cover
 
     // Normalize pages to objects { text, image }
-    // If passed via extraPages (for Preview), use that. Else use book.story_content.pages.
-    const rawPages = extraPages.length > 0 ? extraPages : (book.story_content?.pages || book.pages || []);
+    // If passed via extraPages (for Preview), use that. Else use book.pages.
+    const rawPages = extraPages.length > 0 ? extraPages : (book.pages || []);
     const pages = rawPages.map(p => typeof p === 'string' ? { text: p, image: null } : p);
 
-    const coverUrl = book.story_content?.cover || book.cover_url || pages?.[0]?.image;
+    const coverUrl = book.cover_image_url || book.cover_url || pages?.[0]?.image;
 
     const totalPages = pages.length;
 

@@ -90,7 +90,7 @@ export default function ReadPage() {
                 onClose={() => setIsPaymentOpen(false)}
                 user={user || {}} // Handle guest if needed? Assuming logged in for now based on dashboard flow
                 bookId={book.id}
-                bookCover={book.story_content?.cover || book.cover_url} // Pass cover to modal
+                bookCover={book.cover_image_url || book.cover_url} // Pass cover to modal
             />
         </div>
     );

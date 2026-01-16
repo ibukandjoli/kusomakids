@@ -88,7 +88,7 @@ export async function POST(req) {
                     child_gender: childGender,
                     child_photo_url: childPhotoUrl,
                     pages: content_json, // Corrected Column Name
-                    // cover_image_url removed to avoid schema error
+                    cover_image_url: coverUrl, // Restored column
                     status: 'draft',
                     is_unlocked: false,
                     template_id: templateId
@@ -123,7 +123,7 @@ export async function POST(req) {
                     child_gender: childGender,
                     child_photo_url: childPhotoUrl,
                     pages: content_json, // Corrected Column Name
-                    // cover_image_url removed to avoid schema error
+                    cover_image_url: coverUrl, // Restored column
                     status: 'draft',
                     is_unlocked: false,
                     template_id: templateId

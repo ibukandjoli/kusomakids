@@ -35,13 +35,13 @@ export async function POST(req) {
             return NextResponse.json({ error: "Book not found" }, { status: 404 });
         }
 
-        // Validate Content - Correct Schema is 'story_content'
-        if (!book.story_content || !Array.isArray(book.story_content.pages)) {
+        // Validate Content
+        if (!book.pages || !Array.isArray(book.pages)) {
             console.error("❌ Invalid book content structure");
             return NextResponse.json({ error: "Invalid content" }, { status: 400 });
         }
 
-        const pages = book.story_content.pages;
+        const pages = book.pages;
         const photoUrl = book.child_photo_url;
         const childGender = book.child_gender; // 'boy' or 'girl'
 
@@ -50,8 +50,8 @@ export async function POST(req) {
         let generatedCount = 0;
 
         // [INSERTED FIX] 0. Handle Cover Personalization Explicitly
-        // Normalize cover URL key from JSONB
-        let currentCoverUrl = book.story_content.cover || book.cover_url; // Fallback to legacy if needed
+        // Normalize cover URL key
+        let currentCoverUrl = book.cover_image_url || book.cover_url;
 
         if (currentCoverUrl && photoUrl && !currentCoverUrl.includes('fal')) {
             console.log("🎨 Personalizing Cover Template...");
@@ -143,16 +143,11 @@ export async function POST(req) {
         if (hasChanges) {
             // Determine Cover Image if missing
 
-            // Reconstruct story_content with updates
-            let newStoryContent = {
-                ...book.story_content,
-                pages: updatedPages,
-                cover: currentCoverUrl
-            };
-
+            // Determine Cover Image if missing
             let updates = {
-                story_content: newStoryContent,
+                pages: updatedPages,
                 status: 'completed',
+                cover_image_url: currentCoverUrl
             };
 
             // Legacy Fallback (Only if we STILL don't have a personalized cover)
@@ -161,7 +156,7 @@ export async function POST(req) {
             if (!currentCoverUrl && updatedPages.length > 0 && updatedPages[0].image) {
                 // Fallback for missing cover ENTIRELY
                 console.log("🖼️ Setting missing cover image from Page 1");
-                updates.story_content.cover = updatedPages[0].image;
+                updates.cover_image_url = updatedPages[0].image;
             }
             // Removed the aggressive "overwrite static cover" logic since we now handle it explicitly at start.
 

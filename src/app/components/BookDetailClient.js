@@ -182,7 +182,7 @@ export default function BookDetailClient({ initialBook, initialRelatedBooks }) {
                             </li>
                             <li className="flex items-center gap-3 text-gray-700">
                                 <div className="w-6 h-6 rounded-full bg-green-100 text-green-600 flex items-center justify-center font-bold text-xs">✓</div>
-                                Aperçu gratuit 3 pages avant achat
+                                Aperçu gratuit 3 illustrations avant achat
                             </li>
                         </ul>
 

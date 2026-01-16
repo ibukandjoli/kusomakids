@@ -253,6 +253,16 @@ Gère le paiement one-time via Stripe.
 - **UX** : Refonte des terminologies ("Histoire" vs "Livre") et des templates emails.
 - **Tech** : Séparation des workers et clean up du Payment Flow.
 
+### Janvier 2026 (v1.5.4) - Pivot V1 & Admin Dashboard
+- **Strategic Pivot**: "Asset-First" Generation. Switched from Flux Scene Generation to **Static Templates + Face Swap** for perfect consistency.
+- **Admin Dashboard**: New secured space (`/admin`) for:
+    - **Analytics**: Real-time stats (Revenue, Users, Sales).
+    - **Content Management**: CRUD interface for Story Templates.
+- **Backend**: 
+    - `generate-story` now acts as a Narrative Bridge between static visuals and text.
+    - `generate-book` worker simplified to exclusive Face Swap.
+- **Security**: Added `role` based access control (RBAC) to Profiles.
+
 ### Janvier 2026 (v1.5.3) - Launch Polish
 - **Fix Critical** : **Paywall** : Strict verification of subscription_status before showing Read button.
 - **Fix Critical** : **Cover Face Swap** : Enforced validation of swapped image URL.

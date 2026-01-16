@@ -1,11 +1,12 @@
 // src/app/layout.js
 import './globals.css';
-import { Nunito } from 'next/font/google';
+import { Nunito, Fredoka } from 'next/font/google';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import { BookProvider } from './context/BookContext';
 
-const nunito = Nunito({ subsets: ['latin'] });
+const nunito = Nunito({ subsets: ['latin'], variable: '--font-nunito' });
+const fredoka = Fredoka({ subsets: ['latin'], variable: '--font-fredoka' });
 
 export const viewport = {
   width: 'device-width',
@@ -52,7 +53,7 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="fr">
-      <body className={nunito.className}>
+      <body className={`${nunito.className} ${fredoka.variable}`}>
         <BookProvider>
           <div className="flex flex-col min-h-screen">
             <Header />

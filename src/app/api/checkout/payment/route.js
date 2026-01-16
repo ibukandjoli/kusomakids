@@ -13,6 +13,20 @@ export async function POST(req) {
 
         const origin = process.env.NEXT_PUBLIC_APP_URL || req.headers.get('origin') || 'https://kusomakids.com';
 
+        // SANITIZE COVER URL FOR STRIPE
+        let validCoverUrl = coverUrl;
+        if (validCoverUrl && validCoverUrl.startsWith('/')) {
+            validCoverUrl = `${origin}${validCoverUrl}`;
+        }
+
+        // Ensure it is a valid absolute URL, otherwise ignore it
+        if (validCoverUrl && !validCoverUrl.startsWith('http')) {
+            validCoverUrl = null;
+        }
+
+        // Stripe requires public URLs. Localhost URLs might strictly technically be valid "URLs" but Stripe might reject them if they are not publicly accessible or if they decide so.
+        // But "Not a valid URL" usually means relative path.
+
         // Create Stripe Session
         const session = await stripe.checkout.sessions.create({
             payment_method_types: ['card'],
@@ -24,7 +38,7 @@ export async function POST(req) {
                         product_data: {
                             name: `Histoire: ${bookTitle || 'Histoire Personnalisée'}`,
                             description: `Pour ${childName || 'votre enfant'}`,
-                            images: coverUrl ? [coverUrl] : [],
+                            images: validCoverUrl ? [validCoverUrl] : [],
                         },
                         unit_amount: 3000, // 3000 FCFA
                     },

@@ -8,138 +8,105 @@ const openai = new OpenAI({
 
 export async function POST(request) {
     try {
-        // Ajout de childDescription pour la flexibilité (Métis, Caucasien, etc.)
         const { childName, childAge, gender, theme, childDescription } = await request.json();
 
         if (!childName || !theme) {
-            return NextResponse.json(
-                { error: "Le prénom et le thème sont requis" },
-                { status: 400 }
-            );
+            return NextResponse.json({ error: "Le prénom et le thème sont requis" }, { status: 400 });
         }
 
-        console.log(`🔍 Generating story for ${childName} on theme: ${theme}`);
+        console.log(`🔍 PIVOT V1: Generating story for ${childName} on theme: ${theme}`);
 
-        // 1. TENTATIVE : Récupérer depuis Supabase (Mode Économique ⚡️)
+        // 1. FETCH STATIC TEMPLATE (Visual Anchor)
         const { data: template, error: dbError } = await supabase
             .from('story_templates')
             .select('content_json')
             .eq('theme_slug', theme)
             .single();
 
-        // Check if template exists AND has valid content (pages array)
-        if (template && template.content_json && template.content_json.pages && Array.isArray(template.content_json.pages) && template.content_json.pages.length > 0) {
-            console.log("✅ Template found in DB! Using cached content.");
-
-            let storyString = JSON.stringify(template.content_json);
-
-            // Remplacements globaux
-            storyString = storyString
-                .replace(/{childName}/g, childName)
-                .replace(/{childAge}/g, childAge)
-                // Gestion du genre pour l'anglais (pour les prompts image)
-                .replace(/{gender_en}/g, gender === 'Fille' ? 'girl' : 'boy')
-                // Gestion du genre pour le texte (si le template le prévoit)
-                .replace(/{gender}/g, gender);
-
-            const story = JSON.parse(storyString);
-            return NextResponse.json({ story, source: 'template' });
+        if (dbError || !template || !template.content_json?.pages) {
+            console.warn("⚠️ Template not found for pivot strategy. theme:", theme);
+            return NextResponse.json({ error: "Template introuvable pour ce thème." }, { status: 404 });
         }
 
-        if (dbError && dbError.code !== 'PGRST116') {
-            console.warn("⚠️ Supabase error:", dbError.message);
-        }
+        console.log("✅ Template loaded. Preparing Narrative Bridge...");
+        const templatePages = template.content_json.pages;
 
-        console.log("🤖 Template not found. Falling back to OpenAI Generation...");
+        // 2. CONSTRUCT SCENE CONTEXT FOR AI
+        // We tell OpenAI: "Here are the 10 images. Write the text for them."
+        const scenesDescription = templatePages.map(p =>
+            `Page ${p.pageNumber}: ${p.scene_context || "Scène générique"}`
+        ).join('\n');
 
-        // 2. FALLBACK : Génération OpenAI (Mode Coûteux 💸)
-
-        // --- CONFIGURATION DYNAMIQUE DU PROFIL ---
         const genderEn = gender === 'Fille' ? 'girl' : 'boy';
+        const physicalTraits = childDescription || `African heritage ${genderEn}, ${childAge} years old`;
 
-        // LOGIQUE INTELLIGENTE :
-        // Si une description est fournie (ex: "Métis, cheveux bouclés"), on l'utilise.
-        // Sinon, on applique le "Brand DNA" (Afro-descendant) mais de manière inclusive (pas de "dark skin" forcé).
-        const physicalTraits = childDescription || `African heritage ${genderEn}, expressive eyes, distinct cultural features`;
+        const systemPrompt = `Tu es un auteur de livres pour enfants renommé.
+Ta mission est d'écrire l'histoire textuelle qui accompagne une série d'illustrations fixes pré-existantes.
 
-        const systemPrompt = `Tu es un auteur et directeur artistique expert chez Pixar.
-Ta mission est de créer une histoire pour enfant magique et engageante.
+HÉROS : ${childName}, ${childAge} ans, ${gender}.
+TON : Magique, doux, engageant, inspirant (style Disney/Pixar).
+LANGUE : FRANÇAIS.
 
-CONTEXTE VISUEL (IMPORTANT POUR L'IA IMAGE) :
-Le style visuel est : "Modern 3D Pixar Animation style".
-Le protagoniste est : ${childName}, ${childAge} years old, ${physicalTraits}.
+INSTRUCTIONS :
+1. Je vais te donner la description visuelle de chaque page (SCENE_CONTEXT).
+2. Pour chaque page, tu dois écrire un texte simple (2-3 phrases) qui décrit l'action DANS ce contexte visuel.
+3. Le texte DOIT être cohérent avec l'image décrite. Ne fais pas faire au personnage des actions impossibles vu la description de la scène.
+4. Intègre le nom ${childName} naturellement.
 
-REGLES DE REDACTION (TEXTE) :
-1. Langue de l'histoire : FRANÇAIS.
-2. Structure : Exactement 10 pages.
-3. Contenu : "Il était une fois..." au début. 3-4 phrases simples par page.
+SCENE_CONTEXTS :
+${scenesDescription}
 
-REGLES CRITIQUES POUR LES PROMPTS D'IMAGES (imagePrompt) :
-1. LANGUE : ANGLAIS (Impératif).
-2. CONTENU : Ne décris PAS l'action ("il se souvient"), décris la SCÈNE VISUELLE ("il regarde une photo").
-3. FORMAT : Commence TOUJOURS par : "A medium shot 3D Pixar style illustration of..."
-4. PERSONNAGE : Inclure systématiquement : "${physicalTraits}, ${genderEn} named ${childName}".
-5. AMBIANCE : Ajoute toujours : "warm cinematic lighting, magical atmosphere, vibrant colors, 8k".
-6. INTERDIT : Ne JAMAIS utiliser les mots : "bokeh", "blur", "depth of field", "macro". On veut des arrière-plans détaillés.
-
-Thème : "${theme}"
-Héros : ${childName}, ${childAge} ans, ${gender}.
-
-Format JSON strict attendu :
+FORMAT DE SORTIE JSON ATTENDU :
 {
   "title": "Titre de l'histoire",
   "synopsis": "Court résumé",
   "pages": [
     { 
       "pageNumber": 1, 
-      "text": "Texte de la page en Français...", 
-      "imagePrompt": "A medium shot 3D Pixar style illustration of..." 
-    }
+      "text": "Texte correspondant à la scène 1..."
+    },
+    ... (jusqu'à la dernière page)
   ]
 }`;
 
+        // 3. GENERATE TEXT (Narrative Bridge)
         const completion = await openai.chat.completions.create({
             model: "gpt-4o-mini",
             messages: [
                 { role: "system", content: systemPrompt },
-                { role: "user", content: `Génère l'histoire sur le thème : ${theme}` }
+                { role: "user", content: `Écris l'histoire pour ${childName} sur le thème "${theme}" en suivant les scènes.` }
             ],
             response_format: { type: "json_object" },
         });
 
-        const story = JSON.parse(completion.choices[0].message.content);
+        const generatedStory = JSON.parse(completion.choices[0].message.content);
 
-        // 3. HYBRID MERGE STRATEGY (Optimization Coût Fal.ai 📉)
-        // Même si le texte vient d'OpenAI, on vérifie si on a des "Base Images" dans la DB pour ce thème.
-        // Si oui, on les injecte pour éviter de payer la génération Flux.
+        // 4. MERGE (Text + Static Images)
+        // We combine the AI Text with the Database Images
+        const finalPages = templatePages.map((tmplPage, index) => {
+            // Find corresponding text from AI (or fallback to index match)
+            const aiPage = generatedStory.pages.find(p => p.pageNumber === tmplPage.pageNumber) || generatedStory.pages[index];
 
-        if (template && template.content_json && template.content_json.pages) {
-            console.log("🧩 Checking for Base Images to merge...");
-            const dbPages = template.content_json.pages;
+            return {
+                pageNumber: tmplPage.pageNumber,
+                text: aiPage ? aiPage.text : tmplPage.text, // Fallback to template text if AI fails
+                imagePrompt: tmplPage.scene_context, // Keep context as prompt metadata
+                base_image_url: tmplPage.base_image_url, // THE KEY: Static Image URL
+                audio_url: null
+            };
+        });
 
-            if (Array.isArray(story.pages)) {
-                story.pages = story.pages.map(aiPage => {
-                    // Find matching page in DB template by pageNumber
-                    const dbPage = dbPages.find(p => p.pageNumber === aiPage.pageNumber);
-                    if (dbPage && dbPage.base_image_url) {
-                        console.log(`⚡️ Merging Base Image for Page ${aiPage.pageNumber}`);
-                        return {
-                            ...aiPage,
-                            base_image_url: dbPage.base_image_url // Inject URL for Frontend Caching
-                        };
-                    }
-                    return aiPage;
-                });
-            }
-        }
+        const finalStory = {
+            title: generatedStory.title || "L'Aventure Magique",
+            synopsis: generatedStory.synopsis,
+            pages: finalPages
+        };
 
-        return NextResponse.json({ story, source: 'openai' });
+        console.log("✅ Story merged successfully. Ready for Face Swap Worker.");
+        return NextResponse.json({ story: finalStory, source: 'pivot_v1' });
 
     } catch (error) {
-        console.error("Erreur génération histoire:", error);
-        return NextResponse.json(
-            { error: "Erreur lors de la génération de l'histoire" },
-            { status: 500 }
-        );
+        console.error("🚨 Error in generate-story:", error);
+        return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
     }
 }

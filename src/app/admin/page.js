@@ -1,15 +1,79 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { createClient } from '@/lib/supabase-client';
 
 export default function AdminDashboard() {
-    const [stats] = useState({
-        users: 120, // Mock data
-        booksCreated: 45,
-        revenue: '135.000 F',
-        clubMembers: 12
+    const [stats, setStats] = useState({
+        users: 0,
+        booksCreated: 0,
+        booksPurchased: 0,
+        revenue: '0 F',
+        clubMembers: 0
     });
+    const [loading, setLoading] = useState(true);
+    const supabase = createClient();
+
+    useEffect(() => {
+        async function fetchStats() {
+            try {
+                // 1. Users Count
+                const { count: userCount, error: userError } = await supabase
+                    .from('profiles')
+                    .select('*', { count: 'exact', head: true });
+
+                // 2. Books Created (Total)
+                const { count: booksCount, error: booksError } = await supabase
+                    .from('generated_books')
+                    .select('*', { count: 'exact', head: true });
+
+                // 3. Books Purchased (Unlocked) - Approximation of Revenue
+                const { count: purchasedCount, error: purchasedError } = await supabase
+                    .from('generated_books')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('is_unlocked', true);
+
+                // 4. Club Members (Active subscription)
+                const { count: clubCount, error: clubError } = await supabase
+                    .from('profiles')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('subscription_status', 'active'); // Assuming 'active' means paid member
+
+                if (userError || booksError || purchasedError || clubError) {
+                    console.error("Error fetching stats", { userError, booksError, purchasedError, clubError });
+                }
+
+                // Calculate Revenue (Approximation: 3000 FCFA per book)
+                // Note: This is naive. Ideally we used a 'orders' table.
+                const revenue = (purchasedCount || 0) * 3000;
+                const formattedRevenue = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'XOF' }).format(revenue);
+
+                setStats({
+                    users: userCount || 0,
+                    booksCreated: booksCount || 0,
+                    booksPurchased: purchasedCount || 0,
+                    revenue: formattedRevenue,
+                    clubMembers: clubCount || 0
+                });
+
+            } catch (error) {
+                console.error("Admin stats error:", error);
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        fetchStats();
+    }, []);
+
+    if (loading) {
+        return (
+            <div className="min-h-screen bg-gray-50 pt-32 flex justify-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600"></div>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-gray-50 pt-32 pb-20">
@@ -27,8 +91,9 @@ export default function AdminDashboard() {
                         <p className="text-3xl font-bold text-orange-600 mt-2">{stats.booksCreated}</p>
                     </div>
                     <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                        <h3 className="text-gray-500 text-sm font-bold uppercase">Chiffre d'affaires</h3>
-                        <p className="text-3xl font-bold text-green-600 mt-2">{stats.revenue}</p>
+                        <h3 className="text-gray-500 text-sm font-bold uppercase">Revenu (Est.)</h3>
+                        <p className="text-3xl font-bold text-green-600 mt-2 text-nowrap">{stats.revenue}</p>
+                        <p className="text-xs text-gray-400 mt-1">{stats.booksPurchased} ventes</p>
                     </div>
                     <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
                         <h3 className="text-gray-500 text-sm font-bold uppercase">Membres Club</h3>

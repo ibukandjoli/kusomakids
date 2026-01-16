@@ -234,13 +234,16 @@ export default function PreviewPage() {
                         logs: true,
                     });
 
+                    // DEBUG: Log Full Result
+                    console.log("🔍 Full Face Swap Result:", JSON.stringify(swapResult, null, 2));
+
                     const swapImages = swapResult.images || swapResult.data?.images;
                     if (Array.isArray(swapImages) && swapImages.length > 0) {
                         const newCover = swapImages[0].url;
                         console.log("✅ Cover Face Swap Success:", newCover);
                         coverUrl = newCover; // ONLY update if success
                     } else {
-                        console.warn("⚠️ Cover Face Swap returned no images.");
+                        console.warn("⚠️ Cover Face Swap returned no images. Result:", swapResult);
                     }
                 } catch (e) {
                     console.error("❌ Cover Swap Failed, using template:", e);
@@ -364,12 +367,15 @@ export default function PreviewPage() {
                             logs: true,
                         });
 
+                        // DEBUG: Log Full Result
+                        console.log("🔍 Page Face Swap Result:", JSON.stringify(swapResult, null, 2));
+
                         const swapImages = swapResult.images || swapResult.data?.images;
                         if (Array.isArray(swapImages) && swapImages.length > 0) {
                             finalImageUrl = swapImages[0].url;
                             console.log(`✅ Step 2 Success! Face Swapped.`);
                         } else {
-                            console.warn("⚠️ Face Swap returned no image, using scene.");
+                            console.warn("⚠️ Face Swap returned no image, using scene. Result:", swapResult);
                         }
                     }
 
@@ -512,7 +518,7 @@ export default function PreviewPage() {
                 <BookReader
                     book={{
                         // Priority to Template Title (orderData.bookTitle) to ensure persistence
-                        title: orderData?.bookTitle || story?.title,
+                        title: (orderData?.bookTitle || story?.title || "").replace(/\{childName\}|\[Son prénom\]/gi, orderData?.personalization?.childName || "Ton Enfant"),
                         child_name: orderData?.personalization?.childName,
                         cover_url: coverImage, // Use the generated/swapped cover
                         is_unlocked: false, // Always locked in preview until bought

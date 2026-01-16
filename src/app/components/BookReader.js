@@ -53,9 +53,8 @@ export default function BookReader({ book, user, onUnlock, isEditable = false, o
                     )}
 
                     {/* CSS Overlay Title (Mobile) - Top Position */}
-                    <div className="absolute top-0 left-0 right-0 p-4 pt-4 flex justify-center bg-gradient-to-b from-black/20 to-transparent">
-                        <h1 className="text-xl md:text-2xl font-black text-white font-[var(--font-fredoka)] text-center leading-tight drop-shadow-md transform -rotate-1"
-                            style={{ textShadow: '2px 2px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000' }}>
+                    <div className="absolute top-0 left-0 right-0 p-4 pt-8 flex justify-center bg-gradient-to-b from-black/20 to-transparent">
+                        <h1 className="text-3xl md:text-4xl font-black text-yellow-400 font-[var(--font-fredoka)] text-center leading-tight drop-shadow-xl transform -rotate-1">
                             {book.title}
                         </h1>
                     </div>
@@ -162,11 +161,8 @@ export default function BookReader({ book, user, onUnlock, isEditable = false, o
                             )}
 
                             {/* CSS Overlay Title (Desktop) - REFINED TOP POSITION */}
-                            <div className="absolute top-0 left-0 right-0 pt-6 px-12 flex justify-center z-20">
-                                <h1 className="text-2xl lg:text-3xl font-black text-white font-[var(--font-fredoka)] text-center leading-tight drop-shadow-2xl tracking-wide transform -rotate-1"
-                                    style={{
-                                        textShadow: '2px 2px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000',
-                                    }}>
+                            <div className="absolute top-0 left-0 right-0 pt-10 px-12 flex justify-center z-20">
+                                <h1 className="text-4xl lg:text-5xl font-black text-yellow-400 font-[var(--font-fredoka)] text-center leading-tight drop-shadow-2xl tracking-wide transform -rotate-1">
                                     {book.title}
                                 </h1>
                             </div>
@@ -234,9 +230,11 @@ export default function BookReader({ book, user, onUnlock, isEditable = false, o
                                     />
                                 </div>
                             ) : (
-                                <div className="prose prose-2xl font-serif text-gray-800 leading-relaxed max-w-lg text-center">
-                                    <span className="text-7xl float-left mr-4 text-orange-500 font-bold leading-[0.8]">{pages[currentPage - 1]?.text?.charAt(0)}</span>
-                                    {pages[currentPage - 1]?.text?.substring(1)}
+                                <div className="prose prose-2xl font-serif text-gray-800 leading-relaxed max-w-lg text-center flex flex-col justify-center h-full">
+                                    <p>
+                                        <span className="text-7xl text-orange-500 font-bold leading-[0.8] align-middle mr-2">{pages[currentPage - 1]?.text?.charAt(0)}</span>
+                                        {pages[currentPage - 1]?.text?.substring(1)}
+                                    </p>
                                 </div>
                             )}
                         </div>

@@ -24,26 +24,61 @@ export default function AppHeader({ user, profile }) {
                 </Link>
 
                 {/* CENTER: Navigation */}
+                {/* CENTER: Navigation */}
                 <nav className="hidden md:flex items-center gap-1 bg-gray-100/50 p-1.5 rounded-full border border-gray-200/50">
-                    <Link
-                        href="/dashboard"
-                        className={`px-5 py-2 rounded-full text-sm font-bold transition-all ${isActive('/dashboard') && !pathname.includes('purchased')
-                                ? 'bg-white shadow-sm text-gray-900'
-                                : 'text-gray-500 hover:text-gray-900 hover:bg-white/50'
-                            }`}
-                    >
-                        Mes Histoires
-                    </Link>
-                    <Link
-                        href="/dashboard/purchased"
-                        className={`px-5 py-2 rounded-full text-sm font-bold transition-all flex items-center gap-2 ${isActive('/dashboard/purchased')
-                                ? 'bg-white shadow-sm text-gray-900'
-                                : 'text-gray-500 hover:text-gray-900 hover:bg-white/50'
-                            }`}
-                    >
-                        <span>📚</span>
-                        Mes PDFs
-                    </Link>
+                    {pathname.startsWith('/admin') ? (
+                        <>
+                            <Link
+                                href="/admin"
+                                className={`px-5 py-2 rounded-full text-sm font-bold transition-all ${pathname === '/admin'
+                                    ? 'bg-white shadow-sm text-gray-900'
+                                    : 'text-gray-500 hover:text-gray-900 hover:bg-white/50'
+                                    }`}
+                            >
+                                Vue d'ensemble
+                            </Link>
+                            <Link
+                                href="/admin/books"
+                                className={`px-5 py-2 rounded-full text-sm font-bold transition-all ${pathname.startsWith('/admin/books')
+                                    ? 'bg-white shadow-sm text-gray-900'
+                                    : 'text-gray-500 hover:text-gray-900 hover:bg-white/50'
+                                    }`}
+                            >
+                                Histoires
+                            </Link>
+                            <Link
+                                href="/admin/users"
+                                className={`px-5 py-2 rounded-full text-sm font-bold transition-all ${pathname.startsWith('/admin/users')
+                                    ? 'bg-white shadow-sm text-gray-900'
+                                    : 'text-gray-500 hover:text-gray-900 hover:bg-white/50'
+                                    }`}
+                            >
+                                Utilisateurs
+                            </Link>
+                        </>
+                    ) : (
+                        <>
+                            <Link
+                                href="/dashboard"
+                                className={`px-5 py-2 rounded-full text-sm font-bold transition-all ${isActive('/dashboard') && !pathname.includes('purchased')
+                                    ? 'bg-white shadow-sm text-gray-900'
+                                    : 'text-gray-500 hover:text-gray-900 hover:bg-white/50'
+                                    }`}
+                            >
+                                Mes Histoires
+                            </Link>
+                            <Link
+                                href="/dashboard/purchased"
+                                className={`px-5 py-2 rounded-full text-sm font-bold transition-all flex items-center gap-2 ${isActive('/dashboard/purchased')
+                                    ? 'bg-white shadow-sm text-gray-900'
+                                    : 'text-gray-500 hover:text-gray-900 hover:bg-white/50'
+                                    }`}
+                            >
+                                <span>📚</span>
+                                Mes PDFs
+                            </Link>
+                        </>
+                    )}
                 </nav>
 
                 {/* RIGHT: Actions */}

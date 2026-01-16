@@ -125,7 +125,7 @@ export default function Header() {
   if (isAuthPage || isPreviewPage) return null;
 
   // APP HEADER STRATEGY: Switch to Dashboard specific header
-  if (pathname && pathname.startsWith('/dashboard')) {
+  if (pathname && (pathname.startsWith('/dashboard') || pathname.startsWith('/admin'))) {
     return <AppHeader user={user} profile={profile} />;
   }
 

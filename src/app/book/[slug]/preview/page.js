@@ -455,7 +455,8 @@ export default function PreviewPage() {
             ...orderData,
             coverUrl: coverImage || orderData.coverUrl, // Use state first 
             finalizedPages: pages,
-            cartId: Date.now()
+            cartId: Date.now(),
+            generatedBookId: savedBookId // PASS THE SAVED ID
         };
 
         // Retrieve existing cart

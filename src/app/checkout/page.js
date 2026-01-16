@@ -97,7 +97,14 @@ function CheckoutContent() {
     for (const item of cartItems) {
       if (item.type === 'club') continue; // Handle separate
 
-      let bookId = item.bookId;
+      // 1. DETERMINE BOOK ID
+      // If we came from Preview with auto-save, we have 'generatedBookId'.
+      // If we have 'bookId' but it's actually the TemplateID (from legacy), we need to distinguish.
+      // STRATEGY: If 'generatedBookId' exists, use it. If not, we must create.
+      let bookId = item.generatedBookId || item.id; // item.id might be from Dashboard/MyBooks (already verified)
+
+      // If neither exists, check if item.bookId is a TemplateID (Legacy Cart)
+      // We assume if 'generatedBookId' is missing, we need to save.
 
       // If draft not saved yet
       if (!bookId) {
@@ -117,7 +124,7 @@ function CheckoutContent() {
               childPhotoUrl: item.personalization?.photoUrl,
               content_json: contentToSave,
               coverUrl: item.coverImage || item.coverUrl,
-              templateId: item.templateId
+              templateId: item.templateId || item.bookId // Assuming item.bookId was the template if we are creating new
             })
           });
 
@@ -143,7 +150,9 @@ function CheckoutContent() {
       // If multiple items, we might need a cart implementation in Stripe or loop.
       // MVP: Pay for the FIRST book in the list (most common case: 1 book).
       const itemToPay = cartItems[0];
-      const targetBookId = processedBookIds[0] || itemToPay.bookId;
+      const targetBookId = processedBookIds[0] || itemToPay.generatedBookId || itemToPay.id;
+
+      if (!targetBookId) throw new Error("ID du livre manquant pour le paiement.");
 
       const res = await fetch('/api/checkout/payment', {
         method: 'POST',

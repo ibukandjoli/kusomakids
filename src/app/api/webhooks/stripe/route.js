@@ -6,6 +6,10 @@ import { createClient } from '@/lib/supabase-server';
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
+import { sendEmail } from '@/lib/resend';
+import { BookReadyEmail } from '@/lib/emails/BookReadyEmail'; // Reuse or Create new
+import { SENDERS } from '@/lib/senders';
+
 export async function POST(req) {
     const body = await req.text();
     const sig = headers().get('stripe-signature');
@@ -61,6 +65,25 @@ async function handleCheckoutSessionCompleted(session, supabase) {
             console.error("❌ Failed to unlock book:", unlockError);
         } else {
             console.log("✅ Book Unlocked in DB");
+
+            // 1.5 SEND PURCHASE EMAIL
+            if (customer_email) {
+                try {
+                    console.log(`📧 Sending purchase confirmation to ${customer_email}...`);
+                    await sendEmail({
+                        to: customer_email,
+                        from: SENDERS.TREASURE,
+                        subject: "Votre commande KusomaKids est confirmée ! 🌟",
+                        html: BookReadyEmail({
+                            childName: "votre enfant", // We might not have metadata here easily without DB fetch, keep generic
+                            bookTitle: "Aventure Magique",
+                            previewUrl: `${process.env.NEXT_PUBLIC_APP_URL || 'https://kusomakids.com'}/dashboard`
+                        })
+                    });
+                } catch (emailErr) {
+                    console.error("❌ Purchase Email Failed:", emailErr);
+                }
+            }
 
             // 2. TRIGGER GENERATION WORKER (Redundancy)
             // We call our own API worker to ensure pages 3-10 are generated

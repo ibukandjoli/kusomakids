@@ -6,10 +6,20 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 export async function POST(req) {
     try {
         const body = await req.json();
-        const { userId, email, bookId, amount } = body;
+        const { userId, email, bookId, amount, bookTitle, childName } = body;
 
         if (!userId || !email || !bookId) {
             return NextResponse.json({ error: 'Missing required parameters' }, { status: 400 });
+        }
+
+        // Format dynamic title
+        let productName = 'Histoire Magique (Achat Unique)';
+        if (bookTitle) {
+            productName = bookTitle;
+            if (childName) {
+                // Ensure replacement happens if not already done
+                productName = productName.replace(/\{childName\}/gi, childName).replace(/\[Son prénom\]/gi, childName);
+            }
         }
 
         // Convert amount to currency unit (Euro cents for Stripe or XOF)
@@ -32,11 +42,11 @@ export async function POST(req) {
                     price_data: {
                         currency: 'xof',
                         product_data: {
-                            name: 'Histoire Magique (Achat Unique)',
-                            description: 'Débloquez le PDF et la lecture de cette histoire.',
+                            name: productName,
+                            description: `Débloquez le PDF et la lecture de cette histoire${childName ? ' pour ' + childName : ''}.`,
                             images: ['https://kusomakids.com/logo.png'], // Replace with actual
                         },
-                        unit_amount: 3000, // 3000 XOF (Stripe handles 0-decimal currencies differently, XOF is usually zero-decimal so 3000 = 3000)
+                        unit_amount: 3000, // 3000 XOF
                         // CHECK: XOF is a zero-decimal currency? Stripe says: "For zero-decimal currencies, the amount should be passed as an integer."
                         // XOF is zero-decimal. So 3000 means 3000 XOF.
                     },

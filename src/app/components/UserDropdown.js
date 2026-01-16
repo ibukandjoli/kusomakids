@@ -69,7 +69,7 @@ export default function UserDropdown({ user, profile }) {
                         Mon Profil
                     </Link>
 
-                    <Link href="/dashboard?tab=billing" onClick={() => setIsOpen(false)} className="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition-colors">
+                    <Link href="/dashboard/billing" onClick={() => setIsOpen(false)} className="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-orange-50 hover:text-orange-600 transition-colors">
                         <span className="text-lg">💳</span>
                         Facturation & Crédits
                         {profile?.credits > 0 && (

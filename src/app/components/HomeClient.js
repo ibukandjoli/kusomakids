@@ -134,7 +134,7 @@ export default function HomeClient({ initialBooks }) {
         // Only replace if we have a child name, otherwise leave generic or original
         // If the text contains [Son prénom], we ideally want to show "votre enfant" if not logged in, 
         // or the specific name if logged in.
-        const name = childName || 'votre enfant';
+        const name = childName || 'Votre Enfant';
         if (!text) return '';
         return formatTitle(text)
             .replace(/\[Son prénom\]/gi, name)

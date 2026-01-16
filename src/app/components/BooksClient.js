@@ -30,7 +30,7 @@ export default function BooksClient() {
                 }
 
                 // 2. Fetch Books ONCE
-                let query = supabase.from('story_templates').select('*');
+                let query = supabase.from('story_templates').select('*').eq('is_active', true);
                 const { data, error } = await query;
 
                 if (error) {

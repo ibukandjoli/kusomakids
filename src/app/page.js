@@ -2,6 +2,8 @@ import HomeClient from '@/app/components/HomeClient';
 import { createClient } from '@/lib/supabase-server';
 import { fetchBooksGeneric } from '@/app/services/bookShared';
 
+export const revalidate = 0; // Ensure fresh data on every request (crucial for admin changes)
+
 export const metadata = {
   title: 'KusomaKids - Livres personnalisés pour enfants africains',
   description: 'Créez un livre unique où votre enfant devient le héros. Des histoires magiques célébrant l\'identité africaine, avec son prénom et son avatar.',

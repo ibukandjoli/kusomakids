@@ -1,11 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
 
-export default function OnboardingSuccess() {
+function OnboardingSuccessContent() {
     const [showModal, setShowModal] = useState(true);
     const [user, setUser] = useState(null);
     const router = useRouter();
@@ -90,8 +90,8 @@ export default function OnboardingSuccess() {
                             <li className="flex items-start gap-3">
                                 <span className="text-2xl">📥</span>
                                 <div>
-                                    <p className="font-bold text-gray-900">PDFs illimités</p>
-                                    <p className="text-sm text-gray-600">Téléchargez toutes vos histoires en PDF</p>
+                                    <p className="font-bold text-gray-900">1 PDF gratuit/mois</p>
+                                    <p className="text-sm text-gray-600">+ 50% de réduction sur les PDFs supplémentaires</p>
                                 </div>
                             </li>
                         </ul>
@@ -142,5 +142,17 @@ export default function OnboardingSuccess() {
                 }
             `}</style>
         </div>
+    );
+}
+
+export default function OnboardingSuccess() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-orange-100 flex items-center justify-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
+            </div>
+        }>
+            <OnboardingSuccessContent />
+        </Suspense>
     );
 }

@@ -55,6 +55,14 @@ async function handleCheckoutSessionCompleted(session) {
 
     let userId = metadata?.userId;
     const bookId = metadata?.bookId || metadata?.target_book_id;
+    const targetEmail = customer_email || customer_details?.email;
+
+    let userId = metadata?.userId;
+    const bookId = metadata?.bookId || metadata?.target_book_id;
+    // Extract Metadata for Emails
+    const childName = metadata?.childName || customer_details?.name || 'votre enfant';
+    const bookTitle = "Aventure Magique"; // If dynamic titles exist later, fetch from DB
+
     const isSubscription = session.mode === 'subscription';
 
     console.log(`📦 Processing Order for User: ${userId}, Book: ${bookId}, Email: ${targetEmail}, Type: ${session.mode}`);
@@ -90,6 +98,8 @@ async function handleCheckoutSessionCompleted(session) {
 
                 // 2.5 Send Welcome/OTP Email
                 try {
+                    // A. WELCOME EMAIL (Ibuka)
+                    console.log("📨 Sending Welcome Email (Ibuka)...");
                     // A. WELCOME EMAIL (Ibuka)
                     console.log("📨 Sending Welcome Email (Ibuka)...");
                     const welcomeHtml = WelcomeEmail({ userName: customer_details?.name || 'Parent' });
@@ -161,9 +171,9 @@ async function handleCheckoutSessionCompleted(session) {
                         from: SENDERS.TREASURE,
                         subject: "Votre commande KusomaKids est confirmée ! 🌟",
                         html: BookReadyEmail({
-                            childName: "votre enfant",
-                            bookTitle: "Aventure Magique",
-                            previewUrl: `${process.env.NEXT_PUBLIC_APP_URL || 'https://kusomakids.com'}/dashboard`
+                            childName: childName,
+                            bookTitle: bookTitle,
+                            previewUrl: `https://www.kusomakids.com/dashboard/purchased`
                         })
                     });
                     if (!purEmailRes.success) {

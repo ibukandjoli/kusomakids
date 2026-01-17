@@ -299,3 +299,42 @@ async function handleCheckoutSessionCompleted(session) {
         }
     }
 }
+
+// Handle monthly subscription renewal
+async function handleInvoicePaymentSucceeded(invoice) {
+    // Only process subscription invoices (not one-time payments)
+    if (!invoice.subscription) {
+        console.log("⏭️ Skipping non-subscription invoice");
+        return;
+    }
+    
+    try {
+        // Retrieve subscription to get metadata
+        const subscription = await stripe.subscriptions.retrieve(invoice.subscription);
+        const userId = subscription.metadata?.userId;
+
+        if (!userId) {
+            console.error("❌ No userId in subscription metadata");
+            return;
+        }
+
+        console.log(`🔄 Processing subscription renewal for user: ${userId}`);
+
+        // Reset monthly credits to 1
+        const { error } = await supabaseAdmin
+            .from('profiles')
+            .update({ 
+                monthly_credits: 1,
+                subscription_status: 'active'
+            })
+            .eq('id', userId);
+
+        if (error) {
+            console.error("❌ Failed to reset monthly credits:", error);
+        } else {
+            console.log("✅ Monthly credits reset to 1 for user:", userId);
+        }
+    } catch (err) {
+        console.error("❌ Error processing invoice:", err);
+    }
+}

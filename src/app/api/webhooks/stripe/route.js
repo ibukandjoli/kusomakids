@@ -55,10 +55,6 @@ async function handleCheckoutSessionCompleted(session) {
 
     let userId = metadata?.userId;
     const bookId = metadata?.bookId || metadata?.target_book_id;
-    const targetEmail = customer_email || customer_details?.email;
-
-    let userId = metadata?.userId;
-    const bookId = metadata?.bookId || metadata?.target_book_id;
     // Extract Metadata for Emails
     const childName = metadata?.childName || customer_details?.name || 'votre enfant';
     const bookTitle = "Aventure Magique"; // If dynamic titles exist later, fetch from DB
@@ -117,9 +113,13 @@ async function handleCheckoutSessionCompleted(session) {
                     }
 
                     // B. MAGIC LINK (Treasure)
+                    console.log("🔑 Generating Magic Link...");
                     const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
                         type: 'magiclink',
                         email: targetEmail,
+                        options: {
+                            redirectTo: 'https://www.kusomakids.com/dashboard'
+                        }
                     });
 
                     if (linkData && linkData.properties?.action_link) {

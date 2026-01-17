@@ -4,6 +4,7 @@ import Stripe from 'stripe';
 import { createClient as createSupabaseClient } from '@supabase/supabase-js';
 import { sendEmail } from '@/lib/resend';
 import { BookReadyEmail } from '@/lib/emails/BookReadyEmail';
+import { WelcomeEmail } from '@/lib/emails/WelcomeEmail';
 import { SENDERS } from '@/lib/senders';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);

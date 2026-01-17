@@ -189,20 +189,35 @@ async function handleCheckoutSessionCompleted(session) {
         } else {
             console.log("✅ Book Unlocked & Linked in DB");
 
-            // 1.5 SEND PURCHASE EMAIL (+ Magic Link for Auto-Login/Download)
+            // 1.5 SEND PURCHASE EMAIL (+ Secure Download Link)
             if (targetEmail) {
-                // GENERATE MAGIC LINK FOR "DOWNLOAD" BUTTON
-                let magicLinkUrl = 'https://www.kusomakids.com/login';
+                // GENERATE SECURE DOWNLOAD TOKEN
+                let downloadUrl = 'https://www.kusomakids.com/login';
                 try {
-                    const { data: linkData } = await supabaseAdmin.auth.admin.generateLink({
-                        type: 'magiclink',
-                        email: targetEmail,
-                        options: { redirectTo: 'https://www.kusomakids.com/auth/callback' }
-                    });
-                    if (linkData?.properties?.action_link) {
-                        magicLinkUrl = linkData.properties.action_link;
+                    // Generate cryptographically random token
+                    const crypto = require('crypto');
+                    const downloadToken = crypto.randomBytes(32).toString('hex');
+
+                    // Store token in database
+                    const { error: tokenError } = await supabaseAdmin
+                        .from('download_tokens')
+                        .insert({
+                            book_id: bookId,
+                            token: downloadToken,
+                            email: targetEmail,
+                            downloads_remaining: 3,
+                            expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() // 30 days
+                        });
+
+                    if (tokenError) {
+                        console.error("❌ Failed to create download token:", tokenError);
+                    } else {
+                        downloadUrl = `https://www.kusomakids.com/api/download-secure/${bookId}?token=${downloadToken}`;
+                        console.log("✅ Download token created, valid for 30 days, 3 downloads");
                     }
-                } catch (e) { console.error("Error generating purchase action link:", e); }
+                } catch (e) {
+                    console.error("Error generating download token:", e);
+                }
 
                 try {
                     console.log(`📧 Sending purchase confirmation to ${targetEmail}...`);
@@ -213,7 +228,8 @@ async function handleCheckoutSessionCompleted(session) {
                         html: BookReadyEmail({
                             childName: childName,
                             bookTitle: bookTitle,
-                            previewUrl: magicLinkUrl // User clicks "Download" -> Magic Login -> Redirect to PDFs
+                            downloadUrl: downloadUrl, // Direct download link
+                            userEmail: targetEmail
                         })
                     });
                     if (!purEmailRes.success) {

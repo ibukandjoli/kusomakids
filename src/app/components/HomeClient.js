@@ -223,7 +223,7 @@ export default function HomeClient({ initialBooks }) {
                                 </div>
                                 <div>
                                     <div className="flex text-yellow-400 text-sm">★★★★★</div>
-                                    <p className="text-sm text-gray-600 font-medium">&quot;Magique, ma fille adore son livre !&quot; - <span className="text-gray-900 font-bold">Fatou D.</span></p>
+                                    <p className="text-sm text-gray-600 font-medium">&quot;Mon fils adore son histoire !&quot; - <span className="text-gray-900 font-bold">Fatou S.</span></p>
                                 </div>
                             </div>
 
@@ -327,10 +327,10 @@ export default function HomeClient({ initialBooks }) {
                         <div className="hidden md:block absolute top-[60px] left-[10%] right-[10%] h-1 bg-orange-200 border-t-2 border-dashed border-orange-300 -z-10"></div>
 
                         {[
-                            { emoji: "🎭", title: "1. Choisissez", text: "le thème de l'histoire" },
-                            { emoji: "✏️", title: "2. Personnalisez", text: "prénom, âge et photo" },
+                            { emoji: "🎭", title: "1. Choisissez", text: "une histoire dans la Bibliothèque" },
+                            { emoji: "✏️", title: "2. Personnalisez", text: "avec le prénom, l'âge et la photo" },
                             { emoji: "👀", title: "3. Prévisualisez", text: "et modifiez le texte si besoin" },
-                            { emoji: "📖", title: "4. Savourez", text: "en lecture ou en audio" },
+                            { emoji: "📖", title: "4. Savourez", text: "en lecture streaming ou PDF" },
                         ].map((step, i) => (
                             <motion.div
                                 key={i}
@@ -432,7 +432,7 @@ export default function HomeClient({ initialBooks }) {
                 <div className="container mx-auto px-4">
                     <div className="text-center max-w-2xl mx-auto mb-16">
                         <h2 className="text-3xl font-bold text-gray-900 mb-4">Une formule pour chaque besoin</h2>
-                        <p className="text-gray-600">Offrez une histoire unique ou rejoignez le club pour lire toute l'année.</p>
+                        <p className="text-gray-600">Offrez une histoire unique (PDF)ou rejoignez le club pour lire toute l'année.</p>
                     </div>
 
                     <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto items-center">
@@ -443,10 +443,10 @@ export default function HomeClient({ initialBooks }) {
                         >
                             <div className="mb-6">
                                 <span className="text-gray-500 font-bold tracking-wider text-sm uppercase">À la carte</span>
-                                <h3 className="text-3xl font-bold text-gray-900 mt-2">3.000 F CFA <span className="text-lg text-gray-400 font-normal">/ livre</span></h3>
+                                <h3 className="text-3xl font-bold text-gray-900 mt-2">3.000 F CFA <span className="text-lg text-gray-400 font-normal">/ histoire</span></h3>
                             </div>
                             <ul className="space-y-4 mb-8 flex-grow">
-                                <li className="flex items-center gap-3 text-gray-600"><span className="text-green-500 font-bold">✓</span> 1 Livre PDF Haute Qualité</li>
+                                <li className="flex items-center gap-3 text-gray-600"><span className="text-green-500 font-bold">✓</span> 1 Histoire PDF Haute Qualité</li>
                                 <li className="flex items-center gap-3 text-gray-600"><span className="text-green-500 font-bold">✓</span> Personnalisation complète</li>
                                 <li className="flex items-center gap-3 text-gray-600"><span className="text-green-500 font-bold">✓</span> Modification du texte</li>
                                 <li className="flex items-center gap-3 text-gray-600"><span className="text-green-500 font-bold">✓</span> Lecture en ligne (+ Audio)</li>

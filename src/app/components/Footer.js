@@ -30,7 +30,7 @@ export default function Footer() {
               </span>
             </Link>
             <p className="text-gray-400 leading-relaxed mb-6">
-              Une plateforme magique qui transforme votre enfant en héros d'histoires uniques dont vous restez le co-auteur. L'IA imagine l'histoire, vous la perfectionnez, et votre enfant la dévore.
+              Une plateforme magique qui transforme votre enfant en héros d'histoires uniques. Nous proposons l'histoire, vous la perfectionnez, et votre enfant la dévore.
             </p>
             <div className="flex gap-4">
               <a href="https://instagram.com/kusomakids" className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center hover:bg-orange-500 transition-colors text-white">

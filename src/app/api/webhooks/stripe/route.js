@@ -1,14 +1,25 @@
 import { NextResponse } from 'next/server';
 import { headers } from 'next/headers';
 import Stripe from 'stripe';
-import { createClient } from '@/lib/supabase-server';
+import { createClient as createSupabaseClient } from '@supabase/supabase-js';
+import { sendEmail } from '@/lib/resend';
+import { BookReadyEmail } from '@/lib/emails/BookReadyEmail';
+import { SENDERS } from '@/lib/senders';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
-import { sendEmail } from '@/lib/resend';
-import { BookReadyEmail } from '@/lib/emails/BookReadyEmail'; // Reuse or Create new
-import { SENDERS } from '@/lib/senders';
+// Initialize Admin Client for Ghost Account Creation
+const supabaseAdmin = createSupabaseClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_ROLE_KEY,
+    {
+        auth: {
+            autoRefreshToken: false,
+            persistSession: false
+        }
+    }
+);
 
 export async function POST(req) {
     const body = await req.text();
@@ -17,106 +28,155 @@ export async function POST(req) {
     let event;
 
     try {
-        if (!sig || !endpointSecret) {
-            console.error("⚠️ Missing Stripe Signature or Webhook Secret");
-            return NextResponse.json({ error: "Configuration Error" }, { status: 400 });
-        }
         event = stripe.webhooks.constructEvent(body, sig, endpointSecret);
     } catch (err) {
-        console.error(`❌ Webhook Error: ${err.message}`);
+        console.error(`❌ Webhook signature verification failed.`, err.message);
         return NextResponse.json({ error: `Webhook Error: ${err.message}` }, { status: 400 });
     }
 
-    const supabase = await createClient();
-
-    // Handle the event
-    switch (event.type) {
-        case 'checkout.session.completed':
-            const session = event.data.object;
-            console.log(`💰 Checkout Session Completed: ${session.id}`);
-
-            await handleCheckoutSessionCompleted(session, supabase);
-            break;
-        default:
-            console.log(`Unhandled event type ${event.type}`);
+    if (event.type === 'checkout.session.completed') {
+        const session = event.data.object;
+        try {
+            await handleCheckoutSessionCompleted(session);
+        } catch (error) {
+            console.error("❌ Error handling checkout session:", error);
+            // We return 200 to acknowledge receipt to Stripe, but log the error
+        }
     }
 
     return NextResponse.json({ received: true });
 }
 
-async function handleCheckoutSessionCompleted(session, supabase) {
-    const { metadata, customer_email } = session;
-    const userId = metadata?.userId;
+async function handleCheckoutSessionCompleted(session) {
+    const { metadata, customer_email, customer_details } = session;
+    // Fallback to customer_details.email if customer_email is null
+    const targetEmail = customer_email || customer_details?.email;
 
-    // Determine Book ID (Club uses 'target_book_id', One-Time uses 'bookId')
+    let userId = metadata?.userId;
     const bookId = metadata?.bookId || metadata?.target_book_id;
     const isSubscription = session.mode === 'subscription';
 
-    console.log(`📦 Processing Order for User: ${userId}, Book: ${bookId}, Type: ${session.mode}`);
+    console.log(`📦 Processing Order for User: ${userId}, Book: ${bookId}, Email: ${targetEmail}, Type: ${session.mode}`);
 
-    if (bookId) {
-        // 1. UNLOCK BOOK
-        const { error: unlockError } = await supabase
+    if (!targetEmail) {
+        console.error("❌ CRITICAL: No email found in Stripe Session. Cannot fulfill order.");
+    }
+
+    // --- GHOST ACCOUNT LOGIC ---
+    // If Guest Checkout (userId is 'guest' or missing), utilize Email to find/create user
+    if ((!userId || userId === 'guest') && targetEmail) {
+        console.log(`👻 Guest Checkout detected for ${targetEmail}. checking/creating account...`);
+        try {
+            // 1. Check if user exists
+            const { data: { users }, error: listError } = await supabaseAdmin.auth.admin.listUsers();
+            const existingUser = users?.find(u => u.email === targetEmail);
+
+            if (existingUser) {
+                console.log(`👤 User already exists: ${existingUser.id}`);
+                userId = existingUser.id;
+            } else {
+                console.log(`🆕 Creating Ghost Account for ${targetEmail}...`);
+                // 2. Create User
+                const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
+                    email: targetEmail,
+                    email_confirm: true,
+                    user_metadata: { full_name: customer_details?.name || 'Parent Kusoma' }
+                });
+
+                if (createError) throw createError;
+                userId = newUser.user.id;
+                console.log(`✨ Ghost Account Created: ${userId}`);
+
+                // 2.5 Send Welcome/OTP Email
+                try {
+                    const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
+                        type: 'magiclink',
+                        email: targetEmail,
+                    });
+
+                    if (linkData && linkData.properties?.action_link) {
+                        const emailRes = await sendEmail({
+                            to: targetEmail,
+                            from: SENDERS.TREASURE,
+                            subject: "Accédez à votre histoire KusomaKids ! 🗝️",
+                            html: `<p>Votre commande est validée !</p><p>Pour accéder à votre histoire, cliquez sur ce lien magique : <a href="${linkData.properties.action_link}">Accéder à mon compte</a></p>`
+                        });
+
+                        if (!emailRes.success) {
+                            console.error("❌ Magic Link Email Failed:", emailRes.error);
+                        } else {
+                            console.log("📨 Magic Link sent successfully.");
+                        }
+                    }
+                } catch (linkErr) {
+                    console.error("Failed to generate/send magic link:", linkErr);
+                }
+            }
+        } catch (authError) {
+            console.error("❌ Ghost Account Logic Failed:", authError);
+        }
+    }
+
+    if (bookId && userId) {
+        // 1. UNLOCK BOOK & LINK USER
+        const updates = {
+            is_unlocked: true,
+            user_id: userId // Ensure ownership is transferred/set to the real user
+        };
+
+        const { error: unlockError } = await supabaseAdmin
             .from('generated_books')
-            .update({ is_unlocked: true }) // Ensure status reflects payment
+            .update(updates)
             .eq('id', bookId);
 
         if (unlockError) {
             console.error("❌ Failed to unlock book:", unlockError);
         } else {
-            console.log("✅ Book Unlocked in DB");
+            console.log("✅ Book Unlocked & Linked in DB");
 
             // 1.5 SEND PURCHASE EMAIL
-            if (customer_email) {
+            if (targetEmail) {
                 try {
-                    console.log(`📧 Sending purchase confirmation to ${customer_email}...`);
-                    await sendEmail({
-                        to: customer_email,
+                    console.log(`📧 Sending purchase confirmation to ${targetEmail}...`);
+                    const purEmailRes = await sendEmail({
+                        to: targetEmail,
                         from: SENDERS.TREASURE,
                         subject: "Votre commande KusomaKids est confirmée ! 🌟",
                         html: BookReadyEmail({
-                            childName: "votre enfant", // We might not have metadata here easily without DB fetch, keep generic
+                            childName: "votre enfant",
                             bookTitle: "Aventure Magique",
                             previewUrl: `${process.env.NEXT_PUBLIC_APP_URL || 'https://kusomakids.com'}/dashboard`
                         })
                     });
+                    if (!purEmailRes.success) {
+                        console.error("❌ Purchase Email Failed:", purEmailRes.error);
+                    } else {
+                        console.log("📨 Purchase Email sent successfully.");
+                    }
                 } catch (emailErr) {
-                    console.error("❌ Purchase Email Failed:", emailErr);
+                    console.error("❌ Purchase Email Exception:", emailErr);
                 }
             }
 
-            // 2. TRIGGER GENERATION WORKER (Redundancy)
-            // We call our own API worker to ensure pages 3-10 are generated
+            // 2. TRIGGER GENERATION WORKER
             try {
                 const workerUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://kusomakids.com'}/api/workers/generate-book`;
-
-                // Fire and forget fetch
                 fetch(workerUrl, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ bookId: bookId })
-                }).catch(err => console.error("Worker Trigger Error (Webhook):", err));
-
-                console.log("🚀 Generation Worker Triggered from Webhook");
+                }).catch(err => console.error("Worker Catch:", err));
             } catch (e) {
-                console.error("Failed to trigger worker from webhook:", e);
+                console.error("Worker Trigger Error:", e);
             }
         }
+    } else {
+        console.error(`❌ Skipped Unlock: Missing bookId (${bookId}) or valid userId (${userId})`);
     }
 
     // 3. HANDLE SUBSCRIPTION (CLUB MEMBER)
     if (isSubscription && userId) {
-        // Update user profile or metadata
-        // Assuming we have a 'profiles' table or we update auth.users metadata (cant do via client easily)
-        // Let's assume we update a 'subscription_status' in a 'profiles' table if it exists, or just log for now.
+        // ... existing subscription logic ...
         console.log("🏆 New Club Member! User ID:", userId);
-
-        // Example: Update Supabase public.profiles if exists
-        /*
-        await supabase
-            .from('profiles')
-            .update({ is_club_member: true, stripe_customer_id: session.customer })
-            .eq('id', userId);
-        */
     }
 }

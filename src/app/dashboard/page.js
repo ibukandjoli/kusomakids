@@ -158,7 +158,7 @@ function DashboardContent() {
 
                                 <div className="p-6 flex flex-col flex-grow">
                                     <h3 className="font-bold text-xl text-gray-900 mb-2 line-clamp-2 leading-tight">
-                                        {book.child_name ? `${book.child_name} et ` : ''}{book.title_template || book.title || 'l\'Aventure Magique'}
+                                        {(book.title_template || book.title || 'l\'Aventure Magique').replace(/{childName}/g, book.child_name || 'votre enfant')}
                                     </h3>
                                     <p className="text-gray-400 text-xs font-bold uppercase tracking-wider mb-6">
                                         {new Date(book.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}

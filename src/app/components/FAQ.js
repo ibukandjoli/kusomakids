@@ -7,19 +7,19 @@ const faqs = [
     },
     {
         question: "Comment fonctionne la personnalisation ?",
-        answer: "C'est très simple ! Vous choisissez une histoire, vous importez une photo de votre enfant et vous entrez son prénom et son âge. Notre technologie se charge d'intégrer son visage et son prénom dans les illustrations du livre."
+        answer: "C'est très simple ! Vous choisissez une histoire, vous importez une photo de votre enfant et vous entrez son prénom et son âge. Notre technologie se charge d'intégrer son visage et son prénom dans les illustrations."
     },
     {
         question: "Puis-je modifier l'histoire avant de l'acheter ?",
-        answer: "Absolument. A l'étape de la prévisualisation de l'histoire générée, vous pouvez modifier le texte de chaque page de l'histoire pour qu'il colle parfaitement à la réalité de votre enfant."
+        answer: "Absolument. A l'étape de la prévisualisation de l'histoire générée, vous pouvez modifier le texte de chaque page pour qu'il colle parfaitement à la réalité de votre enfant."
     },
     {
         question: "Quels sont les avantages du Club Kusoma ?",
-        answer: "Le Club offre un accès illimité à la lecture en ligne (audio inclus), 1 livre PDF gratuit par mois à garder à vie, 50% de réduction sur les achats d'autres livres PDF, et l'accès exclusif aux nouveautés."
+        answer: "Le Club offre un accès illimité à la lecture en ligne (audio inclus), 1 histoire PDF gratuite par mois à garder à vie, 50% de réduction sur les achats d'autres histoires PDF, et l'accès exclusif aux nouveautés."
     },
     {
-        question: "Quel est le format du livre ?",
-        answer: "Nous proposons des livres numériques au format PDF haute définition, parfaits pour être lus sur tablette, ordinateur ou smartphone, et même imprimés, si vous le désirez."
+        question: "Quel est le format de l'histoire ?",
+        answer: "Nous proposons des histoires au format PDF haute qualité, parfaits pour être lus sur tablette, ordinateur ou smartphone, et même imprimés, si vous le désirez."
     }
 ];
 

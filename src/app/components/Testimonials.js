@@ -15,7 +15,7 @@ const testimonials = [
         id: 2,
         name: "Yacine N.",
         role: "Maman de Soraya",
-        text: "L'histoire de Soraya a vraiment captivé ma fille. Elle demande à la lire tous les soirs !",
+        text: "L'histoire a vraiment captivé ma fille. Elle demande à la lire tous les soirs !",
         stars: 5,
         avatar: "👩🏾"
     },

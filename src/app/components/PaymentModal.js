@@ -82,11 +82,15 @@ export default function PaymentModal({ isOpen, onClose, user, bookId }) {
 
                 {/* --- LEFT: VISUAL RECALL (Desktop Only) --- */}
                 <div className="hidden md:block w-1/3 bg-gray-100 relative">
-                    {bookCover ? (
-                        <Image src={bookCover} alt="Cover" fill className="object-cover" />
-                    ) : (
-                        <div className="absolute inset-0 flex items-center justify-center text-gray-400">Aperçu</div>
-                    )}
+                    {/* Visual Recall - Use a placeholder or the actual cover passed via props?
+                        Looking at usage in Dashboard, we only pass `bookId`. We don't verify if `bookCover` is passed. 
+                        Let's check usage. Dashboard passes: <PaymentModal ... bookId={selectedBookId} />
+                        It DOES NOT pass bookCover. We should probably fetch it or just show a generic image if missing.
+                        For now, let's just use a Safe Fallback to prevent crash.
+                    */}
+                    <div className="absolute inset-0 flex items-center justify-center text-gray-400 bg-gray-200">
+                        <span className="text-4xl">🎁</span>
+                    </div>
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
                     <div className="absolute bottom-8 left-8 text-white z-10">
                         <p className="text-sm opacity-80 font-medium tracking-wide uppercase mb-2">Votre création</p>

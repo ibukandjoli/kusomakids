@@ -6,7 +6,7 @@ const faqs = [
         answer: "Nos histoires sont conçues pour les enfants de 2 à 10 ans. Chaque histoire indique une tranche d'âge spécifique pour vous guider."
     },
     {
-        question: "Comment fonctionne la personnalisation ?",
+        question: "Comment fonctionne la personnalisation de l'histoire ?",
         answer: "C'est très simple ! Vous choisissez une histoire, vous importez une photo de votre enfant et vous entrez son prénom et son âge. Notre technologie se charge d'intégrer son visage et son prénom dans les illustrations."
     },
     {

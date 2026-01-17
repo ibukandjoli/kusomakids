@@ -5,6 +5,7 @@ import { createClient as createSupabaseClient } from '@supabase/supabase-js';
 import { sendEmail } from '@/lib/resend';
 import { BookReadyEmail } from '@/lib/emails/BookReadyEmail';
 import { WelcomeEmail } from '@/lib/emails/WelcomeEmail';
+import { MagicLinkEmail } from '@/lib/emails/MagicLinkEmail';
 import { SENDERS } from '@/lib/senders';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
@@ -149,7 +150,7 @@ async function handleCheckoutSessionCompleted(session) {
                     type: 'magiclink',
                     email: targetEmail,
                     options: {
-                        redirectTo: 'https://www.kusomakids.com/dashboard'
+                        redirectTo: 'https://www.kusomakids.com/dashboard/purchased'
                     }
                 });
 
@@ -158,7 +159,7 @@ async function handleCheckoutSessionCompleted(session) {
                         to: targetEmail,
                         from: SENDERS.TREASURE,
                         subject: "Accédez à votre histoire KusomaKids ! 🗝️",
-                        html: `<p>Votre commande est validée !</p><p>Pour accéder à votre histoire, cliquez sur ce lien magique : <a href="${linkData.properties.action_link}">Accéder à mon compte</a></p>`
+                        html: MagicLinkEmail({ magicLink: linkData.properties.action_link })
                     });
 
                     if (!emailRes.success) {
@@ -192,8 +193,21 @@ async function handleCheckoutSessionCompleted(session) {
         } else {
             console.log("✅ Book Unlocked & Linked in DB");
 
-            // 1.5 SEND PURCHASE EMAIL
+            // 1.5 SEND PURCHASE EMAIL (+ Magic Link for Auto-Login/Download)
             if (targetEmail) {
+                // GENERATE MAGIC LINK FOR "DOWNLOAD" BUTTON
+                let magicLinkUrl = 'https://www.kusomakids.com/login';
+                try {
+                    const { data: linkData } = await supabaseAdmin.auth.admin.generateLink({
+                        type: 'magiclink',
+                        email: targetEmail,
+                        options: { redirectTo: 'https://www.kusomakids.com/dashboard/purchased' }
+                    });
+                    if (linkData?.properties?.action_link) {
+                        magicLinkUrl = linkData.properties.action_link;
+                    }
+                } catch (e) { console.error("Error generating purchase action link:", e); }
+
                 try {
                     console.log(`📧 Sending purchase confirmation to ${targetEmail}...`);
                     const purEmailRes = await sendEmail({
@@ -203,7 +217,7 @@ async function handleCheckoutSessionCompleted(session) {
                         html: BookReadyEmail({
                             childName: childName,
                             bookTitle: bookTitle,
-                            previewUrl: `https://www.kusomakids.com/dashboard/purchased`
+                            previewUrl: magicLinkUrl // User clicks "Download" -> Magic Login -> Redirect to PDFs
                         })
                     });
                     if (!purEmailRes.success) {

@@ -29,27 +29,27 @@ function SuccessContent() {
                         <li className="flex items-start gap-3">
                             <span className="bg-white w-6 h-6 rounded-full flex items-center justify-center font-bold text-orange-500 shadow-sm flex-shrink-0">1</span>
                             <span>
-                                <strong>Activez votre compte</strong> : Vous avez reçu un email ("Magic Link"). Cliquez dessus pour vous connecter automatiquement.
+                                <strong>Activez votre compte</strong> : Vous avez reçu un email d'activation de votre compte. Cliquez dessus pour vous connecter automatiquement.
                             </span>
                         </li>
                         <li className="flex items-start gap-3">
                             <span className="bg-white w-6 h-6 rounded-full flex items-center justify-center font-bold text-orange-500 shadow-sm flex-shrink-0">2</span>
                             <span>
-                                <strong>Téléchargez votre livre</strong> : Une fois connecté, rendez-vous dans votre tableau de bord ("Mon Espace") pour voir votre livre.
+                                <strong>Téléchargez votre livre</strong> : Une fois connecté, rendez-vous dans votre page "Mes PDFs" pour voir votre histoire et la télécharger.
                             </span>
                         </li>
                     </ul>
                 </div>
 
                 <Link
-                    href="/login"
+                    href="/dashboard"
                     className="block w-full bg-orange-500 text-white font-bold py-4 rounded-xl hover:bg-orange-600 transition-transform hover:scale-105 shadow-lg shadow-orange-500/30"
                 >
-                    Aller à la connexion
+                    Accéder à mon espace
                 </Link>
 
                 <p className="mt-6 text-xs text-gray-400">
-                    Un souci ? Contactez-nous à aide@kusomakids.com
+                    Un souci ? Contactez-nous à coucou@kusomakids.com
                 </p>
             </div>
         </div>

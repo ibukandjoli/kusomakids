@@ -30,7 +30,7 @@ export const BookReadyEmail = ({ childName, bookTitle, previewUrl }) => {
                 Installez-vous confortablement et plongez dans cette aventure personnalisée.
             </p>
             
-            <a href="${previewUrl}" class="button">Lire l'histoire maintenant</a>
+            <a href="${previewUrl}" class="button">Télécharger le PDF 📥</a>
             
             <p style="margin-top: 40px; color: #9ca3af; font-size: 14px;">
                 Vous pouvez accéder à tout moment à vos histoires depuis votre <a href="https://kusomakids.com/dashboard" style="color: #f97316;">Tableau de bord</a>.

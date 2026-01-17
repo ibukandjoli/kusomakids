@@ -1,8 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase-server';
-// FIX: Robust import for serverless client
-import * as falLib from '@fal-ai/serverless-client';
-const fal = falLib.fal || falLib.default || falLib;
+import { fal } from '@fal-ai/serverless-client';
 
 export const maxDuration = 300;
 

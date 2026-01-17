@@ -1,8 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase-server';
-// FIX: Robust import for serverless client (handling default vs named export)
-import * as falLib from '@fal-ai/serverless-client';
-const fal = falLib.fal || falLib.default || falLib;
+import { fal } from '@fal-ai/serverless-client';
 import { sendEmail } from '@/lib/resend';
 import { BookReadyEmail } from '@/lib/emails/BookReadyEmail';
 import { SENDERS } from '@/lib/senders';

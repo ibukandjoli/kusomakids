@@ -52,8 +52,7 @@ export async function POST(req) {
         const { error: bookError } = await supabaseServer
             .from('generated_books')
             .update({
-                is_unlocked: true,
-                status: 'purchased' // Triggers generation via DB trigger? Or just state.
+                is_unlocked: true
             })
             .eq('id', bookId)
             .eq('user_id', session.user.id);

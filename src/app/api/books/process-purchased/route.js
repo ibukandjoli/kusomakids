@@ -1,28 +1,33 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase-server';
-import * as fal from '@fal-ai/serverless-client';
+// FIX: Robust import for serverless client
+import * as falLib from '@fal-ai/serverless-client';
+const fal = falLib.fal || falLib.default || falLib;
 
-export const maxDuration = 300; // 5 minutes (if Vercel Pro, ignored on Free but good practice)
+export const maxDuration = 300;
+
+// Configure Fal
+if (process.env.FAL_KEY) {
+    fal.config({
+        credentials: process.env.FAL_KEY,
+    });
+}
 
 export async function POST(req) {
     console.log("🛠️ Worker: process-purchased triggered");
 
-    // 1. Auth & Input Validation
-    const supabase = await createClient();
-    const { data: { session } } = await supabase.auth.getSession();
-
-    // Note: We might want to allow Servce Role calling this if triggered by webhook?
-    // For now, triggered by User interaction (Dashboard unlock) -> Session required.
-
-    if (!session) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const body = await req.json();
-    const { bookId } = body;
-
     try {
-        // 2. Fetch Book Data
+        const supabase = await createClient();
+        const { data: { session } } = await supabase.auth.getSession();
+
+        if (!session) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
+        const body = await req.json();
+        const { bookId } = body;
+
+        // 1. Fetch Book Data
         const { data: book, error: fetchError } = await supabase
             .from('generated_books')
             .select('*')
@@ -34,28 +39,27 @@ export async function POST(req) {
             return NextResponse.json({ error: 'Book not found' }, { status: 404 });
         }
 
-        console.log(`📘 Processing Book: ${book.title} (ID: ${bookId})`);
+        console.log(`📘 Processing Book: ${book.title_template || book.title} (ID: ${bookId})`);
 
-        // 3. Prepare Generation Loop
-        let pages = book.content_json?.pages || [];
+        // 2. Prepare Generation Loop
+        // SCHEMA FIX: content_json -> story_content
+        const rawContent = book.story_content || {};
+        let pages = Array.isArray(rawContent) ? rawContent : (rawContent.pages || []);
+
         let updated = false;
 
-        // Parallel processing promises
+        // Parallel processing
         const generationPromises = pages.map(async (page, index) => {
-            // Logic: Skip valid images
-            if (page.image && !page.image.includes('placeholder') && !page.image.includes('blur')) {
+            // Skip valid images
+            if (page.image && !page.image.includes('placeholder') && !page.image.includes('blur') && page.image.startsWith('http')) {
                 return page;
             }
 
-            // Logic: Skip Page 1-2 if they are already done? (Index 0, 1)
-            // But if they were placeholders (e.g. error), we regenerate.
-            // Strict rule: If it's a placeholder -> REGENERATE.
-            // Current placeholder URL contains 'placeholder' or 'blur' or is just the cover URL.
-            // Check if URL equals Cover URL?
+            // Logic: If it's the cover URL (placeholder) or explicitly invalid, regen.
             const isPlaceholder = !page.image ||
                 page.image.includes('placeholder') ||
                 page.image.includes('blur') ||
-                page.image === book.cover_url;
+                page.image === book.cover_url; // Often we set page image = cover url as placeholder
 
             if (!isPlaceholder) return page;
 
@@ -63,11 +67,7 @@ export async function POST(req) {
 
             try {
                 // A. TEXT TO IMAGE
-                // Reconstruct Attributes
-                const physicalAttributes = `african ${book.child_gender === 'Fille' ? 'girl' : 'boy'}, ${book.child_age} years old`;
-                // Add photo attributes if exists? "dark skin" etc should come from user selection if we had it.
-                // For now, default "african child" + provided prompt.
-
+                const physicalAttributes = `african ${book.child_gender === 'Fille' ? 'girl' : 'boy'}, ${book.child_age || 5} years old`;
                 const prompt = `${physicalAttributes}, ${page.imagePrompt || page.text}, pixar style, vibrant colors, masterpiece, best quality, wide shot, cinematic lighting`;
 
                 const sceneResult = await fal.subscribe("fal-ai/flux/dev", {
@@ -79,7 +79,7 @@ export async function POST(req) {
                     }
                 });
 
-                let imageUrl = sceneResult.images?.[0]?.url;
+                let imageUrl = sceneResult.images?.[0]?.url || sceneResult.data?.images?.[0]?.url;
 
                 // B. FACE SWAP (If Photo Exists)
                 if (book.child_photo_url && imageUrl) {
@@ -90,12 +90,15 @@ export async function POST(req) {
                                 swap_image_url: book.child_photo_url
                             }
                         });
-                        if (swapResult.images?.[0]?.url) {
-                            imageUrl = swapResult.images[0].url;
+
+                        // Robust Parsing
+                        const swappedUrl = swapResult.image?.url || swapResult.images?.[0]?.url || swapResult.data?.image?.url || swapResult.data?.images?.[0]?.url;
+
+                        if (swappedUrl) {
+                            imageUrl = swappedUrl;
                         }
                     } catch (swapErr) {
                         console.error(`⚠️ Face Swap failed for Page ${index + 1}:`, swapErr);
-                        // Fallback to scene
                     }
                 }
 
@@ -103,7 +106,7 @@ export async function POST(req) {
                     updated = true;
                     return { ...page, image: imageUrl };
                 }
-                return page; // Failed generation returns original (retry later?)
+                return page;
 
             } catch (err) {
                 console.error(`❌ Error generating Page ${index + 1}:`, err);
@@ -111,16 +114,18 @@ export async function POST(req) {
             }
         });
 
-        // Wait for all generations
         const newPages = await Promise.all(generationPromises);
 
-        // 4. Update Database
+        // 3. Update Database
         if (updated) {
+            // Handle JSON structure (Array vs Object)
+            const newContent = Array.isArray(book.story_content) ? newPages : { ...book.story_content, pages: newPages };
+
             const { error: updateError } = await supabase
                 .from('generated_books')
                 .update({
-                    content_json: { ...book.content_json, pages: newPages },
-                    status: 'completed' // or 'purchased' (it's already purchased)
+                    story_content: newContent
+                    // REMOVED status update to prevent error
                 })
                 .eq('id', bookId);
 

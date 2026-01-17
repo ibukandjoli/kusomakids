@@ -8,6 +8,9 @@ create table public.profiles (
   full_name text,
   subscription_status text default 'free', -- 'free', 'active'
   credits integer default 0,
+  monthly_credits integer default 0, -- Club member monthly PDF credits
+  subscription_started_at timestamp with time zone, -- When user subscribed to club
+  onboarding_completed boolean default false, -- Whether user completed onboarding
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 

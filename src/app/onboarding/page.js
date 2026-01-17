@@ -206,6 +206,14 @@ export default function OnboardingPage() {
                 router.push('/signup'); // Protect route
             } else {
                 setUser(session.user);
+
+                // Check if coming from purchase flow
+                const urlParams = new URLSearchParams(window.location.search);
+                const fromPurchase = urlParams.get('from') === 'purchase';
+
+                if (fromPurchase) {
+                    console.log('📦 User redirected from purchase - completing onboarding');
+                }
             }
         };
         getUser();
@@ -215,10 +223,13 @@ export default function OnboardingPage() {
     const saveProfileData = async () => {
         setLoading(true);
         try {
-            // 1. Update Profile Role
+            // 1. Update Profile - Mark onboarding as completed
             const { error: profileError } = await supabase
                 .from('profiles')
-                .update({ role: role })
+                .update({
+                    role: role,
+                    onboarding_completed: true // Mark onboarding as done
+                })
                 .eq('id', user.id);
             if (profileError) throw profileError;
 
@@ -237,8 +248,17 @@ export default function OnboardingPage() {
 
             if (childrenError) throw childrenError;
 
-            // Success - Redirect to Dashboard (Freemium Flow)
-            router.push('/dashboard');
+            // Success - Check if from purchase flow
+            const urlParams = new URLSearchParams(window.location.search);
+            const fromPurchase = urlParams.get('from') === 'purchase';
+
+            if (fromPurchase) {
+                // Redirect to purchased PDFs after onboarding
+                router.push('/dashboard/purchased');
+            } else {
+                // Normal flow - go to dashboard
+                router.push('/dashboard');
+            }
 
         } catch (error) {
             console.error("Save Data Error:", error);

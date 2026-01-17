@@ -82,11 +82,9 @@ export async function POST(req) {
                 .from('generated_books')
                 .insert({
                     user_id: userId,
-                    title_template: title || 'Mon Aventure',
+                    title: title || 'Mon Aventure',
                     child_name: childName,
                     child_age: childAge,
-                    child_gender: childGender,
-                    child_photo_url: childPhotoUrl,
                     child_gender: childGender,
                     child_photo_url: childPhotoUrl,
                     story_content: content_json, // Corrected to match DB schema (jsonb)
@@ -118,11 +116,9 @@ export async function POST(req) {
                 .from('generated_books')
                 .insert({
                     user_id: userId,
-                    title_template: title || 'Mon Aventure',
+                    title: title || 'Mon Aventure',
                     child_name: childName,
                     child_age: childAge,
-                    child_gender: childGender,
-                    child_photo_url: childPhotoUrl,
                     child_gender: childGender,
                     child_photo_url: childPhotoUrl,
                     story_content: content_json, // Corrected to match DB schema (jsonb)

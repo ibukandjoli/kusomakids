@@ -239,10 +239,11 @@ export default function PreviewPage() {
                     console.log("🔍 Full Face Swap Result:", JSON.stringify(swapResult, null, 2));
 
                     // Handle various Fal response formats (Arrays or Single Object)
-                    const swapImages = swapResult.images || swapResult.data?.images || (swapResult.image ? [swapResult.image] : []) || (swapResult.data?.image ? [swapResult.data.image] : []);
+                    // Handle various Fal response formats (Arrays or Single Object)
+                    const swapUrl = swapResult.image?.url || swapResult.images?.[0]?.url || swapResult.data?.image?.url || swapResult.data?.images?.[0]?.url;
 
-                    if (Array.isArray(swapImages) && swapImages.length > 0) {
-                        const newCover = swapImages[0].url;
+                    if (swapUrl) {
+                        const newCover = swapUrl;
                         console.log("✅ Cover Face Swap Success:", newCover);
                         coverUrl = newCover; // ONLY update if success
                     } else {
@@ -371,12 +372,13 @@ export default function PreviewPage() {
                         });
 
                         // DEBUG: Log Full Result
+                        // DEBUG: Log Full Result
                         console.log("🔍 Page Face Swap Result:", JSON.stringify(swapResult, null, 2));
 
-                        const swapImages = swapResult.images || swapResult.data?.images || (swapResult.image ? [swapResult.image] : []) || (swapResult.data?.image ? [swapResult.data.image] : []);
+                        const swapUrl = swapResult.image?.url || swapResult.images?.[0]?.url || swapResult.data?.image?.url || swapResult.data?.images?.[0]?.url;
 
-                        if (Array.isArray(swapImages) && swapImages.length > 0) {
-                            finalImageUrl = swapImages[0].url;
+                        if (swapUrl) {
+                            finalImageUrl = swapUrl;
                             console.log(`✅ Step 2 Success! Face Swapped.`);
                         } else {
                             console.warn("⚠️ Face Swap returned no image, using scene. Result:", swapResult);

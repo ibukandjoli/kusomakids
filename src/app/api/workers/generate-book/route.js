@@ -5,19 +5,19 @@ import { sendEmail } from '@/lib/resend';
 import { BookReadyEmail } from '@/lib/emails/BookReadyEmail';
 import { SENDERS } from '@/lib/senders';
 
-// Force dynamic to allow long-running processes (though Vercel has limits)
+// Force dynamic to allow long-running processes
 export const dynamic = 'force-dynamic';
-export const maxDuration = 60; // Attempt to extend duration if allowed (Pro: 300s, Hobby: 10/60s)
+export const maxDuration = 60;
+
+// 🔧 CRITICAL FIX: Configure Fal explicitly for Server-Side usage
+// This tells Fal to use the Env Key directly and NOT look for a proxy
+if (process.env.FAL_KEY) {
+    fal.config({
+        credentials: process.env.FAL_KEY,
+    });
+}
 
 export async function POST(req) {
-    // Explicitly configure FAL Key for Server-Side Worker
-    // The library might not pick it up automatically in all Next.js environments
-    if (process.env.FAL_KEY) {
-        fal.config({
-            credentials: process.env.FAL_KEY,
-        });
-    }
-
     console.log("👷 WORKER START: Generate Book Background Process");
 
     try {
@@ -31,7 +31,7 @@ export async function POST(req) {
 
         console.log(`📘 Processing Book ID: ${bookId}`);
 
-        // 1. Fetch Book Data & Personalization
+        // 1. Fetch Book Data
         const { data: book, error: fetchError } = await supabase
             .from('generated_books')
             .select('*')
@@ -43,79 +43,71 @@ export async function POST(req) {
             return NextResponse.json({ error: "Book not found" }, { status: 404 });
         }
 
-        // Validate Content - Correct Schema is 'story_content'
-        // story_content might be an array (pages) or an object wrapper. 
-        // Based on create route: story_content = content_json (which is { pages: [...] } usually?)
-        // Let's safe check both.
         const rawContent = book.story_content || {};
         const pages = Array.isArray(rawContent) ? rawContent : (rawContent.pages || []);
 
         if (!pages || !Array.isArray(pages) || pages.length === 0) {
-            console.error("❌ Invalid book content structure: story_content is empty or invalid");
             return NextResponse.json({ error: "Invalid content" }, { status: 400 });
         }
+
         const photoUrl = book.child_photo_url;
-        const childGender = book.child_gender; // 'boy' or 'girl'
+
+        // Log photo status specifically
+        if (!photoUrl) {
+            console.warn("⚠️ NO CHILD PHOTO URL FOUND. Skipping Face Swap.");
+        } else {
+            console.log("✅ Child Photo found:", photoUrl);
+        }
 
         let updatedPages = [...pages];
         let hasChanges = false;
         let generatedCount = 0;
 
-        // [INSERTED FIX] 0. Handle Cover Personalization Explicitly
-        // Normalize cover URL key
+        // 0. COVER IMAGE SWAP
         let currentCoverUrl = book.cover_image_url || book.cover_url;
 
-        if (currentCoverUrl && photoUrl && !currentCoverUrl.includes('fal')) {
-            console.log("🎨 Personalizing Cover Template...");
+        if (currentCoverUrl && photoUrl && !currentCoverUrl.includes('fal.media')) {
+            console.log("🎨 Personalizing Cover...");
             try {
-                const coverSwap = await fal.subscribe("fal-ai/face-swap", {
+                const coverResult = await fal.subscribe("fal-ai/face-swap", {
                     input: {
                         base_image_url: currentCoverUrl,
                         swap_image_url: photoUrl
                     },
                     logs: true,
                 });
-                // Handle both { images: [...] } and { image: { url } } formats
-                const swapUrl = coverSwap.image?.url || coverSwap.images?.[0]?.url || coverSwap.data?.image?.url || coverSwap.data?.images?.[0]?.url;
 
-                if (swapUrl) {
-                    console.log("✅ Cover Swapped Successfully!", swapUrl);
-                    // Update the book object in memory immediately so we don't overwrite it later
-                    currentCoverUrl = swapUrl;
+                // 🔧 FIX: Handle both 'image' (object) and 'images' (array) response formats
+                const newCoverUrl = coverResult.image?.url || coverResult.images?.[0]?.url || coverResult.data?.image?.url || coverResult.data?.images?.[0]?.url;
 
-                    // We must save this update to DB immediately or add to a "pending updates" object
-                    // The loop below tracks "hasChanges". Let's assume we will save at the end.
+                if (newCoverUrl) {
+                    console.log("✅ Cover Swapped Successfully!");
+                    currentCoverUrl = newCoverUrl;
                     hasChanges = true;
+                } else {
+                    console.warn("⚠️ Cover Swap returned no URL. Result:", JSON.stringify(coverResult));
                 }
             } catch (err) {
-                console.error("❌ Cover Swap Failed:", err);
+                console.error("❌ Cover Swap Failed:", err.message);
             }
         }
 
-        // 2. PIVOT V1 LOOP: Pure Face Swap
-        // We iterate through pages and strictly apply Face Swap to the base_image_url
+        // 2. PAGES LOOP (Face Swap)
         for (let i = 0; i < updatedPages.length; i++) {
             const page = updatedPages[i];
 
-            // Safety: Skip if already has a valid final image (e.g. from Preview)
-            // But for Pivot V1, we trust the process: if it's not a swap url (fal.media), we might want to swap it.
-            // Let's stick to standard safety: if it looks like a finished url, skip.
-            const hasValidImage = page.image && page.image.length > 50 && page.image.startsWith('https://fal.media');
+            // Check if page already processed
+            const hasValidImage = page.image && page.image.includes('fal.media');
             if (hasValidImage) {
-                console.log(`✅ Page ${i + 1} already has valid image. Skipping.`);
                 continue;
             }
 
             const baseImageUrl = page.base_image_url;
-
             if (!baseImageUrl) {
-                console.warn(`⚠️ Page ${i + 1} has NO base_image_url. Skipping.`);
-                // In a perfect world we would fallback to Flux here, but for Pivot V1 we want to fail loudly or just show placeholder
-                // to force data quality.
-                continue;
+                continue; // Skip pages without templates
             }
 
-            console.log(`🎭 Processing Page ${i + 1}...`);
+            console.log(`🎭 Processing Page ${i + 1} / ${updatedPages.length}...`);
             let finalImageUrl = baseImageUrl;
 
             try {
@@ -128,57 +120,42 @@ export async function POST(req) {
                         },
                         logs: true,
                     });
-                    // Handle both { images: [...] } and { image: { url } } formats
-                    const swapUrl = swapResult.image?.url || swapResult.images?.[0]?.url || swapResult.data?.image?.url || swapResult.data?.images?.[0]?.url;
 
-                    if (swapUrl) {
-                        finalImageUrl = swapUrl;
+                    // 🔧 FIX: Robust response parsing
+                    const swappedUrl = swapResult.image?.url || swapResult.images?.[0]?.url || swapResult.data?.image?.url || swapResult.data?.images?.[0]?.url;
+
+                    if (swappedUrl) {
+                        finalImageUrl = swappedUrl;
                         console.log(`> Swapped successfully.`);
                     } else {
-                        console.error("Worker Swap Result Dump:", JSON.stringify(swapResult));
-                        throw new Error("Face swap returned no image");
+                        console.warn(`> Warning: No image URL in response for page ${i + 1}. Result:`, JSON.stringify(swapResult));
                     }
-                } else {
-                    console.log(`> No user photo. Using base image.`);
                 }
 
                 updatedPages[i] = {
                     ...page,
-                    image: finalImageUrl // Set the final image
+                    image: finalImageUrl
                 };
                 hasChanges = true;
                 generatedCount++;
 
             } catch (err) {
-                console.error(`❌ Failed to process Page ${i + 1}:`, err);
-                // Keep base image as fallback so book isn't broken
+                console.error(`❌ Failed to process Page ${i + 1}:`, err.message);
+                // Fallback to base image so the book isn't broken
                 updatedPages[i] = { ...page, image: baseImageUrl };
                 hasChanges = true;
             }
         }
 
-        // 3. Save Context & Send Email
+        // 3. Save Updates & Email
         if (hasChanges) {
-            // Determine Cover Image if missing
-
-            // Reconstruct story_content with updates
-            // Keep structure consistent (if it was {pages:[]}, keep it. if it was [], keep it.)
             let newStoryContent = Array.isArray(book.story_content) ? updatedPages : { ...book.story_content, pages: updatedPages };
 
             let updates = {
                 story_content: newStoryContent,
                 cover_image_url: currentCoverUrl
+                // status: 'completed'  <-- REMOVED TO PREVENT 500 ERROR (Column does not exist)
             };
-
-            // Legacy Fallback (Only if we STILL don't have a personalized cover)
-            const isCoverPersonalized = currentCoverUrl && (currentCoverUrl.includes('fal.media') || currentCoverUrl.includes('fal.ai'));
-
-            if (!currentCoverUrl && updatedPages.length > 0 && updatedPages[0].image) {
-                // Fallback for missing cover ENTIRELY
-                console.log("🖼️ Setting missing cover image from Page 1");
-                updates.cover_image_url = updatedPages[0].image;
-            }
-            // Removed the aggressive "overwrite static cover" logic since we now handle it explicitly at start.
 
             const { error: updateError } = await supabase
                 .from('generated_books')
@@ -189,11 +166,10 @@ export async function POST(req) {
                 console.error("❌ Failed to update book in DB:", updateError);
                 return NextResponse.json({ error: "DB Update Failed" }, { status: 500 });
             }
-            console.log("💾 Book updated successfully with new images.");
+            console.log("💾 Book updated successfully.");
 
-            // 4. Send Email Notification
+            // Send Email
             if (book.email) {
-                console.log(`📧 Sending ready email to ${book.email}...`);
                 try {
                     const emailHtml = BookReadyEmail({
                         childName: book.child_name || 'votre enfant',
@@ -201,27 +177,17 @@ export async function POST(req) {
                         previewUrl: `${process.env.NEXT_PUBLIC_APP_URL || 'https://kusomakids.com'}/book/${book.id}/preview`
                     });
 
-                    const emailRes = await sendEmail({
+                    await sendEmail({
                         to: book.email,
-                        from: SENDERS.TREASURE, // Updated Sender
+                        from: SENDERS.TREASURE,
                         subject: `L'histoire de ${book.child_name || 'votre enfant'} est prête ! 📖✨`,
                         html: emailHtml
                     });
-
-                    if (emailRes.success) {
-                        console.log("✅ Email sent successfully.");
-                    } else {
-                        console.error("⚠️ Email warning:", emailRes.error);
-                    }
+                    console.log("✅ Email sent.");
                 } catch (emailErr) {
-                    console.error("❌ Email sending failed:", emailErr);
+                    console.error("❌ Email failed:", emailErr);
                 }
-            } else {
-                console.log("⚠️ No email found for this book. Skipping notification.");
             }
-
-        } else {
-            console.log("🤷‍♂️ No changes made (all pages were already present).");
         }
 
         return NextResponse.json({

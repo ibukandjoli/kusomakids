@@ -36,7 +36,7 @@ export const WelcomeEmail = ({ userName }) => `
 
         <div style="text-align: center; margin: 40px 0;">
             <a href="https://kusomakids.com" style="display: inline-block; background-color: #ea580c; color: #ffffff; padding: 16px 32px; border-radius: 99px; text-decoration: none; font-weight: bold; font-size: 18px; box-shadow: 0 4px 6px rgba(234, 88, 12, 0.25);">
-                Créer ma première histoire magique ✨
+                Créer sa première histoire magique ✨
             </a>
         </div>
 

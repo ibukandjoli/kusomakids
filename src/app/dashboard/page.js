@@ -225,6 +225,7 @@ function DashboardContent() {
                 onClose={() => setModalOpen(false)}
                 user={user}
                 bookId={selectedBookId}
+                profile={profile}
             />
 
             {/* WELCOME CLUB MODAL */}

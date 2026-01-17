@@ -6,7 +6,7 @@ import Link from 'next/link';
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY);
 
-export default function PaymentModal({ isOpen, onClose, user, bookId }) {
+export default function PaymentModal({ isOpen, onClose, user, bookId, profile }) {
     const [loading, setLoading] = useState(false);
 
     if (!isOpen) return null;
@@ -56,7 +56,7 @@ export default function PaymentModal({ isOpen, onClose, user, bookId }) {
                     userId: user.id,
                     email: user.email,
                     bookId: bookId,
-                    amount: 3000 // 3000 FCFA
+                    amount: profile?.subscription_status === 'active' ? 1500 : 3000 // Club members get 50% off
                 }),
             });
 
@@ -115,7 +115,20 @@ export default function PaymentModal({ isOpen, onClose, user, bookId }) {
                                 <div className="absolute top-4 right-4 text-gray-300 group-hover:text-gray-400">📚</div>
                                 <h3 className="font-bold text-gray-900 text-lg mb-1">Juste cette histoire</h3>
                                 <p className="text-xs text-gray-500 mb-4 h-8">Accès à vie (PDF + Audio)</p>
-                                <div className="text-2xl font-black text-gray-900 mb-6">3.000 <span className="text-xs font-normal text-gray-400">FCFA</span></div>
+                                <div className="text-2xl font-black text-gray-900 mb-6">
+                                    {profile?.subscription_status === 'active' ? (
+                                        <>
+                                            <span className="text-green-600">1.500</span>{' '}
+                                            <span className="text-xs font-normal text-gray-400">FCFA</span>
+                                            <div className="text-xs text-gray-400 line-through mt-1">3.000 FCFA</div>
+                                            <div className="text-xs text-green-600 font-bold mt-1">🏆 -50% Membre du Club</div>
+                                        </>
+                                    ) : (
+                                        <>
+                                            3.000 <span className="text-xs font-normal text-gray-400">FCFA</span>
+                                        </>
+                                    )}
+                                </div>
                                 <button
                                     onClick={handleOneOff}
                                     disabled={loading}

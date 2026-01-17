@@ -270,12 +270,10 @@ function DashboardContent() {
                         </button>
                     </div>
                 </div>
-                </div>
-    )
-}
+            )}
 
-<DashboardBottomNav />
-        </div >
+            <DashboardBottomNav />
+        </div>
     );
 }
 

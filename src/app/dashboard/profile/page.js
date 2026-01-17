@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
-import DashboardBottomNav from '../components/DashboardBottomNav';
+import DashboardBottomNav from '../../components/DashboardBottomNav';
 
 export default function ProfilePage() {
     const [loading, setLoading] = useState(true);

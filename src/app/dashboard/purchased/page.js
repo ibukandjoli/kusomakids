@@ -5,7 +5,7 @@ import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
-import DashboardBottomNav from '../components/DashboardBottomNav';
+import DashboardBottomNav from '../../components/DashboardBottomNav';
 
 function MyPdfsContent() {
     const [user, setUser] = useState(null);

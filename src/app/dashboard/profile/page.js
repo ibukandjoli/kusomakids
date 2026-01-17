@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
+import DashboardBottomNav from '../components/DashboardBottomNav';
 
 export default function ProfilePage() {
     const [loading, setLoading] = useState(true);
@@ -127,8 +128,8 @@ export default function ProfilePage() {
                                 type="submit"
                                 disabled={saving}
                                 className={`w-full py-4 rounded-xl font-bold text-white transition-all shadow-lg ${saving
-                                        ? 'bg-orange-300 cursor-wait'
-                                        : 'bg-orange-600 hover:bg-orange-700 hover:shadow-orange-500/30'
+                                    ? 'bg-orange-300 cursor-wait'
+                                    : 'bg-orange-600 hover:bg-orange-700 hover:shadow-orange-500/30'
                                     }`}
                             >
                                 {saving ? 'Enregistrement...' : 'Enregistrer les modifications'}
@@ -138,6 +139,8 @@ export default function ProfilePage() {
                     </form>
                 </div>
             </div>
+
+            <DashboardBottomNav />
         </div>
     );
 }

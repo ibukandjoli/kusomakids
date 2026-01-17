@@ -248,7 +248,44 @@ async function handleCheckoutSessionCompleted(session) {
 
     // 3. HANDLE SUBSCRIPTION (CLUB MEMBER)
     if (isSubscription && userId) {
-        // ... existing subscription logic ...
         console.log("🏆 New Club Member! User ID:", userId);
+
+        try {
+            // Update profile with subscription status and grant monthly credit
+            const { error: profileError } = await supabaseAdmin
+                .from('profiles')
+                .update({
+                    subscription_status: 'active',
+                    monthly_credits: 1, // 1 free PDF download per month
+                    subscription_started_at: new Date().toISOString()
+                })
+                .eq('id', userId);
+
+            if (profileError) {
+                console.error("❌ Failed to update subscription status:", profileError);
+            } else {
+                console.log("✅ Subscription activated with 1 monthly credit");
+            }
+
+            // Send welcome email for club members
+            if (targetEmail) {
+                try {
+                    const welcomeHtml = WelcomeEmail({
+                        userName: customer_details?.name || 'Membre du Club'
+                    });
+                    await sendEmail({
+                        to: targetEmail,
+                        from: SENDERS.WELCOME,
+                        subject: "🎉 Bienvenue au Club Kusoma !",
+                        html: welcomeHtml
+                    });
+                    console.log("📨 Club welcome email sent");
+                } catch (e) {
+                    console.error("Club welcome email error:", e);
+                }
+            }
+        } catch (err) {
+            console.error("❌ Subscription handling error:", err);
+        }
     }
 }

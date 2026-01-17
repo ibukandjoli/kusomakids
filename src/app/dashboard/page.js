@@ -102,10 +102,19 @@ function DashboardContent() {
 
                 {/* Title & Context */}
                 {books.length > 0 && (
-                    <div className="mb-10 mt-6">
+                    <div className="mb-10 mt-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                         <h1 className="text-3xl font-black text-gray-900 border-l-8 border-orange-500 pl-4 py-1">
                             La Bibliothèque de {profile?.full_name?.split(' ')[0] || user?.email?.split('@')[0]}
                         </h1>
+                        {profile?.subscription_status === 'active' && (
+                            <div className="flex items-center gap-2 bg-gradient-to-r from-orange-500 to-orange-600 text-white px-6 py-3 rounded-full shadow-lg">
+                                <span className="text-2xl">🏆</span>
+                                <div className="flex flex-col">
+                                    <span className="font-bold text-sm">Membre du Club</span>
+                                    <span className="text-xs opacity-90">{profile?.monthly_credits || 0} crédit{(profile?.monthly_credits || 0) > 1 ? 's' : ''} restant{(profile?.monthly_credits || 0) > 1 ? 's' : ''}</span>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 )}
 

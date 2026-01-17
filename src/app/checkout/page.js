@@ -299,7 +299,6 @@ function CheckoutContent() {
                       </p>
                       <p className="text-xs text-gray-500 mt-1">Pour {item.personalization?.childName}</p>
                       <p className="text-sm font-bold text-orange-600 mt-1">{item.price || 3000} F</p>
-                      <p className="text-sm font-bold text-orange-600 mt-1">{item.price || 3000} F</p>
                     </div>
 
                     {/* Remove Button */}

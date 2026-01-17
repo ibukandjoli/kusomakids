@@ -413,7 +413,7 @@ export default function PreviewPage() {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
-                            title: data.bookTitle, // Use formatted title?
+                            title_template: data.bookTitle, // Use formatted title?
                             childName: data.personalization.childName,
                             childAge: data.personalization.age,
                             childGender: data.personalization.gender,

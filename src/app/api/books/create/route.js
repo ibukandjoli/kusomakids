@@ -82,7 +82,7 @@ export async function POST(req) {
                 .from('generated_books')
                 .insert({
                     user_id: userId,
-                    title: title || 'Mon Aventure',
+                    title_template: title || 'Mon Aventure',
                     child_name: childName,
                     child_age: childAge,
                     child_gender: childGender,
@@ -118,7 +118,7 @@ export async function POST(req) {
                 .from('generated_books')
                 .insert({
                     user_id: userId,
-                    title: title || 'Mon Aventure',
+                    title_template: title || 'Mon Aventure',
                     child_name: childName,
                     child_age: childAge,
                     child_gender: childGender,

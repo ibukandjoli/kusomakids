@@ -90,6 +90,23 @@ async function handleCheckoutSessionCompleted(session) {
 
                 // 2.5 Send Welcome/OTP Email
                 try {
+                    // A. WELCOME EMAIL (Ibuka)
+                    console.log("📨 Sending Welcome Email (Ibuka)...");
+                    const welcomeHtml = WelcomeEmail({ userName: customer_details?.name || 'Parent' });
+                    const welcomeRes = await sendEmail({
+                        to: targetEmail,
+                        from: SENDERS.WELCOME,
+                        subject: "🎉 Bienvenue dans la famille KusomaKids ! (Un petit mot du papa de Soraya)",
+                        html: welcomeHtml
+                    });
+
+                    if (welcomeRes.success) {
+                        console.log("✅ Welcome Email sent successfully.");
+                    } else {
+                        console.error("❌ Welcome Email Failed:", welcomeRes.error);
+                    }
+
+                    // B. MAGIC LINK (Treasure)
                     const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
                         type: 'magiclink',
                         email: targetEmail,

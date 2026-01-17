@@ -175,7 +175,7 @@ function CheckoutContent() {
           userId: user?.id,
           email: email,
           bookId: targetBookId,
-          bookTitle: itemToPay.bookTitle,
+          bookTitle: itemToPay.bookTitle?.replace(/\{childName\}/gi, itemToPay.personalization?.childName || 'votre enfant'),
           childName: itemToPay.personalization?.childName,
           coverUrl: itemToPay.coverImage || itemToPay.coverUrl
         })

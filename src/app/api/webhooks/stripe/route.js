@@ -58,7 +58,7 @@ async function handleCheckoutSessionCompleted(session, supabase) {
         // 1. UNLOCK BOOK
         const { error: unlockError } = await supabase
             .from('generated_books')
-            .update({ is_unlocked: true, status: 'paid' }) // Ensure status reflects payment
+            .update({ is_unlocked: true }) // Ensure status reflects payment
             .eq('id', bookId);
 
         if (unlockError) {

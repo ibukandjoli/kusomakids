@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import PaymentModal from '../components/PaymentModal';
+import DashboardBottomNav from '../components/DashboardBottomNav';
 
 function DashboardContent() {
     const [user, setUser] = useState(null);
@@ -111,6 +112,7 @@ function DashboardContent() {
                 {/* Content */}
                 {books.length === 0 ? (
                     <div className="bg-white/80 backdrop-blur-sm rounded-[2.5rem] shadow-xl border border-white/50 p-12 text-center max-w-4xl mx-auto mt-10">
+                        {/* ... (First story empty state) */}
                         <div className="mb-6 flex justify-center">
                             {/* Magic Book GIF */}
                             <Image
@@ -131,7 +133,7 @@ function DashboardContent() {
                         </Link>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 pb-32">
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-8 pb-32">
                         {books.map((book) => (
                             <div key={book.id} className="bg-white rounded-3xl shadow-md border border-gray-100 overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 group flex flex-col h-full">
                                 {/* Cover Helper */}
@@ -268,8 +270,12 @@ function DashboardContent() {
                         </button>
                     </div>
                 </div>
-            )}
-        </div>
+                </div>
+    )
+}
+
+<DashboardBottomNav />
+        </div >
     );
 }
 

@@ -30,10 +30,11 @@ export default function PaymentModal({ isOpen, onClose, user, bookId }) {
             const session = await response.json();
             if (session.error) throw new Error(session.error);
 
-            const result = await stripe.redirectToCheckout({
-                sessionId: session.sessionId,
-            });
-            if (result.error) throw new Error(result.error.message);
+            if (session.url) {
+                window.location.href = session.url;
+            } else {
+                throw new Error("Impossible de rediriger vers le paiement (URL manquante).");
+            }
         } catch (error) {
             console.error("Subscription Error:", error);
             alert("Erreur: " + error.message);
@@ -62,10 +63,11 @@ export default function PaymentModal({ isOpen, onClose, user, bookId }) {
             const session = await response.json();
             if (session.error) throw new Error(session.error);
 
-            const result = await stripe.redirectToCheckout({
-                sessionId: session.sessionId,
-            });
-            if (result.error) throw new Error(result.error.message);
+            if (session.url) {
+                window.location.href = session.url;
+            } else {
+                throw new Error("Impossible de rediriger vers le paiement (URL manquante).");
+            }
         } catch (error) {
             console.error("One-time Purchase Error:", error);
             alert("Erreur: " + error.message);

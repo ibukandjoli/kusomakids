@@ -153,7 +153,6 @@ export async function POST(req) {
 
             let updates = {
                 story_content: newStoryContent,
-                status: 'completed',
                 cover_image_url: currentCoverUrl
             };
 

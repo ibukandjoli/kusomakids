@@ -160,7 +160,7 @@ async function handleCheckoutSessionCompleted(session) {
                     type: 'magiclink',
                     email: targetEmail,
                     options: {
-                        redirectTo: 'https://www.kusomakids.com/dashboard/purchased'
+                        redirectTo: 'https://www.kusomakids.com/auth/callback'
                     }
                 });
 
@@ -211,7 +211,7 @@ async function handleCheckoutSessionCompleted(session) {
                     const { data: linkData } = await supabaseAdmin.auth.admin.generateLink({
                         type: 'magiclink',
                         email: targetEmail,
-                        options: { redirectTo: 'https://www.kusomakids.com/dashboard/purchased' }
+                        options: { redirectTo: 'https://www.kusomakids.com/auth/callback' }
                     });
                     if (linkData?.properties?.action_link) {
                         magicLinkUrl = linkData.properties.action_link;
@@ -307,7 +307,7 @@ async function handleInvoicePaymentSucceeded(invoice) {
         console.log("⏭️ Skipping non-subscription invoice");
         return;
     }
-    
+
     try {
         // Retrieve subscription to get metadata
         const subscription = await stripe.subscriptions.retrieve(invoice.subscription);
@@ -323,7 +323,7 @@ async function handleInvoicePaymentSucceeded(invoice) {
         // Reset monthly credits to 1
         const { error } = await supabaseAdmin
             .from('profiles')
-            .update({ 
+            .update({
                 monthly_credits: 1,
                 subscription_status: 'active'
             })

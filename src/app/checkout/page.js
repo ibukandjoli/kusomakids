@@ -80,6 +80,20 @@ function CheckoutContent() {
     init();
   }, [router, searchParams]);
 
+  const removeItem = (index) => {
+    const newItems = [...cartItems];
+    newItems.splice(index, 1);
+    setCartItems(newItems);
+
+    // Update Local Storage
+    if (newItems.length > 0) {
+      localStorage.setItem('cart_items', JSON.stringify(newItems));
+    } else {
+      localStorage.removeItem('cart_items');
+      localStorage.removeItem('cart_item');
+    }
+  };
+
   // Calculations
   const subtotal = cartItems.reduce((acc, item) => acc + (item.price || 3000), 0);
   const discount = credits > 0 ? 3000 * Math.min(credits, cartItems.length) : 0; // Simple discount logic
@@ -285,7 +299,17 @@ function CheckoutContent() {
                       </p>
                       <p className="text-xs text-gray-500 mt-1">Pour {item.personalization?.childName}</p>
                       <p className="text-sm font-bold text-orange-600 mt-1">{item.price || 3000} F</p>
+                      <p className="text-sm font-bold text-orange-600 mt-1">{item.price || 3000} F</p>
                     </div>
+
+                    {/* Remove Button */}
+                    <button
+                      onClick={() => removeItem(idx)}
+                      className="ml-auto self-start text-gray-300 hover:text-red-500 p-2 transition-colors"
+                      title="Retirer du panier"
+                    >
+                      ✕
+                    </button>
                   </div>
                 ))}
               </div>

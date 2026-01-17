@@ -10,6 +10,14 @@ export const dynamic = 'force-dynamic';
 export const maxDuration = 60; // Attempt to extend duration if allowed (Pro: 300s, Hobby: 10/60s)
 
 export async function POST(req) {
+    // Explicitly configure FAL Key for Server-Side Worker
+    // The library might not pick it up automatically in all Next.js environments
+    if (process.env.FAL_KEY) {
+        fal.config({
+            credentials: process.env.FAL_KEY,
+        });
+    }
+
     console.log("👷 WORKER START: Generate Book Background Process");
 
     try {
@@ -67,10 +75,13 @@ export async function POST(req) {
                     },
                     logs: true,
                 });
-                if (coverSwap.images?.[0]?.url) {
-                    console.log("✅ Cover Swapped Successfully!");
+                // Handle both { images: [...] } and { image: { url } } formats
+                const swapUrl = coverSwap.image?.url || coverSwap.images?.[0]?.url || coverSwap.data?.image?.url || coverSwap.data?.images?.[0]?.url;
+
+                if (swapUrl) {
+                    console.log("✅ Cover Swapped Successfully!", swapUrl);
                     // Update the book object in memory immediately so we don't overwrite it later
-                    currentCoverUrl = coverSwap.images[0].url;
+                    currentCoverUrl = swapUrl;
 
                     // We must save this update to DB immediately or add to a "pending updates" object
                     // The loop below tracks "hasChanges". Let's assume we will save at the end.
@@ -117,11 +128,14 @@ export async function POST(req) {
                         },
                         logs: true,
                     });
-                    const swapImages = swapResult.images || swapResult.data?.images;
-                    if (swapImages?.[0]?.url) {
-                        finalImageUrl = swapImages[0].url;
+                    // Handle both { images: [...] } and { image: { url } } formats
+                    const swapUrl = swapResult.image?.url || swapResult.images?.[0]?.url || swapResult.data?.image?.url || swapResult.data?.images?.[0]?.url;
+
+                    if (swapUrl) {
+                        finalImageUrl = swapUrl;
                         console.log(`> Swapped successfully.`);
                     } else {
+                        console.error("Worker Swap Result Dump:", JSON.stringify(swapResult));
                         throw new Error("Face swap returned no image");
                     }
                 } else {

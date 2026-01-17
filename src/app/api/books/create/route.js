@@ -91,7 +91,6 @@ export async function POST(req) {
                     child_photo_url: childPhotoUrl,
                     story_content: content_json, // Corrected to match DB schema (jsonb)
                     cover_image_url: coverUrl,
-                    status: 'draft',
                     is_unlocked: false,
                     template_id: templateId
                 })
@@ -128,7 +127,6 @@ export async function POST(req) {
                     child_photo_url: childPhotoUrl,
                     story_content: content_json, // Corrected to match DB schema (jsonb)
                     cover_image_url: coverUrl,
-                    status: 'draft',
                     is_unlocked: false,
                     template_id: templateId
                 })

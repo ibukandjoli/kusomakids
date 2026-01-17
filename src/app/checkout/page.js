@@ -18,6 +18,7 @@ function CheckoutContent() {
   const [paymentMethod, setPaymentMethod] = useState('card');
   const [credits, setCredits] = useState(0);
   const [processing, setProcessing] = useState(false);
+  const [newsletterOptIn, setNewsletterOptIn] = useState(false);
 
   // Helper to format title with Child Name
   const getDisplayTitle = (title, childName) => {
@@ -92,6 +93,8 @@ function CheckoutContent() {
       localStorage.removeItem('cart_items');
       localStorage.removeItem('cart_item');
     }
+    // Fix: Notify Header to update badge
+    window.dispatchEvent(new Event('cart_updated'));
   };
 
   // Calculations
@@ -177,7 +180,8 @@ function CheckoutContent() {
           bookId: targetBookId,
           bookTitle: itemToPay.bookTitle?.replace(/\{childName\}/gi, itemToPay.personalization?.childName || 'votre enfant'),
           childName: itemToPay.personalization?.childName,
-          coverUrl: itemToPay.coverImage || itemToPay.coverUrl
+          coverUrl: itemToPay.coverImage || itemToPay.coverUrl,
+          newsletterOptIn: newsletterOptIn
         })
       });
 
@@ -246,8 +250,14 @@ function CheckoutContent() {
                   />
                 </div>
                 <div className="flex items-center gap-2">
-                  <input type="checkbox" id="newsletter" className="rounded text-orange-500 focus:ring-orange-500" />
-                  <label htmlFor="newsletter" className="text-sm text-gray-600">M'inscrire au Club Kusoma pour lire en ligne en illimité (audio inclus).</label>
+                  <input
+                    type="checkbox"
+                    id="newsletter"
+                    checked={newsletterOptIn}
+                    onChange={(e) => setNewsletterOptIn(e.target.checked)}
+                    className="rounded text-orange-500 focus:ring-orange-500"
+                  />
+                  <label htmlFor="newsletter" className="text-sm text-gray-600">Recevoir les nouveautés et offres exclusives de KusomaKids.</label>
                 </div>
               </div>
             </div>

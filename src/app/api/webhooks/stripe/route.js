@@ -57,7 +57,17 @@ async function handleCheckoutSessionCompleted(session) {
     const bookId = metadata?.bookId || metadata?.target_book_id;
     // Extract Metadata for Emails
     const childName = metadata?.childName || customer_details?.name || 'votre enfant';
-    const bookTitle = "Aventure Magique"; // If dynamic titles exist later, fetch from DB
+
+    // Fetch Real Book Title
+    let bookTitle = "Aventure Magique";
+    if (bookId) {
+        const { data: bookData } = await supabaseAdmin
+            .from('generated_books')
+            .select('title')
+            .eq('id', bookId)
+            .single();
+        if (bookData?.title) bookTitle = bookData.title;
+    }
 
     const isSubscription = session.mode === 'subscription';
 

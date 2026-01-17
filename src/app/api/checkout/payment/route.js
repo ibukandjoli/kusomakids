@@ -7,7 +7,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 export async function POST(req) {
     try {
         const body = await req.json();
-        const { userId, email, bookId, childName, bookTitle, coverUrl } = body;
+        const { userId, email, bookId, childName, bookTitle, coverUrl, newsletterOptIn } = body;
 
         console.log(`💳 Creating Stripe Session for Book: ${bookTitle}`);
 
@@ -52,7 +52,8 @@ export async function POST(req) {
                 userId: userId || 'guest',
                 bookId: bookId,
                 childName: childName,
-                type: 'book_purchase'
+                type: 'book_purchase',
+                newsletter_opt_in: newsletterOptIn ? 'true' : 'false'
             },
         });
 

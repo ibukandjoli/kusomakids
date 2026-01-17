@@ -56,6 +56,7 @@ async function handleCheckoutSessionCompleted(session) {
     let userId = metadata?.userId;
     const bookId = metadata?.bookId || metadata?.target_book_id;
     // Extract Metadata for Emails
+    // Extract Metadata for Emails
     const childName = metadata?.childName || customer_details?.name || 'votre enfant';
 
     // Fetch Real Book Title
@@ -66,7 +67,9 @@ async function handleCheckoutSessionCompleted(session) {
             .select('title')
             .eq('id', bookId)
             .single();
-        if (bookData?.title) bookTitle = bookData.title;
+        if (bookData?.title) {
+            bookTitle = bookData.title.replace(/\{childName\}/gi, childName);
+        }
     }
 
     const isSubscription = session.mode === 'subscription';
@@ -101,11 +104,26 @@ async function handleCheckoutSessionCompleted(session) {
                 if (createError) throw createError;
                 userId = newUser.user.id;
                 console.log(`✨ Ghost Account Created: ${userId}`);
+            }
 
-                // 2.5 Send Welcome/OTP Email
+            // --- SEND EMAILS (WELCOME / MAGIC LINK) ---
+            // Send only if it's a "guest" checkout flow, even if user existed.
+            // But be careful not to spam. Magic Link is always useful for access.
+            // Welcome email might only be for NEW users?
+            // The user requested: "received confirmation... but not welcome/magic link"
+            // Let's send Magic Link ALWAYS for guest checkout so they can login.
+            // Let's send Welcome only if NEW user? or just send it?
+            // User said "ni le mail de bienvenue... ni celui de livraison".
+            // Let's send both to be safe, or check a flag.
+
+            // For now, let's just make sure the Magic Link is sent.
+
+            // 2.5 Send Welcome Email (Only if NEW user ideally, but for now specific request implies they want it)
+            // Actually, if existingUser found, they might have already got Welcome before.
+            // But if they are complaining they didn't get it...
+
+            if (!existingUser) {
                 try {
-                    // A. WELCOME EMAIL (Ibuka)
-                    console.log("📨 Sending Welcome Email (Ibuka)...");
                     // A. WELCOME EMAIL (Ibuka)
                     console.log("📨 Sending Welcome Email (Ibuka)...");
                     const welcomeHtml = WelcomeEmail({ userName: customer_details?.name || 'Parent' });
@@ -121,34 +139,36 @@ async function handleCheckoutSessionCompleted(session) {
                     } else {
                         console.error("❌ Welcome Email Failed:", welcomeRes.error);
                     }
+                } catch (e) { console.error("Welcome Email Error", e); }
+            }
 
-                    // B. MAGIC LINK (Treasure)
-                    console.log("🔑 Generating Magic Link...");
-                    const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
-                        type: 'magiclink',
-                        email: targetEmail,
-                        options: {
-                            redirectTo: 'https://www.kusomakids.com/dashboard'
-                        }
+            // B. MAGIC LINK (Treasure) - ALWAYS SEND for Guest Checkout flow
+            try {
+                console.log("🔑 Generating Magic Link for", targetEmail);
+                const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
+                    type: 'magiclink',
+                    email: targetEmail,
+                    options: {
+                        redirectTo: 'https://www.kusomakids.com/dashboard'
+                    }
+                });
+
+                if (linkData && linkData.properties?.action_link) {
+                    const emailRes = await sendEmail({
+                        to: targetEmail,
+                        from: SENDERS.TREASURE,
+                        subject: "Accédez à votre histoire KusomaKids ! 🗝️",
+                        html: `<p>Votre commande est validée !</p><p>Pour accéder à votre histoire, cliquez sur ce lien magique : <a href="${linkData.properties.action_link}">Accéder à mon compte</a></p>`
                     });
 
-                    if (linkData && linkData.properties?.action_link) {
-                        const emailRes = await sendEmail({
-                            to: targetEmail,
-                            from: SENDERS.TREASURE,
-                            subject: "Accédez à votre histoire KusomaKids ! 🗝️",
-                            html: `<p>Votre commande est validée !</p><p>Pour accéder à votre histoire, cliquez sur ce lien magique : <a href="${linkData.properties.action_link}">Accéder à mon compte</a></p>`
-                        });
-
-                        if (!emailRes.success) {
-                            console.error("❌ Magic Link Email Failed:", emailRes.error);
-                        } else {
-                            console.log("📨 Magic Link sent successfully.");
-                        }
+                    if (!emailRes.success) {
+                        console.error("❌ Magic Link Email Failed:", emailRes.error);
+                    } else {
+                        console.log("📨 Magic Link sent successfully.");
                     }
-                } catch (linkErr) {
-                    console.error("Failed to generate/send magic link:", linkErr);
                 }
+            } catch (linkErr) {
+                console.error("Failed to generate/send magic link:", linkErr);
             }
         } catch (authError) {
             console.error("❌ Ghost Account Logic Failed:", authError);

@@ -46,7 +46,7 @@ export async function POST(req) {
                 },
             ],
             mode: 'payment',
-            success_url: `${origin}/dashboard?success=true&session_id={CHECKOUT_SESSION_ID}`,
+            success_url: `${origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
             cancel_url: `${origin}/checkout?canceled=true`,
             metadata: {
                 userId: userId || 'guest',

@@ -118,40 +118,26 @@ async function handleCheckoutSessionCompleted(session) {
             }
 
             // --- SEND EMAILS (WELCOME / MAGIC LINK) ---
-            // Send only if it's a "guest" checkout flow, even if user existed.
-            // But be careful not to spam. Magic Link is always useful for access.
-            // Welcome email might only be for NEW users?
-            // The user requested: "received confirmation... but not welcome/magic link"
-            // Let's send Magic Link ALWAYS for guest checkout so they can login.
-            // Let's send Welcome only if NEW user? or just send it?
-            // User said "ni le mail de bienvenue... ni celui de livraison".
-            // Let's send both to be safe, or check a flag.
+            // For guest checkout, ALWAYS send Welcome Email on first purchase
+            // This is their introduction to KusomaKids
 
-            // For now, let's just make sure the Magic Link is sent.
+            // A. WELCOME EMAIL (Ibuka) - Send for ALL guest purchases
+            try {
+                console.log("📨 Sending Welcome Email (Ibuka) for guest purchase...");
+                const welcomeHtml = WelcomeEmail({ userName: customer_details?.name || 'Parent' });
+                const welcomeRes = await sendEmail({
+                    to: targetEmail,
+                    from: SENDERS.WELCOME,
+                    subject: "🎉 Bienvenue dans la famille KusomaKids ! (Un petit mot du papa de Soraya)",
+                    html: welcomeHtml
+                });
 
-            // 2.5 Send Welcome Email (Only if NEW user ideally, but for now specific request implies they want it)
-            // Actually, if existingUser found, they might have already got Welcome before.
-            // But if they are complaining they didn't get it...
-
-            if (!existingUser) {
-                try {
-                    // A. WELCOME EMAIL (Ibuka)
-                    console.log("📨 Sending Welcome Email (Ibuka)...");
-                    const welcomeHtml = WelcomeEmail({ userName: customer_details?.name || 'Parent' });
-                    const welcomeRes = await sendEmail({
-                        to: targetEmail,
-                        from: SENDERS.WELCOME,
-                        subject: "🎉 Bienvenue dans la famille KusomaKids ! (Un petit mot du papa de Soraya)",
-                        html: welcomeHtml
-                    });
-
-                    if (welcomeRes.success) {
-                        console.log("✅ Welcome Email sent successfully.");
-                    } else {
-                        console.error("❌ Welcome Email Failed:", welcomeRes.error);
-                    }
-                } catch (e) { console.error("Welcome Email Error", e); }
-            }
+                if (welcomeRes.success) {
+                    console.log("✅ Welcome Email sent successfully.");
+                } else {
+                    console.error("❌ Welcome Email Failed:", welcomeRes.error);
+                }
+            } catch (e) { console.error("Welcome Email Error", e); }
 
             // B. MAGIC LINK (Treasure) - ALWAYS SEND for Guest Checkout flow
             try {

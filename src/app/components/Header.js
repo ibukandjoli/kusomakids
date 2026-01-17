@@ -168,7 +168,7 @@ export default function Header() {
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
                             </svg>
                             {totalBadgeCount > 0 && (
-                                <span className="absolute top-0 right-0 w-4 h-4 bg-red-500 text-white text-[10px] font-bold flex items-center justify-center rounded-full">
+                                <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-red-500 text-white text-[10px] font-bold flex items-center justify-center rounded-full px-1">
                                     {totalBadgeCount}
                                 </span>
                             )}

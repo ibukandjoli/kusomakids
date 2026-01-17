@@ -49,9 +49,24 @@ export default function AuthCallback() {
                         console.log('✅ Magic Link authentication successful');
                         setStatus('success');
 
-                        // Redirect to purchased PDFs page
+                        // Check if user needs onboarding (incomplete profile)
+                        const { data: profile } = await supabase
+                            .from('profiles')
+                            .select('full_name, onboarding_completed')
+                            .eq('id', data.session.user.id)
+                            .single();
+
+                        // Redirect to onboarding if profile is incomplete
+                        // (no full_name or onboarding_completed flag is false)
+                        const needsOnboarding = !profile?.full_name || profile?.onboarding_completed === false;
+
                         setTimeout(() => {
-                            router.push('/dashboard/purchased');
+                            if (needsOnboarding) {
+                                console.log('📝 Redirecting to onboarding (incomplete profile)');
+                                router.push('/onboarding?from=purchase');
+                            } else {
+                                router.push('/dashboard/purchased');
+                            }
                         }, 1500);
                         return;
                     }

@@ -18,7 +18,9 @@ export default function Header() {
     const isAuthPage = ['/login', '/signup', '/forgot-password', '/reset-password'].includes(pathname);
     const isPreviewPage = pathname && pathname.includes('/preview');
 
+
     const [guestCount, setGuestCount] = useState(0);
+    const [totalBadgeCount, setTotalBadgeCount] = useState(0);
 
     useEffect(() => {
         // Scroll handler
@@ -63,8 +65,6 @@ export default function Header() {
         });
 
         // Unified Badge Count Logic
-        const [totalBadgeCount, setTotalBadgeCount] = useState(0);
-
         const updateBadgeCounts = () => {
             try {
                 if (typeof window === 'undefined') return;
@@ -97,6 +97,7 @@ export default function Header() {
             subscription?.unsubscribe();
         };
     }, []);
+
 
     // PROFILE FETCHING (For AppHeader)
     const [profile, setProfile] = useState(null);

@@ -123,14 +123,55 @@ export async function GET(req, { params }) {
         return NextResponse.json({ error: "Book not found" }, { status: 404 });
     }
 
-    // 3. Access Control
+    // 3. Access Control & Credit Logic
     if (book.user_id !== user.id) {
         return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    // Must be Unlocked (Purchased or Club Credit used)
+    // Check if book is already unlocked
     if (!book.is_unlocked) {
-        return NextResponse.json({ error: "Book needs to be purchased/unlocked first." }, { status: 403 });
+        // Book is locked - Check if user is club member with credits
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('subscription_status, monthly_credits')
+            .eq('id', user.id)
+            .single();
+
+        const isClubMember = profile?.subscription_status === 'active';
+        const hasCredits = (profile?.monthly_credits || 0) > 0;
+
+        if (isClubMember && hasCredits) {
+            // Use credit to unlock book
+            const { error: unlockError } = await supabase
+                .from('generated_books')
+                .update({ is_unlocked: true })
+                .eq('id', bookId);
+
+            if (unlockError) {
+                console.error("Failed to unlock book:", unlockError);
+                return NextResponse.json({ error: "Failed to unlock book" }, { status: 500 });
+            }
+
+            // Deduct credit
+            const { error: creditError } = await supabase
+                .from('profiles')
+                .update({ monthly_credits: profile.monthly_credits - 1 })
+                .eq('id', user.id);
+
+            if (creditError) {
+                console.error("Failed to deduct credit:", creditError);
+            }
+
+            console.log(`✅ Book unlocked using club credit. Credits remaining: ${profile.monthly_credits - 1}`);
+        } else {
+            // Not a member or no credits - must purchase
+            return NextResponse.json({
+                error: "Book needs to be purchased first.",
+                needsPurchase: true,
+                isClubMember,
+                hasCredits
+            }, { status: 403 });
+        }
     }
 
     // 4. Generate Stream

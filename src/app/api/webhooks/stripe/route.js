@@ -46,6 +46,16 @@ export async function POST(req) {
         }
     }
 
+    // Handle monthly subscription renewal
+    if (event.type === 'invoice.payment_succeeded') {
+        const invoice = event.data.object;
+        try {
+            await handleInvoicePaymentSucceeded(invoice);
+        } catch (error) {
+            console.error("❌ Error handling invoice payment:", error);
+        }
+    }
+
     return NextResponse.json({ received: true });
 }
 

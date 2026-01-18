@@ -372,92 +372,91 @@ export default function NewBookPage() {
                                 placeholder="URL legacy..."
                             />
                         </div>
-                    </div>
 
-                    <div className="flex items-center space-x-3">
-                        <input
-                            type="checkbox"
-                            id="active"
-                            checked={form.is_active}
-                            onChange={e => setForm({ ...form, is_active: e.target.checked })}
-                            className="w-5 h-5 text-orange-600 rounded focus:ring-orange-500"
-                        />
-                        <label htmlFor="active" className="text-gray-700 font-bold">Rendre cette histoire visible immédiatement</label>
-                    </div>
-            </div>
-
-            {/* Pages Editor */}
-            <div className="space-y-6">
-                <h2 className="text-2xl font-bold text-gray-900">Configuration des 10 Pages</h2>
-                {pages.map((page, index) => (
-                    <div key={index} className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex gap-6 items-start">
-                        <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center text-orange-700 font-bold text-xl flex-shrink-0">
-                            {page.pageNumber}
+                        <div className="flex items-center space-x-3">
+                            <input
+                                type="checkbox"
+                                id="active"
+                                checked={form.is_active}
+                                onChange={e => setForm({ ...form, is_active: e.target.checked })}
+                                className="w-5 h-5 text-orange-600 rounded focus:ring-orange-500"
+                            />
+                            <label htmlFor="active" className="text-gray-700 font-bold">Rendre cette histoire visible immédiatement</label>
                         </div>
-                        <div className="flex-1 space-y-4">
-                            <div>
-                                <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Image de la Page (Master)</label>
-                                <div className="flex gap-4 items-start">
-                                    <div className="flex-1">
-                                        <input
-                                            type="file"
-                                            accept="image/*"
-                                            onChange={(e) => handlePageImageUpload(index, e.target.files[0])}
-                                            className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200"
+                    </div>
+
+                    {/* Pages Editor */}
+                    <div className="space-y-6">
+                        <h2 className="text-2xl font-bold text-gray-900">Configuration des 10 Pages</h2>
+                        {pages.map((page, index) => (
+                            <div key={index} className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex gap-6 items-start">
+                                <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center text-orange-700 font-bold text-xl flex-shrink-0">
+                                    {page.pageNumber}
+                                </div>
+                                <div className="flex-1 space-y-4">
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Image de la Page (Master)</label>
+                                        <div className="flex gap-4 items-start">
+                                            <div className="flex-1">
+                                                <input
+                                                    type="file"
+                                                    accept="image/*"
+                                                    onChange={(e) => handlePageImageUpload(index, e.target.files[0])}
+                                                    className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200"
+                                                />
+                                            </div>
+                                            <div className="flex-1">
+                                                <input
+                                                    type="url"
+                                                    className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:ring-1 focus:ring-orange-500 outline-none font-mono text-xs text-gray-400"
+                                                    value={page.base_image_url}
+                                                    onChange={e => updatePage(index, 'base_image_url', e.target.value)}
+                                                    placeholder="Ou URL directe..."
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Texte de l'Histoire (Master Script)</label>
+                                        <div className="text-xs text-gray-400 mb-2">Variables: {'{childName}'}, {'{childAge}'}, {'{gender}'}, {'{city}'}</div>
+                                        <textarea
+                                            className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:ring-1 focus:ring-orange-500 outline-none text-sm h-32 font-medium text-gray-800"
+                                            value={page.text_template || ''}
+                                            onChange={e => updatePage(index, 'text_template', e.target.value)}
+                                            placeholder="Ce matin-là, {childName}..."
                                         />
                                     </div>
-                                    <div className="flex-1">
-                                        <input
-                                            type="url"
-                                            className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:ring-1 focus:ring-orange-500 outline-none font-mono text-xs text-gray-400"
-                                            value={page.base_image_url}
-                                            onChange={e => updatePage(index, 'base_image_url', e.target.value)}
-                                            placeholder="Ou URL directe..."
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Contexte de la Scène (Prompt IA - Optionnel)</label>
+                                        <textarea
+                                            className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:ring-1 focus:ring-orange-500 outline-none text-sm h-20 text-gray-500"
+                                            value={page.scene_context}
+                                            onChange={e => updatePage(index, 'scene_context', e.target.value)}
+                                            placeholder="Décrivez la scène..."
                                         />
                                     </div>
                                 </div>
+                                {/* Preview Thumbnail if URL exists */}
+                                {page.base_image_url && (
+                                    <div className="w-32 h-32 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0 border border-gray-200 relative group">
+                                        <img src={page.base_image_url} className="w-full h-full object-cover" alt={`Page ${page.pageNumber}`} />
+                                    </div>
+                                )}
                             </div>
-                            <div>
-                                <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Texte de l'Histoire (Master Script)</label>
-                                <div className="text-xs text-gray-400 mb-2">Variables: {'{childName}'}, {'{childAge}'}, {'{gender}'}, {'{city}'}</div>
-                                <textarea
-                                    className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:ring-1 focus:ring-orange-500 outline-none text-sm h-32 font-medium text-gray-800"
-                                    value={page.text_template || ''}
-                                    onChange={e => updatePage(index, 'text_template', e.target.value)}
-                                    placeholder="Ce matin-là, {childName}..."
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Contexte de la Scène (Prompt IA - Optionnel)</label>
-                                <textarea
-                                    className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:ring-1 focus:ring-orange-500 outline-none text-sm h-20 text-gray-500"
-                                    value={page.scene_context}
-                                    onChange={e => updatePage(index, 'scene_context', e.target.value)}
-                                    placeholder="Décrivez la scène..."
-                                />
-                            </div>
-                        </div>
-                        {/* Preview Thumbnail if URL exists */}
-                        {page.base_image_url && (
-                            <div className="w-32 h-32 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0 border border-gray-200 relative group">
-                                <img src={page.base_image_url} className="w-full h-full object-cover" alt={`Page ${page.pageNumber}`} />
-                            </div>
-                        )}
+                        ))}
                     </div>
-                ))}
-            </div>
 
-            <div className="sticky bottom-4">
-                <button
-                    type="submit"
-                    disabled={loading || uploading}
-                    className="w-full bg-gray-900 text-white py-4 rounded-xl font-bold hover:bg-black transition-colors disabled:opacity-50 shadow-xl"
-                >
-                    {loading ? 'Création en cours...' : uploading ? 'Upload en cours...' : 'Sauvegarder l\'Histoire'}
-                </button>
+                    <div className="sticky bottom-4">
+                        <button
+                            type="submit"
+                            disabled={loading || uploading}
+                            className="w-full bg-gray-900 text-white py-4 rounded-xl font-bold hover:bg-black transition-colors disabled:opacity-50 shadow-xl"
+                        >
+                            {loading ? 'Création en cours...' : uploading ? 'Upload en cours...' : 'Sauvegarder l\'Histoire'}
+                        </button>
+                    </div>
+                </form>
             </div>
-        </form>
-            </div >
-        </div >
+        </div>
     );
 }

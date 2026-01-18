@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { renderToStream, Document, Page, Text, Image, StyleSheet } from '@react-pdf/renderer';
+import { renderToStream, Document, Page, Text, Image, View, StyleSheet } from '@react-pdf/renderer';
 
 // Initialize Supabase Admin Client
 const supabaseAdmin = createClient(
@@ -14,66 +14,82 @@ const supabaseAdmin = createClient(
     }
 );
 
-// PDF Styles (same as existing download endpoint)
+// PDF Styles - Landscape format for children's book
 const styles = StyleSheet.create({
     page: {
-        flexDirection: 'column',
+        flexDirection: 'row', // Side by side layout
         backgroundColor: '#FFFFFF',
-        padding: 40
+        padding: 0
     },
     coverPage: {
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
         backgroundColor: '#FDFBF7',
-        padding: 40,
+        padding: 60,
         height: '100%'
     },
     coverImage: {
-        width: '100%',
+        width: '80%',
         height: 400,
         objectFit: 'contain',
-        marginBottom: 30,
-        borderRadius: 10
+        marginBottom: 40,
+        borderRadius: 15
     },
     title: {
-        fontSize: 32,
+        fontSize: 42,
         fontWeight: 'bold',
         textAlign: 'center',
-        marginBottom: 10,
-        color: '#1a1a1a'
+        marginBottom: 15,
+        color: '#1a1a1a',
+        fontFamily: 'Helvetica-Bold' // Child-friendly
     },
     subtitle: {
-        fontSize: 18,
+        fontSize: 22,
         textAlign: 'center',
         color: '#666666',
-        marginBottom: 20
+        marginBottom: 25,
+        fontFamily: 'Helvetica'
     },
-    storyPage: {
+    // Story page - split layout
+    imageSection: {
+        width: '50%',
+        height: '100%',
+        backgroundColor: '#F8F8F8',
         padding: 40,
-        flexDirection: 'column'
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+    },
+    textSection: {
+        width: '50%',
+        height: '100%',
+        padding: 50,
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        backgroundColor: '#FFFFFF'
     },
     storyImage: {
         width: '100%',
-        height: 300,
-        objectFit: 'cover',
-        marginBottom: 30,
-        borderRadius: 8
+        maxHeight: '90%',
+        objectFit: 'contain',
+        borderRadius: 12
     },
     storyText: {
-        fontSize: 14,
-        lineHeight: 1.6,
-        color: '#333333',
-        textAlign: 'justify'
+        fontSize: 18,
+        lineHeight: 1.8,
+        color: '#2d2d2d',
+        textAlign: 'left',
+        fontFamily: 'Helvetica' // Readable for children
     },
     pageNumber: {
         position: 'absolute',
-        bottom: 30,
-        left: 0,
-        right: 0,
-        textAlign: 'center',
-        fontSize: 10,
-        color: '#999999'
+        bottom: 20,
+        right: 30,
+        fontSize: 14,
+        color: '#999999',
+        fontFamily: 'Helvetica'
     }
 });
 
@@ -86,8 +102,8 @@ const BookDocument = ({ book }) => {
 
     return (
         <Document>
-            {/* COVER PAGE */}
-            <Page size="A4" style={styles.coverPage}>
+            {/* COVER PAGE - Portrait */}
+            <Page size="A4" orientation="portrait" style={styles.coverPage}>
                 <Text style={styles.title}>{formattedTitle}</Text>
                 <Text style={styles.subtitle}>Une aventure pour {book.child_name}</Text>
 
@@ -95,18 +111,24 @@ const BookDocument = ({ book }) => {
                     <Image src={book.cover_image_url} style={styles.coverImage} />
                 )}
 
-                <Text style={{ marginTop: 50, fontSize: 12, color: '#999' }}>KusomaKids - Histoires Magiques</Text>
+                <Text style={{ marginTop: 60, fontSize: 14, color: '#999' }}>KusomaKids - Histoires Magiques</Text>
             </Page>
 
-            {/* STORY PAGES */}
+            {/* STORY PAGES - Landscape with side-by-side layout */}
             {pages.map((page, index) => (
-                <Page key={index} size="A4" style={styles.storyPage}>
-                    {page.image && (
-                        <Image src={page.image} style={styles.storyImage} />
-                    )}
-                    <Text style={styles.storyText}>{page.text}</Text>
+                <Page key={index} size="A4" orientation="landscape" style={styles.page}>
+                    {/* LEFT: Image */}
+                    <View style={styles.imageSection}>
+                        {page.image && (
+                            <Image src={page.image} style={styles.storyImage} />
+                        )}
+                    </View>
 
-                    <Text style={styles.pageNumber}>{index + 1}</Text>
+                    {/* RIGHT: Text */}
+                    <View style={styles.textSection}>
+                        <Text style={styles.storyText}>{page.text}</Text>
+                        <Text style={styles.pageNumber}>{index + 1}</Text>
+                    </View>
                 </Page>
             ))}
         </Document>

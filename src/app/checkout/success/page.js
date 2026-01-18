@@ -22,31 +22,33 @@ function SuccessContent() {
 
                 <div className="text-left bg-orange-50 p-6 rounded-xl border border-orange-100 mb-8">
                     <h3 className="font-bold text-orange-800 mb-4 flex items-center">
-                        <span className="bg-orange-200 w-6 h-6 rounded-full flex items-center justify-center mr-2 text-xs">ℹ️</span>
+                        <span className="bg-orange-200 w-6 h-6 rounded-full flex items-center justify-center mr-2 text-xs">📧</span>
                         Prochaines étapes :
                     </h3>
                     <ul className="space-y-4 text-sm text-gray-700">
                         <li className="flex items-start gap-3">
                             <span className="bg-white w-6 h-6 rounded-full flex items-center justify-center font-bold text-orange-500 shadow-sm flex-shrink-0">1</span>
                             <span>
-                                <strong>Activez votre compte</strong> : Vous avez reçu un email d'activation de votre compte. Cliquez dessus pour vous connecter automatiquement.
+                                <strong>Consultez votre boîte mail</strong> : Vous avez reçu un email avec un lien pour télécharger votre PDF. Le lien est valable 30 jours.
                             </span>
                         </li>
                         <li className="flex items-start gap-3">
                             <span className="bg-white w-6 h-6 rounded-full flex items-center justify-center font-bold text-orange-500 shadow-sm flex-shrink-0">2</span>
                             <span>
-                                <strong>Téléchargez votre livre</strong> : Une fois connecté, rendez-vous dans votre page "Mes PDFs" pour voir votre histoire et la télécharger.
+                                <strong>Créez votre compte KusomaKids</strong> : Pour lire l'histoire en streaming (avec audio) et retrouver tous vos PDFs en un clic.
                             </span>
                         </li>
                     </ul>
                 </div>
 
-                <Link
-                    href="/dashboard"
+                <a
+                    href="https://mail.google.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="block w-full bg-orange-500 text-white font-bold py-4 rounded-xl hover:bg-orange-600 transition-transform hover:scale-105 shadow-lg shadow-orange-500/30"
                 >
-                    Accéder à mon espace
-                </Link>
+                    📧 Ouvrir Gmail
+                </a>
 
                 <p className="mt-6 text-xs text-gray-400">
                     Un souci ? Contactez-nous à coucou@kusomakids.com

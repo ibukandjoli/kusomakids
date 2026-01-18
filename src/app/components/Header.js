@@ -69,15 +69,11 @@ export default function Header() {
             try {
                 if (typeof window === 'undefined') return;
 
-                // 1. Cart Items
+                // Only count cart_items (guest_books are legacy/pre-auth, not in cart)
                 const cartItems = JSON.parse(localStorage.getItem('cart_items') || '[]');
                 const cartCount = Array.isArray(cartItems) ? cartItems.length : 0;
 
-                // 2. Guest Items (Legacy or pre-auth)
-                const guestItems = JSON.parse(localStorage.getItem('guest_books') || '[]');
-                const guestCount = Array.isArray(guestItems) ? guestItems.length : 0;
-
-                setTotalBadgeCount(cartCount + guestCount);
+                setTotalBadgeCount(cartCount);
             } catch (e) {
                 console.error("Badge Update Error:", e);
             }
@@ -161,11 +157,11 @@ export default function Header() {
 
                     {/* Actions */}
                     <div className="flex items-center space-x-4">
-                        {/* Cart Icon */}
+                        {/* Cart Icon - Shopping Bag */}
                         <Link href="/checkout" className={`relative p-2 rounded-full transition-colors ${isScrolled ? 'text-gray-600 hover:bg-gray-100' : 'text-gray-900 hover:bg-gray-100'
                             }`}>
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
                             </svg>
                             {totalBadgeCount > 0 && (
                                 <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-red-500 text-white text-[10px] font-bold flex items-center justify-center rounded-full px-1">

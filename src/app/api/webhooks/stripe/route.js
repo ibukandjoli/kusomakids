@@ -139,34 +139,9 @@ async function handleCheckoutSessionCompleted(session) {
                 }
             } catch (e) { console.error("Welcome Email Error", e); }
 
-            // B. MAGIC LINK (Treasure) - ALWAYS SEND for Guest Checkout flow
-            try {
-                console.log("🔑 Generating Magic Link for", targetEmail);
-                const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
-                    type: 'magiclink',
-                    email: targetEmail,
-                    options: {
-                        redirectTo: 'https://www.kusomakids.com/auth/callback'
-                    }
-                });
-
-                if (linkData && linkData.properties?.action_link) {
-                    const emailRes = await sendEmail({
-                        to: targetEmail,
-                        from: SENDERS.TREASURE,
-                        subject: "Accédez à votre histoire KusomaKids ! 🗝️",
-                        html: MagicLinkEmail({ magicLink: linkData.properties.action_link })
-                    });
-
-                    if (!emailRes.success) {
-                        console.error("❌ Magic Link Email Failed:", emailRes.error);
-                    } else {
-                        console.log("📨 Magic Link sent successfully.");
-                    }
-                }
-            } catch (linkErr) {
-                console.error("Failed to generate/send magic link:", linkErr);
-            }
+            // B. MAGIC LINK - REMOVED (replaced by direct PDF download link)
+            // Users now receive a direct download link in the BookReadyEmail instead
+            console.log("✅ Skipping Magic Link - using direct download token instead");
         } catch (authError) {
             console.error("❌ Ghost Account Logic Failed:", authError);
         }

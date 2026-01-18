@@ -185,19 +185,29 @@ export default function BookReader({ book, user, onUnlock, isEditable = false, o
                         {/* LEFT: Image (Locked or Unlocked) */}
                         <div className="w-1/2 h-full relative bg-gray-100 border-r border-[#E0D0B0] overflow-hidden group">
                             {/* Page Index 0 is Page 1 */}
-                            {(pages[currentPage - 1]?.image || (!isUnlocked && currentPage >= 3)) ? (
-                                <Image
-                                    src={pages[currentPage - 1]?.image || coverUrl} // Use Cover if locked/missing
-                                    alt={`Page ${currentPage}`}
-                                    fill
-                                    className={`object-cover transition-all duration-700 ${(!isUnlocked && currentPage >= 3) ? 'blur-md scale-110 opacity-50' : 'group-hover:scale-105'}`}
-                                />
-                            ) : (
-                                <div className="absolute inset-0 flex items-center justify-center flex-col text-gray-400">
-                                    <span className="text-6xl animate-bounce mb-4">🎨</span>
-                                    <p>Illustration en cours...</p>
-                                </div>
-                            )}
+                            {(() => {
+                                const pageData = pages[currentPage - 1];
+                                const imageUrl = pageData?.image || pageData?.image_url || pageData?.imageUrl || coverUrl;
+                                const hasImage = !!(pageData?.image || pageData?.image_url || pageData?.imageUrl);
+
+                                if (hasImage || (!isUnlocked && currentPage >= 3)) {
+                                    return (
+                                        <Image
+                                            src={imageUrl}
+                                            alt={`Page ${currentPage}`}
+                                            fill
+                                            className={`object-cover transition-all duration-700 ${(!isUnlocked && currentPage >= 3) ? 'blur-md scale-110 opacity-50' : 'group-hover:scale-105'}`}
+                                        />
+                                    );
+                                } else {
+                                    return (
+                                        <div className="absolute inset-0 flex items-center justify-center flex-col text-gray-400">
+                                            <span className="text-6xl animate-bounce mb-4">🎨</span>
+                                            <p>Illustration en cours...</p>
+                                        </div>
+                                    );
+                                }
+                            })()}
 
                             {/* Hybrid Lock Overlay */}
                             {(!isUnlocked && currentPage >= 3) && (
@@ -250,73 +260,54 @@ export default function BookReader({ book, user, onUnlock, isEditable = false, o
         </div>
     );
 
-    // Audio Logic
+    // Audio Logic (Web Speech API - Simple & Free)
     const [isPlaying, setIsPlaying] = useState(false);
-    const audioRef = useRef(null);
 
-    const handlePlayAudio = async () => {
+    // Cleanup on unmount
+    useEffect(() => {
+        return () => {
+            if (typeof window !== 'undefined') {
+                window.speechSynthesis.cancel();
+            }
+        };
+    }, []);
+
+    const handlePlayAudio = () => {
+        if (!('speechSynthesis' in window)) {
+            alert("Votre navigateur ne supporte pas la lecture audio.");
+            return;
+        }
+
         if (isPlaying) {
-            audioRef.current?.pause();
+            window.speechSynthesis.cancel();
             setIsPlaying(false);
             return;
         }
 
         const currentPageData = pages[currentPage > 0 ? currentPage - 1 : 0]; // Handle Cover (0) vs Pages
-        const textToRead = currentPage === 0 ? book.title : currentPageData?.text;
+        // Cover doesn't usually have 'text' in pages array, maybe title + tagline
+        const textToRead = currentPage === 0
+            ? `${book.title}. ${book.tagline || ''}`
+            : currentPageData?.text;
 
         if (!textToRead) return;
 
-        // Check if audio URL already exists
-        let audioUrl = currentPageData?.audio_url;
+        const utterance = new SpeechSynthesisUtterance(textToRead);
+        utterance.lang = 'fr-FR'; // Force French
+        utterance.rate = 0.9; // Slightly slower for kids
+        utterance.pitch = 1.1; // Slightly higher/friendly
 
-        // If not, call API to generate (and cache)
-        if (!audioUrl) {
-            try {
-                // Show loading state (optimistic or spinner)
-                // For now, change cursor or visual cue
-                document.body.style.cursor = 'wait';
+        utterance.onend = () => {
+            setIsPlaying(false);
+        };
 
-                const res = await fetch('/api/audio/generate-speech', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        text: textToRead,
-                        bookId: book.id, // Ensure book object has ID
-                        pageIndex: currentPage > 0 ? currentPage - 1 : 0 // 0 for Cover, etc.
-                    })
-                });
+        utterance.onerror = (e) => {
+            console.error("Speech Error:", e);
+            setIsPlaying(false);
+        };
 
-                const data = await res.json();
-                document.body.style.cursor = 'default';
-
-                if (!res.ok) {
-                    console.error("Audio Error:", data);
-                    alert("Erreur lors de la génération audio. Vérifiez votre connexion.");
-                    return;
-                }
-
-                audioUrl = data.audioUrl;
-
-                // Optimistic Update (Optional: Update local pages array so we don't fetch again this session)
-                // We should ideally update the parent's state, but for this component:
-                if (currentPage > 0) {
-                    pages[currentPage - 1].audio_url = audioUrl;
-                }
-
-            } catch (e) {
-                document.body.style.cursor = 'default';
-                console.error(e);
-                return;
-            }
-        }
-
-        if (audioUrl) {
-            const audio = new Audio(audioUrl);
-            audioRef.current = audio;
-            audio.play();
-            setIsPlaying(true);
-            audio.onended = () => setIsPlaying(false);
-        }
+        window.speechSynthesis.speak(utterance);
+        setIsPlaying(true);
     };
 
     // Fullscreen Logic

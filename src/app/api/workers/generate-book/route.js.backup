@@ -7,78 +7,18 @@ import { SENDERS } from '@/lib/senders';
 
 // Force dynamic to allow long-running processes
 export const dynamic = 'force-dynamic';
-export const maxDuration = 300; // 5 minutes for 10 FLUX PuLID generations (~15-20s each)
+export const maxDuration = 300; // 5 minutes for 10 face swaps (~15-30s each)
 
-// 🔧 Configure Fal explicitly for Server-Side usage
+// 🔧 CRITICAL FIX: Configure Fal explicitly for Server-Side usage
+// This tells Fal to use the Env Key directly and NOT look for a proxy
 if (process.env.FAL_KEY) {
     fal.config({
         credentials: process.env.FAL_KEY,
     });
 }
 
-/**
- * Helper: Build optimized prompt for FLUX PuLID
- * Combines scene description with quality directives
- */
-function buildPuLIDPrompt(pageText, sceneDescription) {
-    // Base prompt from story content
-    let prompt = sceneDescription || pageText || "A young African child in a children's book illustration";
-
-    // Add quality directives
-    prompt += ". Photorealistic children's book illustration style, natural facial proportions, realistic eyes, warm lighting, professional quality, detailed and lifelike.";
-
-    return prompt;
-}
-
-/**
- * Negative prompt to avoid Disney/Pixar eyes
- * Critical for maintaining natural eye proportions
- */
-const NEGATIVE_PROMPT = "disney eyes, pixar style, cartoon eyes, oversized eyes, anime eyes, big eyes, exaggerated features, 3d animation style, dreamworks style";
-
-/**
- * Generate personalized image using FLUX PuLID
- * @param {string} scenePrompt - Description of the scene
- * @param {string} childPhotoUrl - Reference photo of the child
- * @returns {Promise<string>} - URL of generated image
- */
-async function generateWithPuLID(scenePrompt, childPhotoUrl) {
-    try {
-        const result = await fal.subscribe("fal-ai/flux-pulid", {
-            input: {
-                prompt: scenePrompt,
-                negative_prompt: NEGATIVE_PROMPT,
-                reference_image_url: childPhotoUrl,
-                num_inference_steps: 35,
-                guidance_scale: 3.5,
-                id_weight: 1.0,
-                num_images: 1,
-                enable_safety_checker: false,
-                output_format: "png",
-                image_size: {
-                    width: 1024,
-                    height: 1024
-                }
-            },
-            logs: true,
-        });
-
-        // Extract image URL from response
-        const imageUrl = result.images?.[0]?.url || result.image?.url;
-
-        if (!imageUrl) {
-            throw new Error("No image URL in FLUX PuLID response");
-        }
-
-        return imageUrl;
-    } catch (error) {
-        console.error("FLUX PuLID generation failed:", error);
-        throw error;
-    }
-}
-
 export async function POST(req) {
-    console.log("👷 WORKER START: Generate Book with FLUX PuLID");
+    console.log("👷 WORKER START: Generate Book Background Process");
 
     try {
         const supabase = await createClient();
@@ -112,82 +52,102 @@ export async function POST(req) {
 
         const photoUrl = book.child_photo_url;
 
+        // Log photo status specifically
         if (!photoUrl) {
-            console.warn("⚠️ NO CHILD PHOTO URL FOUND. Cannot generate personalized images.");
-            return NextResponse.json({ error: "Child photo required" }, { status: 400 });
+            console.warn("⚠️ NO CHILD PHOTO URL FOUND. Skipping Face Swap.");
+        } else {
+            console.log("✅ Child Photo found:", photoUrl);
         }
-
-        console.log("✅ Child Photo found:", photoUrl);
 
         let updatedPages = [...pages];
         let hasChanges = false;
         let generatedCount = 0;
 
-        // 2. COVER IMAGE GENERATION with FLUX PuLID
+        // 0. COVER IMAGE SWAP
         let currentCoverUrl = book.cover_image_url || book.cover_url;
 
-        if (photoUrl && currentCoverUrl) {
-            console.log("🎨 Generating Personalized Cover with FLUX PuLID...");
+        if (currentCoverUrl && photoUrl && !currentCoverUrl.includes('fal.media')) {
+            console.log("🎨 Personalizing Cover...");
             try {
-                // Build cover prompt from book title and theme
-                const coverPrompt = buildPuLIDPrompt(
-                    book.title,
-                    `A young African child as the hero of the story "${book.title}". Cover illustration for a children's book, vibrant and engaging`
-                );
+                const coverResult = await fal.subscribe("fal-ai/face-swap", {
+                    input: {
+                        base_image_url: currentCoverUrl,
+                        swap_image_url: photoUrl
+                    },
+                    logs: true,
+                });
 
-                const newCoverUrl = await generateWithPuLID(coverPrompt, photoUrl);
+                // 🔧 FIX: Handle both 'image' (object) and 'images' (array) response formats
+                const newCoverUrl = coverResult.image?.url || coverResult.images?.[0]?.url || coverResult.data?.image?.url || coverResult.data?.images?.[0]?.url;
 
                 if (newCoverUrl) {
-                    console.log("✅ Cover Generated Successfully!");
+                    console.log("✅ Cover Swapped Successfully!");
                     currentCoverUrl = newCoverUrl;
                     hasChanges = true;
                 } else {
-                    console.warn("⚠️ Cover generation returned no URL");
+                    console.warn("⚠️ Cover Swap returned no URL. Result:", JSON.stringify(coverResult));
                 }
             } catch (err) {
-                console.error("❌ Cover Generation Failed:", err.message);
-                // Keep original cover as fallback
+                console.error("❌ Cover Swap Failed:", err.message);
             }
         }
 
-        // 3. PAGES LOOP - Generate ALL pages with FLUX PuLID
+        // 2. PAGES LOOP (Face Swap) - Process ALL pages for purchased books
         for (let i = 0; i < updatedPages.length; i++) {
             const page = updatedPages[i];
 
-            console.log(`🎭 Generating Page ${i + 1} / ${updatedPages.length} with FLUX PuLID...`);
+            // For purchased books, we want to generate ALL images with face swap
+            // Even if preview images exist, we regenerate them with face swap
+            const baseImageUrl = page.base_image_url || page.image;
+            if (!baseImageUrl) {
+                console.warn(`⚠️ Page ${i + 1} has no base image, skipping`);
+                continue; // Skip pages without templates
+            }
+
+            console.log(`🎭 Processing Page ${i + 1} / ${updatedPages.length}...`);
+            let finalImageUrl = baseImageUrl;
 
             try {
-                // Build scene prompt from page content
-                const pagePrompt = buildPuLIDPrompt(
-                    page.text || page.content,
-                    page.scene_description || page.prompt || `Scene ${i + 1} from the story`
-                );
+                if (photoUrl) {
+                    // PERFORM FACE SWAP
+                    const swapResult = await fal.subscribe("fal-ai/face-swap", {
+                        input: {
+                            base_image_url: baseImageUrl,
+                            swap_image_url: photoUrl
+                        },
+                        logs: true,
+                    });
 
-                console.log(`  Prompt: ${pagePrompt.substring(0, 100)}...`);
+                    // 🔧 FIX: Robust response parsing
+                    const swappedUrl = swapResult.image?.url || swapResult.images?.[0]?.url || swapResult.data?.image?.url || swapResult.data?.images?.[0]?.url;
 
-                const generatedImageUrl = await generateWithPuLID(pagePrompt, photoUrl);
+                    if (swappedUrl) {
+                        finalImageUrl = swappedUrl;
+                        console.log(`> Swapped successfully.`);
+                    } else {
+                        console.warn(`> Warning: No image URL in response for page ${i + 1}. Result:`, JSON.stringify(swapResult));
+                    }
+                } else {
+                    // No photo URL, use base image
+                    console.log(`> No photo for face swap, using base image`);
+                }
 
                 updatedPages[i] = {
                     ...page,
-                    image: generatedImageUrl,
-                    base_image_url: generatedImageUrl // Store as base for future reference
+                    image: finalImageUrl
                 };
-
                 hasChanges = true;
                 generatedCount++;
-                console.log(`  ✅ Page ${i + 1} generated successfully`);
 
             } catch (err) {
-                console.error(`❌ Failed to generate Page ${i + 1}:`, err.message);
-
-                // Fallback: keep existing image or use placeholder
-                const fallbackImage = page.image || page.base_image_url || 'https://placehold.co/1024x1024/png?text=Generation+Failed';
-                updatedPages[i] = { ...page, image: fallbackImage };
+                console.error(`❌ Failed to process Page ${i + 1}:`, err.message);
+                // Fallback to base image so the book isn't broken
+                updatedPages[i] = { ...page, image: baseImageUrl };
                 hasChanges = true;
             }
         }
 
-        // 4. Save Updates & Send PDF Email with Download Link
+        // 3. Save Updates & Send PDF Email with Download Link
         if (hasChanges) {
             let newStoryContent = Array.isArray(book.story_content) ? updatedPages : { ...book.story_content, pages: updatedPages };
 
@@ -272,12 +232,10 @@ export async function POST(req) {
             }
         }
 
-        console.log(`✨ Worker Complete: ${generatedCount} images generated with FLUX PuLID`);
-
         return NextResponse.json({
             success: true,
             generatedCount,
-            message: "Worker finished - FLUX PuLID generation complete"
+            message: "Worker finished"
         });
 
     } catch (error) {

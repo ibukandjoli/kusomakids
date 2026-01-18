@@ -16,7 +16,7 @@ export default function Header() {
     const pathname = usePathname();
 
     const isAuthPage = ['/login', '/signup', '/forgot-password', '/reset-password'].includes(pathname);
-    const isPreviewPage = pathname && pathname.includes('/preview');
+    const isPreviewPage = pathname && (pathname.includes('/preview') || pathname.includes('/read/'));
 
 
     const [guestCount, setGuestCount] = useState(0);

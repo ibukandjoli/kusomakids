@@ -147,14 +147,13 @@ export async function POST(req) {
             }
         }
 
-        // 3. Save Updates & Email
+        // 3. Save Updates & Send PDF Email with Download Link
         if (hasChanges) {
             let newStoryContent = Array.isArray(book.story_content) ? updatedPages : { ...book.story_content, pages: updatedPages };
 
             let updates = {
                 story_content: newStoryContent,
                 cover_image_url: currentCoverUrl
-                // status: 'completed'  <-- REMOVED TO PREVENT 500 ERROR (Column does not exist)
             };
 
             const { error: updateError } = await supabase
@@ -168,24 +167,67 @@ export async function POST(req) {
             }
             console.log("💾 Book updated successfully.");
 
-            // Send Email
+            // GENERATE SECURE DOWNLOAD TOKEN & SEND PDF EMAIL
             if (book.email) {
+                let downloadUrl = 'https://www.kusomakids.com/login';
+
+                try {
+                    // Generate cryptographically random token
+                    const crypto = require('crypto');
+                    const downloadToken = crypto.randomBytes(32).toString('hex');
+
+                    // Initialize Supabase Admin for token storage
+                    const { createClient } = require('@supabase/supabase-js');
+                    const supabaseAdmin = createClient(
+                        process.env.NEXT_PUBLIC_SUPABASE_URL,
+                        process.env.SUPABASE_SERVICE_ROLE_KEY,
+                        {
+                            auth: {
+                                autoRefreshToken: false,
+                                persistSession: false
+                            }
+                        }
+                    );
+
+                    // Store token in database
+                    const { error: tokenError } = await supabaseAdmin
+                        .from('download_tokens')
+                        .insert({
+                            book_id: bookId,
+                            token: downloadToken,
+                            email: book.email,
+                            downloads_remaining: 3,
+                            expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() // 30 days
+                        });
+
+                    if (tokenError) {
+                        console.error("❌ Failed to create download token:", tokenError);
+                    } else {
+                        downloadUrl = `https://www.kusomakids.com/api/download-secure/${bookId}?token=${downloadToken}`;
+                        console.log("✅ Download token created, valid for 30 days, 3 downloads");
+                    }
+                } catch (tokenErr) {
+                    console.error("Error generating download token:", tokenErr);
+                }
+
+                // Send PDF Ready Email with download link
                 try {
                     const emailHtml = BookReadyEmail({
                         childName: book.child_name || 'votre enfant',
                         bookTitle: book.title,
-                        previewUrl: `${process.env.NEXT_PUBLIC_APP_URL || 'https://kusomakids.com'}/book/${book.id}/preview`
+                        downloadUrl: downloadUrl,
+                        userEmail: book.email
                     });
 
                     await sendEmail({
                         to: book.email,
                         from: SENDERS.TREASURE,
-                        subject: `L'histoire de ${book.child_name || 'votre enfant'} est prête ! 📖✨`,
+                        subject: `📥 Votre PDF est prêt ! ${book.title}`,
                         html: emailHtml
                     });
-                    console.log("✅ Email sent.");
+                    console.log("✅ PDF Download Email sent.");
                 } catch (emailErr) {
-                    console.error("❌ Email failed:", emailErr);
+                    console.error("❌ PDF Email failed:", emailErr);
                 }
             }
         }

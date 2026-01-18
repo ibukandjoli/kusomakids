@@ -573,6 +573,8 @@ export default function PreviewPage() {
                         const pageId = pages[index]?.id;
                         if (pageId) handleEditSave(pageId, newText);
                     }}
+                    showFullscreen={false} // Disable fullscreen in preview mode
+                    user={user}
                     onUnlock={handleUnlock}
                     enableAudio={false}
                 />

@@ -3,7 +3,7 @@ import { headers } from 'next/headers';
 import Stripe from 'stripe';
 import { createClient as createSupabaseClient } from '@supabase/supabase-js';
 import { sendEmail } from '@/lib/resend';
-import { BookReadyEmail } from '@/lib/emails/BookReadyEmail';
+import { OrderConfirmationEmail } from '@/lib/emails/OrderConfirmationEmail';
 import { WelcomeEmail } from '@/lib/emails/WelcomeEmail';
 import { MagicLinkEmail } from '@/lib/emails/MagicLinkEmail';
 import { SENDERS } from '@/lib/senders';
@@ -164,56 +164,27 @@ async function handleCheckoutSessionCompleted(session) {
         } else {
             console.log("✅ Book Unlocked & Linked in DB");
 
-            // 1.5 SEND PURCHASE EMAIL (+ Secure Download Link)
+            // 1.5 SEND ORDER CONFIRMATION EMAIL (Immediate)
             if (targetEmail) {
-                // GENERATE SECURE DOWNLOAD TOKEN
-                let downloadUrl = 'https://www.kusomakids.com/login';
                 try {
-                    // Generate cryptographically random token
-                    const crypto = require('crypto');
-                    const downloadToken = crypto.randomBytes(32).toString('hex');
-
-                    // Store token in database
-                    const { error: tokenError } = await supabaseAdmin
-                        .from('download_tokens')
-                        .insert({
-                            book_id: bookId,
-                            token: downloadToken,
-                            email: targetEmail,
-                            downloads_remaining: 3,
-                            expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() // 30 days
-                        });
-
-                    if (tokenError) {
-                        console.error("❌ Failed to create download token:", tokenError);
-                    } else {
-                        downloadUrl = `https://www.kusomakids.com/api/download-secure/${bookId}?token=${downloadToken}`;
-                        console.log("✅ Download token created, valid for 30 days, 3 downloads");
-                    }
-                } catch (e) {
-                    console.error("Error generating download token:", e);
-                }
-
-                try {
-                    console.log(`📧 Sending purchase confirmation to ${targetEmail}...`);
-                    const purEmailRes = await sendEmail({
+                    console.log(`📧 Sending order confirmation to ${targetEmail}...`);
+                    const confirmEmailRes = await sendEmail({
                         to: targetEmail,
                         from: SENDERS.TREASURE,
-                        subject: "Votre commande KusomaKids est confirmée ! 🌟",
-                        html: BookReadyEmail({
+                        subject: "Commande confirmée ! Votre histoire arrive... ✨",
+                        html: OrderConfirmationEmail({
                             childName: childName,
                             bookTitle: bookTitle,
-                            downloadUrl: downloadUrl, // Direct download link
                             userEmail: targetEmail
                         })
                     });
-                    if (!purEmailRes.success) {
-                        console.error("❌ Purchase Email Failed:", purEmailRes.error);
+                    if (!confirmEmailRes.success) {
+                        console.error("❌ Confirmation Email Failed:", confirmEmailRes.error);
                     } else {
-                        console.log("📨 Purchase Email sent successfully.");
+                        console.log("📨 Order Confirmation Email sent successfully.");
                     }
                 } catch (emailErr) {
-                    console.error("❌ Purchase Email Exception:", emailErr);
+                    console.error("❌ Confirmation Email Exception:", emailErr);
                 }
             }
 

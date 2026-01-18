@@ -103,6 +103,17 @@ export async function POST(req) {
             return NextResponse.json({ error: "Book not found" }, { status: 404 });
         }
 
+        // 1.5 Set status to 'processing'
+        await supabase
+            .from('generated_books')
+            .update({
+                generation_status: 'processing',
+                generation_started_at: new Date().toISOString()
+            })
+            .eq('id', bookId);
+
+        console.log("📊 Status set to 'processing'");
+
         const rawContent = book.story_content || {};
         const pages = Array.isArray(rawContent) ? rawContent : (rawContent.pages || []);
 
@@ -193,7 +204,11 @@ export async function POST(req) {
 
             let updates = {
                 story_content: newStoryContent,
-                cover_image_url: currentCoverUrl
+                cover_image_url: currentCoverUrl,
+                generation_status: 'completed',
+                generation_completed_at: new Date().toISOString(),
+                images_generated_count: generatedCount,
+                generation_error: null
             };
 
             const { error: updateError } = await supabase
@@ -282,6 +297,22 @@ export async function POST(req) {
 
     } catch (error) {
         console.error("🚨 Worker Critical Error:", error);
+
+        // Save error status to database
+        try {
+            const supabase = await createClient();
+            await supabase
+                .from('generated_books')
+                .update({
+                    generation_status: 'failed',
+                    generation_error: error.message,
+                    generation_completed_at: new Date().toISOString()
+                })
+                .eq('id', body?.bookId);
+        } catch (dbError) {
+            console.error("Failed to save error status:", dbError);
+        }
+
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
 }

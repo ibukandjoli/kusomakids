@@ -63,7 +63,7 @@ export default function ReadPage() {
     );
 
     return (
-        <div className="min-h-screen bg-gray-900 flex flex-col items-center justify-center p-4 relative">
+        <div className="min-h-screen bg-gray-900 flex flex-col items-center justify-center p-0 relative">
             {/* Top Bar */}
             <div className="absolute top-0 left-0 w-full p-6 flex justify-between items-center z-10">
                 <button onClick={() => router.push('/dashboard')} className="text-white/60 hover:text-white flex items-center gap-2 transition-colors">

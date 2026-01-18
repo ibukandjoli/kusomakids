@@ -286,7 +286,7 @@ export default function HomeClient({ initialBooks }) {
                                         <div className="absolute left-0 top-0 bottom-0 w-[4px] bg-white/20 z-20"></div> {/* Spine Highlight */}
 
                                         <Image
-                                            src={book.coverUrl || `/images/books/${book.folder}/main.png`}
+                                            src={book.cover_image_url || book.coverUrl || `/images/books/${book.folder}/main.png`}
                                             alt={book.title}
                                             fill
                                             className="object-cover transform group-hover:scale-105 transition-transform duration-700"

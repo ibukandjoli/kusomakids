@@ -52,6 +52,36 @@ export default function PersonalizePage() {
         fetchBook();
     }, [params.slug]);
 
+    // Fetch user's child data to pre-fill form
+    useEffect(() => {
+        async function fetchChildData() {
+            try {
+                const { data: { session } } = await supabase.auth.getSession();
+                if (!session) return;
+
+                // Try to get child data from children table
+                const { data: children } = await supabase
+                    .from('children')
+                    .select('first_name, age, gender')
+                    .eq('user_id', session.user.id)
+                    .limit(1);
+
+                if (children && children.length > 0) {
+                    const child = children[0];
+                    setFormData(prev => ({
+                        ...prev,
+                        childName: child.first_name || '',
+                        age: child.age?.toString() || '4',
+                        gender: child.gender || 'boy'
+                    }));
+                }
+            } catch (err) {
+                console.error('Error fetching child data:', err);
+            }
+        }
+        fetchChildData();
+    }, []);
+
     const [uploadSuccess, setUploadSuccess] = useState(false);
 
     const handlePhotoChange = (e) => {

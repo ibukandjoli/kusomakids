@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase-server';
+import { createClient } from '@supabase/supabase-js';
 import * as fal from '@fal-ai/serverless-client';
 import { sendEmail } from '@/lib/resend';
 import { BookReadyEmail } from '@/lib/emails/BookReadyEmail';
@@ -16,6 +16,12 @@ if (process.env.FAL_KEY) {
     });
 }
 
+// Initialize Supabase Admin Client (for worker without user session)
+const supabaseAdmin = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_ROLE_KEY
+);
+
 /**
  * Helper: Build optimized prompt for FLUX PuLID
  * Combines scene description with quality directives
@@ -31,57 +37,50 @@ function buildPuLIDPrompt(pageText, sceneDescription) {
 }
 
 /**
- * Negative prompt to avoid Disney/Pixar eyes
- * Critical for maintaining natural eye proportions
+ * Negative Prompt to avoid common FLUX PuLID issues
  */
-const NEGATIVE_PROMPT = "disney eyes, pixar style, cartoon eyes, oversized eyes, anime eyes, big eyes, exaggerated features, 3d animation style, dreamworks style";
+const NEGATIVE_PROMPT = "exaggerated eyes, oversized eyes, anime eyes, cartoon eyes, distorted face, unrealistic proportions, low quality, blurry";
 
 /**
- * Generate personalized image using FLUX PuLID
- * @param {string} scenePrompt - Description of the scene
- * @param {string} childPhotoUrl - Reference photo of the child
- * @returns {Promise<string>} - URL of generated image
+ * Generate image using FLUX PuLID
  */
-async function generateWithPuLID(scenePrompt, childPhotoUrl) {
-    try {
-        const result = await fal.subscribe("fal-ai/flux-pulid", {
-            input: {
-                prompt: scenePrompt,
-                negative_prompt: NEGATIVE_PROMPT,
-                reference_image_url: childPhotoUrl,
-                num_inference_steps: 35,
-                guidance_scale: 3.5,
-                id_weight: 1.0,
-                num_images: 1,
-                enable_safety_checker: false,
-                output_format: "png",
-                image_size: {
-                    width: 1024,
-                    height: 1024
-                }
-            },
-            logs: true,
-        });
+async function generateWithPuLID(prompt, referenceImageUrl) {
+    console.log(`  🎨 Generating with prompt: ${prompt.substring(0, 80)}...`);
 
-        // Extract image URL from response
-        const imageUrl = result.images?.[0]?.url || result.image?.url;
+    const result = await fal.subscribe("fal-ai/flux-pulid", {
+        input: {
+            prompt: prompt,
+            reference_images: [{ image_url: referenceImageUrl }],
+            num_images: 1,
+            guidance_scale: 3.5,
+            num_inference_steps: 28,
+            seed: Math.floor(Math.random() * 1000000),
+            enable_safety_checker: false,
+            output_format: "jpeg",
+            negative_prompt: NEGATIVE_PROMPT
+        },
+        logs: false,
+        onQueueUpdate: (update) => {
+            if (update.status === "IN_PROGRESS") {
+                console.log(`    ⏳ Progress: ${update.logs?.join(' ') || 'Processing...'}`);
+            }
+        },
+    });
 
-        if (!imageUrl) {
-            throw new Error("No image URL in FLUX PuLID response");
-        }
-
-        return imageUrl;
-    } catch (error) {
-        console.error("FLUX PuLID generation failed:", error);
-        throw error;
+    if (!result.data?.images?.[0]?.url) {
+        throw new Error("No image URL returned from Fal");
     }
+
+    return result.data.images[0].url;
 }
 
+/**
+ * MAIN WORKER ENDPOINT
+ */
 export async function POST(req) {
     console.log("👷 WORKER START: Generate Book with FLUX PuLID");
 
     try {
-        const supabase = await createClient();
         const body = await req.json();
         const { bookId } = body;
 
@@ -92,7 +91,7 @@ export async function POST(req) {
         console.log(`📘 Processing Book ID: ${bookId}`);
 
         // 1. Fetch Book Data
-        const { data: book, error: fetchError } = await supabase
+        const { data: book, error: fetchError } = await supabaseAdmin
             .from('generated_books')
             .select('*')
             .eq('id', bookId)
@@ -104,7 +103,7 @@ export async function POST(req) {
         }
 
         // 1.5 Set status to 'processing'
-        await supabase
+        await supabaseAdmin
             .from('generated_books')
             .update({
                 generation_status: 'processing',
@@ -211,7 +210,7 @@ export async function POST(req) {
                 generation_error: null
             };
 
-            const { error: updateError } = await supabase
+            const { error: updateError } = await supabaseAdmin
                 .from('generated_books')
                 .update(updates)
                 .eq('id', bookId);
@@ -300,8 +299,7 @@ export async function POST(req) {
 
         // Save error status to database
         try {
-            const supabase = await createClient();
-            await supabase
+            await supabaseAdmin
                 .from('generated_books')
                 .update({
                     generation_status: 'failed',

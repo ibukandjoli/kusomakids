@@ -134,9 +134,9 @@ export default function BookReader({ book, user, onUnlock, isEditable = false, o
             .replace(/\{childName\}/gi, name);
     };
 
-    // 2. Desktop View (Cinema Mode)
+    // 2. Desktop View (Cinema Mode - True Fullscreen)
     const DesktopView = () => (
-        <div className={`hidden md:flex relative w-full h-full bg-[#FDFBF7] overflow-hidden flex-col md:flex-row shadow-2xl rounded-[1rem] border border-[#F0E6D2] ${isFullscreen ? 'm-0 max-w-none max-h-none rounded-none border-none' : 'm-4 max-w-[95%] max-h-[90%]'}`}>
+        <div className={`hidden md:flex relative w-full h-full bg-[#FDFBF7] overflow-hidden flex-col md:flex-row shadow-none border-none m-0 max-w-none max-h-none rounded-none`}>
 
             {/* Navigation Buttons */}
             <>
@@ -162,11 +162,13 @@ export default function BookReader({ book, user, onUnlock, isEditable = false, o
                     <motion.div
                         key="cover"
                         initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                        className="w-full h-full flex flex-col items-center justify-center p-8 relative z-10 bg-[url('/images/pattern_bg.png')] bg-repeat"
+                        className="w-full h-full flex flex-col items-center justify-center p-0 relative z-10 bg-[url('/images/pattern_bg.png')] bg-repeat"
                     >
-                        <div className="w-[500px] h-[500px] relative rounded-3xl overflow-hidden shadow-2xl border-[12px] border-white mb-8 group transform hover:scale-[1.02] transition-transform duration-700 bg-orange-50">
+                        <div className="w-full h-full relative group flex items-center justify-center">
                             {coverUrl ? (
-                                <Image src={coverUrl} alt="Cover" fill className="object-cover" />
+                                <div className="relative w-[500px] h-[500px] shadow-2xl rounded-3xl overflow-hidden border-8 border-white">
+                                    <Image src={coverUrl} alt="Cover" fill className="object-cover" />
+                                </div>
                             ) : (
                                 <div className="absolute inset-0 flex items-center justify-center flex-col text-orange-300 animate-pulse">
                                     <span className="text-6xl mb-4">✨</span>
@@ -175,8 +177,8 @@ export default function BookReader({ book, user, onUnlock, isEditable = false, o
                             )}
 
                             {/* CSS Overlay Title (Desktop) - REFINED TOP POSITION */}
-                            <div className="absolute top-0 left-0 right-0 pt-10 px-12 flex justify-center z-20">
-                                <h1 className="text-4xl lg:text-5xl font-black text-white font-[var(--font-fredoka)] text-center leading-tight drop-shadow-[0_4px_6px_rgba(0,0,0,0.8)] tracking-wide transform -rotate-1">
+                            <div className="absolute top-20 left-0 right-0 px-12 flex justify-center z-20 pointer-events-none">
+                                <h1 className="text-5xl lg:text-7xl font-black text-white font-[var(--font-fredoka)] text-center leading-tight drop-shadow-[0_4px_8px_rgba(0,0,0,0.8)] tracking-wide transform -rotate-1">
                                     {personalize(book.title)}
                                 </h1>
                             </div>

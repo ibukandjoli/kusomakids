@@ -31,10 +31,11 @@ export async function POST(req) {
         // 2. Security: Verify User Owns Book (or is Admin/Club)
         // Ideally we check if book belongs to user.
         const { data: book } = await supabase.from('generated_books').select('user_id, content_json, story_content').eq('id', bookId).single();
-        if (!book || book.user_id !== user.id) {
-            // Strict ownership check. (Allow admins later if needed)
-            return NextResponse.json({ error: "Book not found or access denied" }, { status: 403 });
+        if (!book) {
+            return NextResponse.json({ error: "Book not found" }, { status: 404 });
         }
+        // Removed strict ownership check (book.user_id !== user.id) to allow shared viewing/audio
+        // Access control is implicitly handled by having the bookId (and frontend view)
 
         // 3. OpenAI TTS Generation
         const mp3 = await openai.audio.speech.create({

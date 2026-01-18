@@ -269,54 +269,75 @@ export default function BookReader({ book, user, onUnlock, isEditable = false, o
         </div>
     );
 
-    // Audio Logic (Web Speech API - Simple & Free)
+    // Audio Logic (OpenAI TTS - High Quality)
     const [isPlaying, setIsPlaying] = useState(false);
+    const [isAudioLoading, setIsAudioLoading] = useState(false);
+    const audioRef = useRef(null);
 
-    // Cleanup on unmount
-    useEffect(() => {
-        return () => {
-            if (typeof window !== 'undefined') {
-                window.speechSynthesis.cancel();
-            }
-        };
-    }, []);
-
-    const handlePlayAudio = () => {
-        if (!('speechSynthesis' in window)) {
-            alert("Votre navigateur ne supporte pas la lecture audio.");
-            return;
-        }
-
+    const handlePlayAudio = async () => {
         if (isPlaying) {
-            window.speechSynthesis.cancel();
+            audioRef.current?.pause();
             setIsPlaying(false);
             return;
         }
 
         const currentPageData = pages[currentPage > 0 ? currentPage - 1 : 0]; // Handle Cover (0) vs Pages
-        // Cover doesn't usually have 'text' in pages array, maybe title + tagline
+        // For cover, we read title + tagline
         const textToRead = currentPage === 0
-            ? `${book.title}. ${book.tagline || ''}`
+            ? `${book.title}. ${book.tagline || ''}` // Tagline is simple text if available
             : currentPageData?.text;
 
         if (!textToRead) return;
 
-        const utterance = new SpeechSynthesisUtterance(textToRead);
-        utterance.lang = 'fr-FR'; // Force French
-        utterance.rate = 0.9; // Slightly slower for kids
-        utterance.pitch = 1.1; // Slightly higher/friendly
+        // Check if audio URL already exists in our page data
+        let audioUrl = currentPageData?.audio_url;
 
-        utterance.onend = () => {
-            setIsPlaying(false);
-        };
+        // If not, call API to generate (and cache)
+        if (!audioUrl) {
+            try {
+                setIsAudioLoading(true);
+                // Optimistic UI handled by loader spinner in button
 
-        utterance.onerror = (e) => {
-            console.error("Speech Error:", e);
-            setIsPlaying(false);
-        };
+                const res = await fetch('/api/audio/generate-speech', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        text: textToRead,
+                        bookId: book.id,
+                        pageIndex: currentPage > 0 ? currentPage - 1 : 0 // 0 for Cover, etc.
+                    })
+                });
 
-        window.speechSynthesis.speak(utterance);
-        setIsPlaying(true);
+                const data = await res.json();
+                setIsAudioLoading(false);
+
+                if (!res.ok) {
+                    console.error("Audio Error:", data);
+                    alert("Impossible de générer l'audio pour le moment.");
+                    return;
+                }
+
+                audioUrl = data.audioUrl;
+
+                // Optimistic Update locally
+                if (currentPage > 0) {
+                    currentPageData.audio_url = audioUrl; // Mutate local reference for current session re-play
+                }
+
+            } catch (e) {
+                setIsAudioLoading(false);
+                console.error(e);
+                return;
+            }
+        }
+
+        if (audioUrl) {
+            const audio = new Audio(audioUrl);
+            audioRef.current = audio;
+            audio.play();
+            setIsPlaying(true);
+            audio.onended = () => setIsPlaying(false);
+        }
     };
 
     // Fullscreen Logic

@@ -105,13 +105,13 @@ const BookDocument = ({ book }) => {
             {/* COVER PAGE - Portrait */}
             <Page size="A4" orientation="portrait" style={styles.coverPage}>
                 <Text style={styles.title}>{formattedTitle}</Text>
-                <Text style={styles.subtitle}>Une aventure pour {book.child_name}</Text>
+                <Text style={styles.subtitle}>Une histoire pour {book.child_name}</Text>
 
                 {book.cover_image_url && (
                     <Image src={book.cover_image_url} style={styles.coverImage} />
                 )}
 
-                <Text style={{ marginTop: 60, fontSize: 14, color: '#999' }}>KusomaKids - Histoires Magiques</Text>
+                <Text style={{ marginTop: 60, fontSize: 14, color: '#999' }}>KusomaKids - Créateur d'Histoires Magiques</Text>
             </Page>
 
             {/* STORY PAGES - Landscape with side-by-side layout */}

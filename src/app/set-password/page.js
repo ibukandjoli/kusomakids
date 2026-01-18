@@ -32,28 +32,38 @@ function SetPasswordContent() {
         setLoading(true);
 
         try {
-            // Sign in with email and set password
-            const { data, error: signInError } = await supabase.auth.signInWithPassword({
+            // For ghost accounts, we need to set password via API
+            // Call our custom API endpoint to set password for ghost account
+            const response = await fetch('/api/auth/set-password', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                setError(data.error || 'Une erreur est survenue');
+                setLoading(false);
+                return;
+            }
+
+            // Now sign in with the new password
+            const { error: signInError } = await supabase.auth.signInWithPassword({
                 email: email,
                 password: password
             });
 
             if (signInError) {
-                // If user doesn't have a password yet, update it
-                const { error: updateError } = await supabase.auth.updateUser({
-                    password: password
-                });
-
-                if (updateError) {
-                    setError(updateError.message);
-                    setLoading(false);
-                    return;
-                }
+                setError('Connexion échouée. Veuillez réessayer.');
+                setLoading(false);
+                return;
             }
 
             // Redirect to onboarding
             router.push('/onboarding?from=purchase');
         } catch (err) {
+            console.error('Password setup error:', err);
             setError('Une erreur est survenue. Veuillez réessayer.');
             setLoading(false);
         }

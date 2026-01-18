@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 
-export default function BookReader({ book, user, onUnlock, isEditable = false, onTextChange, extraPages = [], enableAudio = true }) {
+export default function BookReader({ book, user, onUnlock, isEditable = false, onTextChange, extraPages = [], enableAudio = true, showFullscreen = true }) {
     const [currentPage, setCurrentPage] = useState(0); // 0 = Cover
     const [isFullscreen, setIsFullscreen] = useState(false);
     const readerRef = useRef(null);
@@ -363,25 +363,25 @@ export default function BookReader({ book, user, onUnlock, isEditable = false, o
                 </button>
             )}
 
-            {/* Fullscreen Button */}
-            <button
-                onClick={toggleFullscreen}
-                className="absolute top-20 right-20 z-50 md:top-8 md:right-24 bg-white/90 backdrop-blur shadow-xl border border-gray-100 p-3 rounded-full transition-all hover:scale-110 group text-gray-600"
-                title={isFullscreen ? 'Quitter le plein écran' : 'Plein écran'}
-            >
-                {isFullscreen ? (
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                ) : (
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
-                    </svg>
-                )}
-                <span className="absolute right-full mr-2 bg-black/80 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
-                    {isFullscreen ? 'Quitter' : 'Plein écran'}
-                </span>
-            </button>
+            {/* Fullscreen Button - Only show if showFullscreen prop is true */}
+            {showFullscreen && (
+                <button
+                    onClick={toggleFullscreen}
+                    className="absolute top-20 right-20 z-50 md:top-8 md:right-24 p-3 bg-white/90 hover:bg-white rounded-full shadow-lg transition-all hover:scale-110"
+                    title={isFullscreen ? 'Quitter le plein écran' : 'Plein écran'}
+                >
+                    {isFullscreen ? (
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    ) : (
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                        </svg>
+                    )}
+                    <span className="sr-only">{isFullscreen ? 'Quitter' : 'Plein écran'}</span>
+                </button>
+            )}
 
             {/* Mobile: Scrollable container handles its own overflow */}
             <div className="md:hidden w-full h-full overflow-y-auto">

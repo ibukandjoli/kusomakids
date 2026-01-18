@@ -80,7 +80,7 @@ const styles = StyleSheet.create({
         fontSize: 18,
         lineHeight: 1.8,
         color: '#2d2d2d',
-        textAlign: 'left',
+        textAlign: 'left', // Left align to avoid hyphenation
         fontFamily: 'Helvetica' // Readable for children
     },
     pageNumber: {

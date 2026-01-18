@@ -92,18 +92,15 @@ export async function POST(req) {
             }
         }
 
-        // 2. PAGES LOOP (Face Swap)
+        // 2. PAGES LOOP (Face Swap) - Process ALL pages for purchased books
         for (let i = 0; i < updatedPages.length; i++) {
             const page = updatedPages[i];
 
-            // Check if page already processed
-            const hasValidImage = page.image && page.image.includes('fal.media');
-            if (hasValidImage) {
-                continue;
-            }
-
-            const baseImageUrl = page.base_image_url;
+            // For purchased books, we want to generate ALL images with face swap
+            // Even if preview images exist, we regenerate them with face swap
+            const baseImageUrl = page.base_image_url || page.image;
             if (!baseImageUrl) {
+                console.warn(`⚠️ Page ${i + 1} has no base image, skipping`);
                 continue; // Skip pages without templates
             }
 
@@ -130,6 +127,9 @@ export async function POST(req) {
                     } else {
                         console.warn(`> Warning: No image URL in response for page ${i + 1}. Result:`, JSON.stringify(swapResult));
                     }
+                } else {
+                    // No photo URL, use base image
+                    console.log(`> No photo for face swap, using base image`);
                 }
 
                 updatedPages[i] = {

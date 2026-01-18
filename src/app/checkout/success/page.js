@@ -1,12 +1,21 @@
 'use client';
 
-import { Suspense } from 'react';
+import { Suspense, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 
 function SuccessContent() {
     const searchParams = useSearchParams();
     const sessionId = searchParams.get('session_id');
+
+    // Clear cart after successful purchase
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            localStorage.removeItem('cart_items');
+            window.dispatchEvent(new Event('cart_updated'));
+            console.log('✅ Cart cleared after purchase');
+        }
+    }, []);
 
     return (
         <div className="min-h-screen bg-[#FFF9F5] flex flex-col items-center justify-center p-4">

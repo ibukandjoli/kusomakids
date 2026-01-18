@@ -41,9 +41,9 @@ export const BookReadyEmail = ({ childName, bookTitle, downloadUrl, userEmail })
             </p>
 
             <div class="benefits">
-                <h3 style="color: #92400e; margin-top: 0; font-size: 18px;">📱 Créez votre compte KusomaKids</h3>
+                <h3 style="color: #92400e; margin-top: 0; font-size: 18px;">🔐 Activez votre compte KusomaKids</h3>
                 <p style="color: #92400e; font-size: 14px; margin: 10px 0;">
-                    Profitez de tous les avantages :
+                    Votre compte a été créé ! Définissez votre mot de passe pour accéder à :
                 </p>
                 <ul>
                     <li>🎧 Lire l'histoire en streaming avec audio</li>
@@ -52,7 +52,7 @@ export const BookReadyEmail = ({ childName, bookTitle, downloadUrl, userEmail })
                     <li>🏆 Rejoindre le Club Kusoma (histoires illimitées)</li>
                 </ul>
                 <div style="text-align: center; margin-top: 15px;">
-                    <a href="https://www.kusomakids.com/signup?email=${encodeURIComponent(userEmail)}" class="button-secondary">Créer mon compte →</a>
+                    <a href="https://www.kusomakids.com/set-password?email=${encodeURIComponent(userEmail)}" class="button-secondary">Définir mon mot de passe →</a>
                 </div>
             </div>
         </div>

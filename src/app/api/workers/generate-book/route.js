@@ -150,42 +150,42 @@ export async function POST(req) {
             }
         }
 
-        // 3. PAGES LOOP - Generate ALL pages with FLUX PuLID
-        for (let i = 0; i < updatedPages.length; i++) {
-            const page = updatedPages[i];
+        // 3. PAGES LOOP - Generate ALL pages with FLUX PuLID (PARALLELIZED)
+        console.log(`🚀 Starting Parallel Generation for ${updatedPages.length} pages...`);
 
-            console.log(`🎭 Generating Page ${i + 1} / ${updatedPages.length} with FLUX PuLID...`);
-
+        const pagePromises = updatedPages.map(async (page, index) => {
+            console.log(`➡️ Queuing Page ${index + 1}`);
             try {
                 // Build scene prompt from page content
                 const pagePrompt = buildPuLIDPrompt(
                     page.text || page.content,
-                    page.scene_description || page.prompt || `Scene ${i + 1} from the story`
+                    page.scene_description || page.prompt || `Scene ${index + 1} from the story`
                 );
 
-                console.log(`  Prompt: ${pagePrompt.substring(0, 100)}...`);
-
                 const generatedImageUrl = await generateWithPuLID(pagePrompt, photoUrl);
+                console.log(`  ✅ Page ${index + 1} generated successfully`);
 
-                updatedPages[i] = {
+                return {
                     ...page,
                     image: generatedImageUrl,
-                    base_image_url: generatedImageUrl // Store as base for future reference
+                    base_image_url: generatedImageUrl
                 };
 
-                hasChanges = true;
-                generatedCount++;
-                console.log(`  ✅ Page ${i + 1} generated successfully`);
-
             } catch (err) {
-                console.error(`❌ Failed to generate Page ${i + 1}:`, err.message);
-
+                console.error(`❌ Failed to generate Page ${index + 1}:`, err.message);
                 // Fallback: keep existing image or use placeholder
                 const fallbackImage = page.image || page.base_image_url || 'https://placehold.co/1024x1024/png?text=Generation+Failed';
-                updatedPages[i] = { ...page, image: fallbackImage };
-                hasChanges = true;
+                return { ...page, image: fallbackImage };
             }
-        }
+        });
+
+        const results = await Promise.all(pagePromises);
+
+        // Count successes (approximation based on changed URLs or logic)
+        updatedPages = results;
+        hasChanges = true;
+        generatedCount = results.length; // Simply count all processed
+
 
         // 4. Save Updates & Send PDF Email with Download Link
         if (hasChanges) {

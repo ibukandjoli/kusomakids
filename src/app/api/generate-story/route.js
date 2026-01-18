@@ -30,10 +30,10 @@ export async function POST(request) {
         const replaceVariables = (text) => {
             if (!text) return "";
             let processed = text;
-            processed = processed.replace(/{childName}/g, childName);
-            processed = processed.replace(/{childAge}/g, childAge || "");
-            processed = processed.replace(/{gender}/g, gender || "");
-            processed = processed.replace(/{city}/g, city || "sa ville");
+            processed = processed.replace(/{childName}/gi, childName);
+            processed = processed.replace(/{childAge}/gi, childAge || "");
+            processed = processed.replace(/{gender}/gi, gender || "");
+            processed = processed.replace(/{city}/gi, city || "sa ville");
             return processed;
         };
 

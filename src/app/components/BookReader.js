@@ -61,7 +61,7 @@ export default function BookReader({ book, user, onUnlock, isEditable = false, o
                     {/* CSS Overlay Title (Mobile) - Top Position */}
                     <div className="absolute top-0 left-0 right-0 p-4 pt-8 flex justify-center bg-gradient-to-b from-black/20 to-transparent">
                         <h1 className="text-3xl md:text-4xl font-black text-white font-[var(--font-fredoka)] text-center leading-tight drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] transform -rotate-1">
-                            {book.title}
+                            {personalize(book.title)}
                         </h1>
                     </div>
                 </div>
@@ -125,9 +125,18 @@ export default function BookReader({ book, user, onUnlock, isEditable = false, o
         </div>
     );
 
+    // Helper to personalize text (Moved inside component or reused if imported)
+    const personalize = (text) => {
+        if (!text) return '';
+        const name = book.child_name || 'Votre Enfant';
+        return text
+            .replace(/\[Son prénom\]/gi, name)
+            .replace(/\{childName\}/gi, name);
+    };
+
     // 2. Desktop View (Cinema Mode)
     const DesktopView = () => (
-        <div className="hidden md:flex relative w-full h-full bg-[#FDFBF7] overflow-hidden flex-col md:flex-row shadow-2xl rounded-[1rem] border border-[#F0E6D2] m-4 max-w-[95%] max-h-[90%]">
+        <div className={`hidden md:flex relative w-full h-full bg-[#FDFBF7] overflow-hidden flex-col md:flex-row shadow-2xl rounded-[1rem] border border-[#F0E6D2] ${isFullscreen ? 'm-0 max-w-none max-h-none rounded-none border-none' : 'm-4 max-w-[95%] max-h-[90%]'}`}>
 
             {/* Navigation Buttons */}
             <>
@@ -168,7 +177,7 @@ export default function BookReader({ book, user, onUnlock, isEditable = false, o
                             {/* CSS Overlay Title (Desktop) - REFINED TOP POSITION */}
                             <div className="absolute top-0 left-0 right-0 pt-10 px-12 flex justify-center z-20">
                                 <h1 className="text-4xl lg:text-5xl font-black text-white font-[var(--font-fredoka)] text-center leading-tight drop-shadow-[0_4px_6px_rgba(0,0,0,0.8)] tracking-wide transform -rotate-1">
-                                    {book.title}
+                                    {personalize(book.title)}
                                 </h1>
                             </div>
                         </div>

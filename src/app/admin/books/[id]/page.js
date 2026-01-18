@@ -19,11 +19,29 @@ export default function EditBookPage({ params }) {
     const [pages, setPages] = useState([]);
 
     const [form, setForm] = useState({
+        // Existing fields
         title_template: '',
         theme_slug: '',
         description: '',
         cover_image_url: '',
-        is_active: true
+        is_active: true,
+
+        // NEW FIELDS - Display & Marketing
+        title: '',
+        tagline: '',
+        theme: '',
+
+        // NEW FIELDS - Pricing & Metadata
+        price: 3000,
+        age_range: '3-7 ans',
+        genre: 'Aventure',
+
+        // NEW FIELDS - Benefits
+        benefits: [],
+
+        // NEW FIELDS - Additional Covers
+        cover_url: '',
+        base_cover_image_url: ''
     });
 
     useEffect(() => {
@@ -41,11 +59,23 @@ export default function EditBookPage({ params }) {
             if (error) throw error;
 
             setForm({
+                // Existing fields
                 title_template: data.title_template,
                 theme_slug: data.theme_slug,
                 description: data.description || '',
                 cover_image_url: data.cover_image_url || '',
-                is_active: data.is_active
+                is_active: data.is_active,
+
+                // NEW FIELDS
+                title: data.title || '',
+                tagline: data.tagline || '',
+                theme: data.theme || '',
+                price: data.price || 3000,
+                age_range: data.age_range || '3-7 ans',
+                genre: data.genre || 'Aventure',
+                benefits: data.benefits || [],
+                cover_url: data.cover_url || '',
+                base_cover_image_url: data.base_cover_image_url || ''
             });
 
             // Parse Pages
@@ -130,12 +160,24 @@ export default function EditBookPage({ params }) {
             const { error } = await supabase
                 .from('story_templates')
                 .update({
+                    // Existing fields
                     title_template: form.title_template,
                     theme_slug: form.theme_slug,
                     description: form.description,
                     cover_image_url: form.cover_image_url,
                     content_json: content_json,
-                    is_active: form.is_active
+                    is_active: form.is_active,
+
+                    // NEW FIELDS
+                    title: form.title,
+                    tagline: form.tagline,
+                    theme: form.theme,
+                    price: form.price,
+                    age_range: form.age_range,
+                    genre: form.genre,
+                    benefits: form.benefits,
+                    cover_url: form.cover_url,
+                    base_cover_image_url: form.base_cover_image_url
                 })
                 .eq('id', id);
 
@@ -204,9 +246,98 @@ export default function EditBookPage({ params }) {
                                 onChange={e => setForm({ ...form, description: e.target.value })}
                             />
                         </div>
+                    </div>
+
+                    {/* NEW: Pricing & Metadata */}
+                    <div className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 space-y-6">
+                        <h2 className="text-xl font-bold text-gray-900">Tarification & Métadonnées</h2>
+                        <div className="grid md:grid-cols-3 gap-6">
+                            <div>
+                                <label className="block text-sm font-bold text-gray-700 mb-2">Prix (FCFA)</label>
+                                <input
+                                    type="number"
+                                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-orange-500 outline-none"
+                                    value={form.price}
+                                    onChange={e => setForm({ ...form, price: parseInt(e.target.value) || 0 })}
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-bold text-gray-700 mb-2">Tranche d'Âge</label>
+                                <select
+                                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-orange-500 outline-none"
+                                    value={form.age_range}
+                                    onChange={e => setForm({ ...form, age_range: e.target.value })}
+                                >
+                                    <option value="3-5 ans">3-5 ans</option>
+                                    <option value="3-7 ans">3-7 ans</option>
+                                    <option value="5-7 ans">5-7 ans</option>
+                                    <option value="7-10 ans">7-10 ans</option>
+                                    <option value="8-12 ans">8-12 ans</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-bold text-gray-700 mb-2">Genre</label>
+                                <select
+                                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-orange-500 outline-none"
+                                    value={form.genre}
+                                    onChange={e => setForm({ ...form, genre: e.target.value })}
+                                >
+                                    <option value="Aventure">Aventure</option>
+                                    <option value="Éducatif">Éducatif</option>
+                                    <option value="Fantaisie">Fantaisie</option>
+                                    <option value="Conte">Conte</option>
+                                    <option value="Famille">Famille</option>
+                                    <option value="Amitié">Amitié</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* NEW: Benefits */}
+                    <div className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 space-y-6">
+                        <h2 className="text-xl font-bold text-gray-900">Bénéfices Pédagogiques</h2>
+                        <div className="space-y-3">
+                            {form.benefits.map((benefit, index) => (
+                                <div key={index} className="flex gap-3">
+                                    <input
+                                        type="text"
+                                        className="flex-1 px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-orange-500 outline-none"
+                                        value={benefit}
+                                        onChange={e => {
+                                            const newBenefits = [...form.benefits];
+                                            newBenefits[index] = e.target.value;
+                                            setForm({ ...form, benefits: newBenefits });
+                                        }}
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            const newBenefits = form.benefits.filter((_, i) => i !== index);
+                                            setForm({ ...form, benefits: newBenefits });
+                                        }}
+                                        className="px-4 py-3 rounded-xl bg-red-50 text-red-600 font-bold hover:bg-red-100"
+                                    >
+                                        ×
+                                    </button>
+                                </div>
+                            ))}
+                            <button
+                                type="button"
+                                onClick={() => setForm({ ...form, benefits: [...form.benefits, ''] })}
+                                className="w-full px-4 py-3 rounded-xl border-2 border-dashed border-gray-300 text-gray-600 font-bold hover:border-orange-500 hover:text-orange-600"
+                            >
+                                + Ajouter un bénéfice
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Cover Images (Enhanced) */}
+                    <div className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 space-y-6">
+                        <h2 className="text-xl font-bold text-gray-900">Images de Couverture</h2>
 
                         <div>
-                            <label className="block text-sm font-bold text-gray-700 mb-2">Image de Couverture</label>
+                            <label className="block text-sm font-bold text-gray-700 mb-2">Image de Couverture Principale</label>
+                            <p className="text-xs text-gray-500 mb-2">Couverture affichée sur le site</p>
 
                             {/* Upload or URL */}
                             <div className="space-y-3">
@@ -236,6 +367,28 @@ export default function EditBookPage({ params }) {
                                     </div>
                                 )}
                             </div>
+                        </div>
+
+                        {/* NEW: Base Cover */}
+                        <div>
+                            <label className="block text-sm font-bold text-gray-700 mb-2">Image de Couverture de Base (Optionnel)</label>
+                            <input
+                                type="url"
+                                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-orange-500 outline-none font-mono text-sm text-gray-500"
+                                value={form.base_cover_image_url}
+                                onChange={e => setForm({ ...form, base_cover_image_url: e.target.value })}
+                            />
+                        </div>
+
+                        {/* NEW: Legacy Cover */}
+                        <div>
+                            <label className="block text-sm font-bold text-gray-700 mb-2">Cover URL (Legacy)</label>
+                            <input
+                                type="url"
+                                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-orange-500 outline-none font-mono text-sm text-gray-500"
+                                value={form.cover_url}
+                                onChange={e => setForm({ ...form, cover_url: e.target.value })}
+                            />
                         </div>
 
                         <div className="flex items-center space-x-3">

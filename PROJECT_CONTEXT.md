@@ -1,10 +1,46 @@
 # KusomaKids - Project Context
 
-## Current Status (January 17, 2026)
+## Current Status (January 18, 2026)
 
-**Latest Update**: Club Kusoma subscription system fully implemented with auto-unlock, credit management, and discounted pricing.
+**Latest Update**: Two-email PDF delivery system with worker-based image generation, ghost account password setup, and secure download tokens.
 
 ## ✅ Recent Major Accomplishments
+
+### PDF Delivery & Image Generation System (January 18, 2026)
+Complete overhaul of PDF delivery flow with quality guarantees:
+
+**Features Implemented**:
+- **Two-Email System**: Immediate order confirmation + PDF ready notification after worker completes
+- **Secure Download Tokens**: Cryptographically secure tokens with expiry (30 days) and download limits (3)
+- **Worker-Based Generation**: All 10 story illustrations generated with face swap before PDF email sent
+- **Ghost Account Password Setup**: Dedicated `/set-password` page with admin API for passwordless accounts
+- **Landscape PDF Layout**: Side-by-side image/text layout optimized for printing
+- **Cart Auto-Clear**: Shopping cart empties automatically after successful purchase
+- **Preview UI Cleanup**: Fullscreen button removed from preview mode (only in streaming)
+
+**Technical Implementation**:
+- `src/lib/emails/OrderConfirmationEmail.js`: Immediate post-purchase confirmation
+- `src/lib/emails/BookReadyEmail.js`: PDF download link sent after worker completion
+- `src/app/api/auth/set-password/route.js`: Admin API to set password for ghost accounts
+- `src/app/api/download-secure/[bookId]/route.js`: Token-based secure PDF downloads
+- `src/app/api/workers/generate-book/route.js`: Generates all images, creates token, sends PDF email
+- `src/app/components/BookReader.js`: Added `showFullscreen` prop for conditional display
+- `migrations/create_download_tokens.sql`: Database table for secure download tokens
+
+**Email Flow**:
+1. **Immediate** (after payment): Order confirmation with "PDF arriving in 2-3 minutes"
+2. **After Worker** (2-3 min): PDF download link with all 10 personalized illustrations
+
+**Database Schema** (`download_tokens` table):
+```sql
+id uuid primary key
+book_id uuid references generated_books(id)
+token text unique not null
+email text not null
+downloads_remaining integer default 3
+expires_at timestamp not null
+created_at timestamp default now()
+```
 
 ### Club Kusoma Subscription System (January 17, 2026)
 Complete subscription system with monthly credits and member benefits:
@@ -73,7 +109,10 @@ src/
 ├── app/
 │   ├── api/
 │   │   ├── webhooks/stripe/route.js      # Stripe webhooks (checkout + renewal)
+│   │   ├── auth/set-password/route.js     # Ghost account password setup
 │   │   ├── download/[bookId]/route.js    # PDF download with credit logic
+│   │   ├── download-secure/[bookId]/route.js # Secure token-based PDF download
+│   │   ├── workers/generate-book/route.js # Background image generation + email
 │   │   ├── checkout/
 │   │   │   ├── payment/route.js          # One-time payment
 │   │   │   ├── subscription/route.js     # Club subscription
@@ -84,16 +123,18 @@ src/
 │   │   ├── page.js                       # Main dashboard with member badge
 │   │   ├── purchased/page.js             # PDFs page
 │   │   └── profile/page.js               # User profile
-│   ├── onboarding/success/page.js        # Club welcome page
-│   ├── checkout/success/page.js          # Purchase success page
+│   ├── set-password/page.js           # Password setup for ghost accounts
+│   ├── onboarding/success/page.js     # Club welcome page
+│   ├── checkout/success/page.js       # Purchase success page (auto-clears cart)
 │   └── components/
 │       ├── PaymentModal.js               # Dynamic pricing modal
+│       ├── BookReader.js                 # Story reader with showFullscreen prop
 │       ├── DashboardBottomNav.js         # Mobile navigation
 │       └── Header.js                     # Main header with cart badge
 └── lib/
     ├── emails/
-    │   ├── MagicLinkEmail.js             # Styled magic link email
-    │   ├── BookReadyEmail.js             # Purchase confirmation
+    │   ├── OrderConfirmationEmail.js     # Immediate order confirmation
+    │   ├── BookReadyEmail.js             # PDF download link (after worker)
     │   └── WelcomeEmail.js               # Welcome email
     └── supabase.js                       # Supabase client
 ```
@@ -138,7 +179,21 @@ NEXT_PUBLIC_APP_URL=https://www.kusomakids.com
 
 ## 📋 User Flows
 
-### Flow 1: Club Subscription
+### Flow 1: Guest PDF Purchase (New System)
+1. User adds book to cart and checks out (3,000 FCFA)
+2. Stripe payment success → Webhook creates ghost account
+3. **Email 1 (Immediate)**: Order confirmation
+   - "Your illustrations are being finalized..."
+   - "PDF will arrive in 2-3 minutes"
+   - Link to set password and create account
+4. Worker generates all 10 illustrations with face swap (~2-3 min)
+5. Worker creates secure download token (30 days, 3 downloads)
+6. **Email 2 (After worker)**: PDF ready with download link
+7. User clicks link → Downloads PDF with all 10 personalized pages
+8. User sets password → Onboarding → Dashboard
+9. PDF accessible in "Mes PDFs" page
+
+### Flow 2: Club Subscription
 1. User clicks "Devenir Membre" (6,500 FCFA/month)
 2. Stripe checkout → Payment success
 3. Webhook activates subscription:
@@ -256,5 +311,6 @@ npm start      # Production server
 
 ---
 
-*Last Updated: January 17, 2026*
-*Version: 2.0 (Club Kusoma Launch)*
+*Last Updated: January 18, 2026*
+*Version: 2.1 (PDF Delivery System Overhaul)*
+

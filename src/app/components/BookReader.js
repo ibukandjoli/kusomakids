@@ -349,16 +349,19 @@ export default function BookReader({ book, user, onUnlock, isEditable = false, o
             {enableAudio && (
                 <button
                     onClick={handlePlayAudio}
-                    className={`absolute top-20 right-4 z-50 md:top-8 md:right-8 bg-white/90 backdrop-blur shadow-xl border border-gray-100 p-3 rounded-full transition-all hover:scale-110 group ${isPlaying ? 'text-orange-500 ring-2 ring-orange-500' : 'text-gray-600'}`}
+                    disabled={isAudioLoading}
+                    className={`absolute top-20 right-4 z-50 md:top-8 md:right-8 bg-white/90 backdrop-blur shadow-xl border border-gray-100 p-3 rounded-full transition-all hover:scale-110 group ${isPlaying ? 'text-orange-500 ring-2 ring-orange-500' : 'text-gray-600'} ${isAudioLoading ? 'opacity-70 cursor-wait' : ''}`}
                     title="Écouter l'histoire"
                 >
-                    {isPlaying ? (
+                    {isAudioLoading ? (
+                        <div className="w-6 h-6 border-2 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
+                    ) : isPlaying ? (
                         <span className="animate-pulse">🔊</span>
                     ) : (
                         <span>🔈</span>
                     )}
                     <span className="absolute right-full mr-2 bg-black/80 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
-                        {isPlaying ? 'Pause' : 'Écouter'}
+                        {isAudioLoading ? 'Génération...' : isPlaying ? 'Pause' : 'Écouter (HD)'}
                     </span>
                 </button>
             )}

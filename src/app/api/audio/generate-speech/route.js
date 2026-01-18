@@ -30,7 +30,7 @@ export async function POST(req) {
 
         // 2. Security: Verify User Owns Book (or is Admin/Club)
         // Ideally we check if book belongs to user.
-        const { data: book } = await supabase.from('generated_books').select('user_id, content_json').eq('id', bookId).single();
+        const { data: book } = await supabase.from('generated_books').select('user_id, content_json, story_content').eq('id', bookId).single();
         if (!book || book.user_id !== user.id) {
             // Strict ownership check. (Allow admins later if needed)
             return NextResponse.json({ error: "Book not found or access denied" }, { status: 403 });
@@ -71,18 +71,26 @@ export async function POST(req) {
             .getPublicUrl(fileName);
 
         // 6. Update Book Data (Cache the URL)
-        // We need to update the specific page in content_json
-        const pages = book.content_json.pages || [];
+        // Check for story_content (standard) or content_json (legacy)
+        let content = book.story_content || book.content_json || {};
+        let pages = Array.isArray(content) ? content : (content.pages || []);
+
         // Ensure pageIndex is valid
         if (pages[pageIndex]) {
             pages[pageIndex].audio_url = publicUrl;
 
-            await supabase
+            // Reconstruct content to save back
+            let newContent = Array.isArray(content) ? pages : { ...content, pages: pages };
+
+            // Update column dynamically (prefer story_content)
+            const updatePayload = book.story_content ? { story_content: newContent } : { content_json: newContent };
+
+            const { error: updateError } = await supabase
                 .from('generated_books')
-                .update({
-                    content_json: { ...book.content_json, pages: pages }
-                })
+                .update(updatePayload)
                 .eq('id', bookId);
+
+            if (updateError) console.error("⚠️ Failed to cache audio URL:", updateError);
         }
 
         console.log("✅ Audio Generated & Cached:", publicUrl);

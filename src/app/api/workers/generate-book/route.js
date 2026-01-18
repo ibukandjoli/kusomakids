@@ -7,7 +7,7 @@ import { SENDERS } from '@/lib/senders';
 
 // Force dynamic to allow long-running processes
 export const dynamic = 'force-dynamic';
-export const maxDuration = 60;
+export const maxDuration = 300; // 5 minutes for 10 face swaps (~15-30s each)
 
 // 🔧 CRITICAL FIX: Configure Fal explicitly for Server-Side usage
 // This tells Fal to use the Env Key directly and NOT look for a proxy

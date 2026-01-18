@@ -114,9 +114,8 @@ export default function BookReader({ book, user, onUnlock, isEditable = false, o
                                     className="w-full h-40 p-4 bg-orange-50/30 rounded-xl border border-orange-100 text-gray-800 font-serif text-lg leading-relaxed focus:ring-2 focus:ring-orange-500 outline-none resize-none"
                                 />
                             ) : (
-                                <p className="font-serif text-lg text-gray-800 leading-relaxed">
-                                    <span className="text-orange-500 font-bold text-3xl float-left mr-2 leading-none">{page.text?.charAt(0)}</span>
-                                    {page.text?.substring(1)}
+                                <p className="font-serif text-xl text-gray-800 leading-relaxed">
+                                    {page.text}
                                 </p>
                             )}
                         </div>
@@ -212,10 +211,12 @@ export default function BookReader({ book, user, onUnlock, isEditable = false, o
                                 </div>
                             )}
 
-                            {/* Watermark */}
-                            <div className="absolute inset-0 flex items-center justify-center opacity-30 pointer-events-none">
-                                <span className="text-white font-black text-5xl -rotate-12 uppercase tracking-widest drop-shadow-lg mix-blend-overlay">Kusoma Kids</span>
-                            </div>
+                            {/* Watermark - Only show if book is NOT unlocked */}
+                            {!isUnlocked && (
+                                <div className="absolute inset-0 flex items-center justify-center opacity-30 pointer-events-none">
+                                    <span className="text-white font-black text-5xl -rotate-12 uppercase tracking-widest drop-shadow-lg mix-blend-overlay">Kusoma Kids</span>
+                                </div>
+                            )}
                         </div>
 
                         {/* RIGHT: Text (Always Editable & Centered) */}
@@ -236,10 +237,9 @@ export default function BookReader({ book, user, onUnlock, isEditable = false, o
                                     />
                                 </div>
                             ) : (
-                                <div className="prose prose-2xl font-serif text-gray-800 leading-relaxed max-w-lg text-center flex flex-col justify-center h-full">
-                                    <p>
-                                        <span className="text-7xl text-orange-500 font-bold leading-[0.8] align-middle mr-2">{pages[currentPage - 1]?.text?.charAt(0)}</span>
-                                        {pages[currentPage - 1]?.text?.substring(1)}
+                                <div className="prose prose-2xl font-serif text-gray-800 leading-relaxed max-w-2xl text-center flex flex-col justify-center h-full">
+                                    <p className="text-2xl">
+                                        {pages[currentPage - 1]?.text}
                                     </p>
                                 </div>
                             )}

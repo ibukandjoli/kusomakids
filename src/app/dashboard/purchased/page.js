@@ -44,8 +44,24 @@ function MyPdfsContent() {
         fetchPdfs();
     }, [router]);
 
-    const handleDownload = (bookId) => {
-        window.open(`/api/download/${bookId}`, '_blank');
+    const handleDownload = async (bookId) => {
+        try {
+            // Get or create download token
+            const response = await fetch(`/api/download-secure/${bookId}/get-token`, {
+                method: 'POST'
+            });
+
+            if (!response.ok) {
+                alert('Erreur lors de la génération du lien de téléchargement');
+                return;
+            }
+
+            const { token } = await response.json();
+            window.open(`/api/download-secure/${bookId}?token=${token}`, '_blank');
+        } catch (error) {
+            console.error('Download error:', error);
+            alert('Erreur lors du téléchargement');
+        }
     };
 
     if (loading) return <div className="min-h-screen bg-gray-50 pt-32 flex justify-center"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div></div>;
@@ -100,7 +116,7 @@ function MyPdfsContent() {
                                     </div>
 
                                     <h3 className="font-bold text-xl text-gray-900 mb-2 line-clamp-2">
-                                        {book.child_name ? `${book.child_name} et ` : ''}{book.title_template || book.title || 'l\'Aventure Magique'}
+                                        {(book.title || book.title_template || 'l\'Aventure Magique').replace(/\{childName\}|\[Son prénom\]/gi, book.child_name || '')}
                                     </h3>
                                     <p className="text-gray-400 text-xs font-bold uppercase tracking-wider mb-6">
                                         Acquis le {new Date(book.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}

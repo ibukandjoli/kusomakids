@@ -21,11 +21,29 @@ export default function NewBookPage() {
     );
 
     const [form, setForm] = useState({
+        // Existing fields
         title_template: '',
         theme_slug: '',
         description: '',
         cover_image_url: '',
-        is_active: true
+        is_active: true,
+
+        // NEW FIELDS - Display & Marketing
+        title: '',                      // Display title (different from template)
+        tagline: '',                    // Subtitle/catchphrase
+        theme: '',                      // Theme category
+
+        // NEW FIELDS - Pricing & Metadata
+        price: 3000,                    // Default price in FCFA
+        age_range: '3-7 ans',           // Default age range
+        genre: 'Aventure',              // Default genre
+
+        // NEW FIELDS - Benefits (array)
+        benefits: [],                   // Learning benefits
+
+        // NEW FIELDS - Additional Covers
+        cover_url: '',                  // Legacy cover URL
+        base_cover_image_url: ''        // Base cover before personalization
     });
 
     // Helper: Upload Image to Supabase Storage
@@ -89,12 +107,24 @@ export default function NewBookPage() {
             const { error } = await supabase
                 .from('story_templates')
                 .insert([{
+                    // Existing fields
                     title_template: form.title_template,
                     theme_slug: form.theme_slug,
                     description: form.description,
                     cover_image_url: form.cover_image_url,
                     content_json: content_json,
-                    is_active: form.is_active
+                    is_active: form.is_active,
+
+                    // NEW FIELDS
+                    title: form.title,
+                    tagline: form.tagline,
+                    theme: form.theme,
+                    price: form.price,
+                    age_range: form.age_range,
+                    genre: form.genre,
+                    benefits: form.benefits,
+                    cover_url: form.cover_url,
+                    base_cover_image_url: form.base_cover_image_url
                 }]);
 
             if (error) throw error;
@@ -146,6 +176,42 @@ export default function NewBookPage() {
                             </div>
                         </div>
 
+                        {/* NEW: Display Title & Tagline */}
+                        <div className="grid md:grid-cols-2 gap-6">
+                            <div>
+                                <label className="block text-sm font-bold text-gray-700 mb-2">Titre d'Affichage</label>
+                                <input
+                                    type="text"
+                                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-orange-500 outline-none"
+                                    value={form.title}
+                                    onChange={e => setForm({ ...form, title: e.target.value })}
+                                    placeholder="Ex: L'Anniversaire Magique de {childName}"
+                                />
+                                <p className="text-xs text-gray-500 mt-1">Titre affiché sur le site (peut différer du template)</p>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-bold text-gray-700 mb-2">Thème</label>
+                                <input
+                                    type="text"
+                                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-orange-500 outline-none"
+                                    value={form.theme}
+                                    onChange={e => setForm({ ...form, theme: e.target.value })}
+                                    placeholder="Ex: Anniversaire, École, Famille"
+                                />
+                            </div>
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-bold text-gray-700 mb-2">Tagline / Sous-titre</label>
+                            <input
+                                type="text"
+                                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-orange-500 outline-none"
+                                value={form.tagline}
+                                onChange={e => setForm({ ...form, tagline: e.target.value })}
+                                placeholder="Ex: Une aventure magique écrite pour {childName}"
+                            />
+                        </div>
+
                         <div>
                             <label className="block text-sm font-bold text-gray-700 mb-2">Description</label>
                             <textarea
@@ -155,9 +221,101 @@ export default function NewBookPage() {
                                 placeholder="Description affichée sur la page d'accueil..."
                             />
                         </div>
+                    </div>
+
+                    {/* NEW: Pricing & Metadata Section */}
+                    <div className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 space-y-6">
+                        <h2 className="text-xl font-bold text-gray-900">Tarification & Métadonnées</h2>
+                        <div className="grid md:grid-cols-3 gap-6">
+                            <div>
+                                <label className="block text-sm font-bold text-gray-700 mb-2">Prix (FCFA)</label>
+                                <input
+                                    type="number"
+                                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-orange-500 outline-none"
+                                    value={form.price}
+                                    onChange={e => setForm({ ...form, price: parseInt(e.target.value) || 0 })}
+                                    placeholder="3000"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-bold text-gray-700 mb-2">Tranche d'Âge</label>
+                                <select
+                                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-orange-500 outline-none"
+                                    value={form.age_range}
+                                    onChange={e => setForm({ ...form, age_range: e.target.value })}
+                                >
+                                    <option value="3-5 ans">3-5 ans</option>
+                                    <option value="3-7 ans">3-7 ans</option>
+                                    <option value="5-7 ans">5-7 ans</option>
+                                    <option value="7-10 ans">7-10 ans</option>
+                                    <option value="8-12 ans">8-12 ans</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-bold text-gray-700 mb-2">Genre</label>
+                                <select
+                                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-orange-500 outline-none"
+                                    value={form.genre}
+                                    onChange={e => setForm({ ...form, genre: e.target.value })}
+                                >
+                                    <option value="Aventure">Aventure</option>
+                                    <option value="Éducatif">Éducatif</option>
+                                    <option value="Fantaisie">Fantaisie</option>
+                                    <option value="Conte">Conte</option>
+                                    <option value="Famille">Famille</option>
+                                    <option value="Amitié">Amitié</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* NEW: Benefits Section */}
+                    <div className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 space-y-6">
+                        <h2 className="text-xl font-bold text-gray-900">Bénéfices Pédagogiques</h2>
+                        <p className="text-sm text-gray-500">Ce que l'enfant va apprendre avec cette histoire</p>
+                        <div className="space-y-3">
+                            {form.benefits.map((benefit, index) => (
+                                <div key={index} className="flex gap-3">
+                                    <input
+                                        type="text"
+                                        className="flex-1 px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-orange-500 outline-none"
+                                        value={benefit}
+                                        onChange={e => {
+                                            const newBenefits = [...form.benefits];
+                                            newBenefits[index] = e.target.value;
+                                            setForm({ ...form, benefits: newBenefits });
+                                        }}
+                                        placeholder="Ex: Confiance en soi"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            const newBenefits = form.benefits.filter((_, i) => i !== index);
+                                            setForm({ ...form, benefits: newBenefits });
+                                        }}
+                                        className="px-4 py-3 rounded-xl bg-red-50 text-red-600 font-bold hover:bg-red-100 transition-colors"
+                                    >
+                                        ×
+                                    </button>
+                                </div>
+                            ))}
+                            <button
+                                type="button"
+                                onClick={() => setForm({ ...form, benefits: [...form.benefits, ''] })}
+                                className="w-full px-4 py-3 rounded-xl border-2 border-dashed border-gray-300 text-gray-600 font-bold hover:border-orange-500 hover:text-orange-600 transition-colors"
+                            >
+                                + Ajouter un bénéfice
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Cover Images Section (Enhanced) */}
+                    <div className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 space-y-6">
+                        <h2 className="text-xl font-bold text-gray-900">Images de Couverture</h2>
 
                         <div>
-                            <label className="block text-sm font-bold text-gray-700 mb-2">Image de Couverture</label>
+                            <label className="block text-sm font-bold text-gray-700 mb-2">Image de Couverture Principale</label>
+                            <p className="text-xs text-gray-500 mb-2">Couverture affichée sur le site (Supabase bucket: covers)</p>
 
                             {/* Upload or URL */}
                             <div className="space-y-3">
@@ -189,90 +347,117 @@ export default function NewBookPage() {
                             </div>
                         </div>
 
-                        <div className="flex items-center space-x-3">
+                        {/* NEW: Base Cover Image */}
+                        <div>
+                            <label className="block text-sm font-bold text-gray-700 mb-2">Image de Couverture de Base (Optionnel)</label>
+                            <p className="text-xs text-gray-500 mb-2">Couverture avant personnalisation (pour face swap)</p>
                             <input
-                                type="checkbox"
-                                id="active"
-                                checked={form.is_active}
-                                onChange={e => setForm({ ...form, is_active: e.target.checked })}
-                                className="w-5 h-5 text-orange-600 rounded focus:ring-orange-500"
+                                type="url"
+                                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-orange-500 outline-none font-mono text-sm text-gray-500"
+                                value={form.base_cover_image_url}
+                                onChange={e => setForm({ ...form, base_cover_image_url: e.target.value })}
+                                placeholder="URL de l'image de base..."
                             />
-                            <label htmlFor="active" className="text-gray-700 font-bold">Rendre cette histoire visible immédiatement</label>
+                        </div>
+
+                        {/* NEW: Legacy Cover URL */}
+                        <div>
+                            <label className="block text-sm font-bold text-gray-700 mb-2">Cover URL (Legacy - Optionnel)</label>
+                            <p className="text-xs text-gray-500 mb-2">Ancien champ pour compatibilité</p>
+                            <input
+                                type="url"
+                                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-orange-500 outline-none font-mono text-sm text-gray-500"
+                                value={form.cover_url}
+                                onChange={e => setForm({ ...form, cover_url: e.target.value })}
+                                placeholder="URL legacy..."
+                            />
                         </div>
                     </div>
 
-                    {/* Pages Editor */}
-                    <div className="space-y-6">
-                        <h2 className="text-2xl font-bold text-gray-900">Configuration des 10 Pages</h2>
-                        {pages.map((page, index) => (
-                            <div key={index} className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex gap-6 items-start">
-                                <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center text-orange-700 font-bold text-xl flex-shrink-0">
-                                    {page.pageNumber}
-                                </div>
-                                <div className="flex-1 space-y-4">
-                                    <div>
-                                        <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Image de la Page (Master)</label>
-                                        <div className="flex gap-4 items-start">
-                                            <div className="flex-1">
-                                                <input
-                                                    type="file"
-                                                    accept="image/*"
-                                                    onChange={(e) => handlePageImageUpload(index, e.target.files[0])}
-                                                    className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200"
-                                                />
-                                            </div>
-                                            <div className="flex-1">
-                                                <input
-                                                    type="url"
-                                                    className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:ring-1 focus:ring-orange-500 outline-none font-mono text-xs text-gray-400"
-                                                    value={page.base_image_url}
-                                                    onChange={e => updatePage(index, 'base_image_url', e.target.value)}
-                                                    placeholder="Ou URL directe..."
-                                                />
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Texte de l'Histoire (Master Script)</label>
-                                        <div className="text-xs text-gray-400 mb-2">Variables: {'{childName}'}, {'{childAge}'}, {'{gender}'}, {'{city}'}</div>
-                                        <textarea
-                                            className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:ring-1 focus:ring-orange-500 outline-none text-sm h-32 font-medium text-gray-800"
-                                            value={page.text_template || ''}
-                                            onChange={e => updatePage(index, 'text_template', e.target.value)}
-                                            placeholder="Ce matin-là, {childName}..."
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Contexte de la Scène (Prompt IA - Optionnel)</label>
-                                        <textarea
-                                            className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:ring-1 focus:ring-orange-500 outline-none text-sm h-20 text-gray-500"
-                                            value={page.scene_context}
-                                            onChange={e => updatePage(index, 'scene_context', e.target.value)}
-                                            placeholder="Décrivez la scène..."
-                                        />
-                                    </div>
-                                </div>
-                                {/* Preview Thumbnail if URL exists */}
-                                {page.base_image_url && (
-                                    <div className="w-32 h-32 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0 border border-gray-200 relative group">
-                                        <img src={page.base_image_url} className="w-full h-full object-cover" alt={`Page ${page.pageNumber}`} />
-                                    </div>
-                                )}
-                            </div>
-                        ))}
+                    <div className="flex items-center space-x-3">
+                        <input
+                            type="checkbox"
+                            id="active"
+                            checked={form.is_active}
+                            onChange={e => setForm({ ...form, is_active: e.target.checked })}
+                            className="w-5 h-5 text-orange-600 rounded focus:ring-orange-500"
+                        />
+                        <label htmlFor="active" className="text-gray-700 font-bold">Rendre cette histoire visible immédiatement</label>
                     </div>
-
-                    <div className="sticky bottom-4">
-                        <button
-                            type="submit"
-                            disabled={loading || uploading}
-                            className="w-full bg-gray-900 text-white py-4 rounded-xl font-bold hover:bg-black transition-colors disabled:opacity-50 shadow-xl"
-                        >
-                            {loading ? 'Création en cours...' : uploading ? 'Upload en cours...' : 'Sauvegarder l\'Histoire'}
-                        </button>
-                    </div>
-                </form>
             </div>
-        </div>
+
+            {/* Pages Editor */}
+            <div className="space-y-6">
+                <h2 className="text-2xl font-bold text-gray-900">Configuration des 10 Pages</h2>
+                {pages.map((page, index) => (
+                    <div key={index} className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex gap-6 items-start">
+                        <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center text-orange-700 font-bold text-xl flex-shrink-0">
+                            {page.pageNumber}
+                        </div>
+                        <div className="flex-1 space-y-4">
+                            <div>
+                                <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Image de la Page (Master)</label>
+                                <div className="flex gap-4 items-start">
+                                    <div className="flex-1">
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            onChange={(e) => handlePageImageUpload(index, e.target.files[0])}
+                                            className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200"
+                                        />
+                                    </div>
+                                    <div className="flex-1">
+                                        <input
+                                            type="url"
+                                            className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:ring-1 focus:ring-orange-500 outline-none font-mono text-xs text-gray-400"
+                                            value={page.base_image_url}
+                                            onChange={e => updatePage(index, 'base_image_url', e.target.value)}
+                                            placeholder="Ou URL directe..."
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Texte de l'Histoire (Master Script)</label>
+                                <div className="text-xs text-gray-400 mb-2">Variables: {'{childName}'}, {'{childAge}'}, {'{gender}'}, {'{city}'}</div>
+                                <textarea
+                                    className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:ring-1 focus:ring-orange-500 outline-none text-sm h-32 font-medium text-gray-800"
+                                    value={page.text_template || ''}
+                                    onChange={e => updatePage(index, 'text_template', e.target.value)}
+                                    placeholder="Ce matin-là, {childName}..."
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Contexte de la Scène (Prompt IA - Optionnel)</label>
+                                <textarea
+                                    className="w-full px-3 py-2 rounded-lg border border-gray-200 focus:ring-1 focus:ring-orange-500 outline-none text-sm h-20 text-gray-500"
+                                    value={page.scene_context}
+                                    onChange={e => updatePage(index, 'scene_context', e.target.value)}
+                                    placeholder="Décrivez la scène..."
+                                />
+                            </div>
+                        </div>
+                        {/* Preview Thumbnail if URL exists */}
+                        {page.base_image_url && (
+                            <div className="w-32 h-32 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0 border border-gray-200 relative group">
+                                <img src={page.base_image_url} className="w-full h-full object-cover" alt={`Page ${page.pageNumber}`} />
+                            </div>
+                        )}
+                    </div>
+                ))}
+            </div>
+
+            <div className="sticky bottom-4">
+                <button
+                    type="submit"
+                    disabled={loading || uploading}
+                    className="w-full bg-gray-900 text-white py-4 rounded-xl font-bold hover:bg-black transition-colors disabled:opacity-50 shadow-xl"
+                >
+                    {loading ? 'Création en cours...' : uploading ? 'Upload en cours...' : 'Sauvegarder l\'Histoire'}
+                </button>
+            </div>
+        </form>
+            </div >
+        </div >
     );
 }

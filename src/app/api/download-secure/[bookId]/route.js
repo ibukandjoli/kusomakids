@@ -114,7 +114,7 @@ const BookDocument = ({ book }) => {
 };
 
 export async function GET(req, { params }) {
-    const { bookId } = params;
+    const { bookId } = await params; // Fix: await params in Next.js 15
     const { searchParams } = new URL(req.url);
     const token = searchParams.get('token');
 

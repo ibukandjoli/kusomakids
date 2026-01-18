@@ -204,7 +204,8 @@ export async function fetchBooksGeneric(supabaseClient, filters = {}) {
         const { data: dbBooks, error } = await supabaseClient
             .from('story_templates')
             .select('*')
-            .eq('is_active', true);
+            .eq('is_active', true)
+            .order('created_at', { ascending: false }); // Newest first
 
         if (error) throw error;
 

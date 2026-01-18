@@ -127,6 +127,11 @@ export async function GET(req, { params }) {
 
     try {
         // 2. Fetch and validate token
+        console.log('🔍 Searching for token in database...');
+        console.log('   Token (first 20 chars):', token?.substring(0, 20));
+        console.log('   Token length:', token?.length);
+        console.log('   Book ID:', bookId);
+
         const { data: tokenData, error: tokenError } = await supabaseAdmin
             .from('download_tokens')
             .select('*')
@@ -134,8 +139,29 @@ export async function GET(req, { params }) {
             .eq('book_id', bookId)
             .single();
 
+        console.log('📊 Query result:', {
+            found: !!tokenData,
+            error: tokenError?.message,
+            tokenDataId: tokenData?.id
+        });
+
         if (tokenError || !tokenData) {
             console.error("❌ Invalid token:", tokenError);
+
+            // Try to find ANY token for this book to help debug
+            const { data: anyTokens } = await supabaseAdmin
+                .from('download_tokens')
+                .select('id, token, book_id')
+                .eq('book_id', bookId)
+                .limit(1);
+
+            console.log('🔎 Debug - Tokens for this book:', anyTokens?.map(t => ({
+                id: t.id,
+                tokenMatch: t.token === token,
+                tokenLengthDB: t.token.length,
+                tokenLengthProvided: token?.length
+            })));
+
             return NextResponse.json({ error: "Invalid or expired download link" }, { status: 403 });
         }
 

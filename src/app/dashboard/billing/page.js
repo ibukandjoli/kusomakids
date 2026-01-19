@@ -3,11 +3,12 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
+import PaymentModal from '@/app/components/PaymentModal';
 
 export default function BillingPage() {
     const [loading, setLoading] = useState(true);
     const [profile, setProfile] = useState(null);
+    const [showPaymentModal, setShowPaymentModal] = useState(false);
     const router = useRouter();
 
     useEffect(() => {
@@ -87,12 +88,12 @@ export default function BillingPage() {
                             <p className="text-gray-600 mb-8 max-w-md mx-auto">
                                 Rejoignez le Club Kusoma pour débloquer des histoires illimitées en ligne et 1 PDF offert chaque mois !
                             </p>
-                            <Link
-                                href="/club"
+                            <button
+                                onClick={() => setShowPaymentModal(true)}
                                 className="inline-block bg-gradient-to-r from-orange-500 to-pink-500 text-white px-8 py-4 rounded-full font-bold text-lg hover:shadow-lg hover:scale-105 transition-all shadow-orange-500/30"
                             >
                                 Rejoindre le Club pour 6500 FCFA/mois
-                            </Link>
+                            </button>
                         </div>
                     )}
                 </div>
@@ -120,6 +121,12 @@ export default function BillingPage() {
                     )}
                 </div>
             </div>
+
+            <PaymentModal
+                isOpen={showPaymentModal}
+                onClose={() => setShowPaymentModal(false)}
+                user={profile}
+            />
         </div>
     );
 }

@@ -46,12 +46,13 @@ async function generatePersonalizedImage(baseImageUrl, childPhotoUrl, scenePromp
         const polishResult = await fal.subscribe("fal-ai/flux/dev/image-to-image", {
             input: {
                 image_url: swappedUrl,
-                prompt: scenePrompt + ", photorealistic, natural lighting, high quality, highly detailed skin texture, cinematic lighting, 8k",
-                strength: 0.35, // GOLDEN RATIO: Keeps identity (face) & context, fixes "sticker" look
+                // Add "expressive face" to prompt to encourage keeping the original expression (open mouth, etc.)
+                prompt: scenePrompt + ", highly expressive face, open mouth if shouting, photorealistic, natural lighting, high quality, highly detailed skin texture, cinematic lighting, 8k",
+                strength: 0.45, // INCREASED to allow geometry changes (opening mouth)
                 num_inference_steps: 30,
                 guidance_scale: 3.5,
                 enable_safety_checker: false,
-                output_format: "jpeg" // JPEG is lighter/faster for final delivery
+                output_format: "jpeg"
             },
             logs: true,
         });

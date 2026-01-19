@@ -6,7 +6,7 @@ import Link from 'next/link';
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY);
 
-export default function PaymentModal({ isOpen, onClose, user, bookId, profile }) {
+export default function PaymentModal({ isOpen, onClose, user, bookId, book, profile }) {
     const [loading, setLoading] = useState(false);
 
     if (!isOpen) return null;

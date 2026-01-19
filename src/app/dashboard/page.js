@@ -231,6 +231,7 @@ function DashboardContent() {
                 onClose={() => setModalOpen(false)}
                 user={user}
                 bookId={selectedBookId}
+                book={books.find(b => b.id === selectedBookId)}
                 profile={profile}
             />
 

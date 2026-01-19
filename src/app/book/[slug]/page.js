@@ -10,7 +10,7 @@ const isUUID = (str) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-
 // 1. Generate Dynamic Metadata for SEO
 export async function generateMetadata({ params }) {
   const resolvedParams = await params;
-  const slug = resolvedParams?.slug;
+  const slug = resolvedParams?.slug ? decodeURIComponent(resolvedParams.slug) : null;
 
   if (!slug) return {};
 
@@ -57,7 +57,7 @@ export async function generateMetadata({ params }) {
 // 2. Server Component fetches data and passes to Client Component
 export default async function BookDetailPage({ params }) {
   const resolvedParams = await params;
-  const slug = resolvedParams?.slug;
+  const slug = resolvedParams?.slug ? decodeURIComponent(resolvedParams.slug) : null;
 
   if (!slug) return <BookDetailClient initialBook={null} />;
 

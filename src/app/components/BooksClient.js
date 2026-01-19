@@ -126,9 +126,9 @@ export default function BooksClient() {
                                     <div className="bg-white rounded-[2rem] overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 h-full flex flex-col border border-gray-100">
                                         {/* Image Container */}
                                         <div className="relative aspect-square overflow-hidden bg-gray-100">
-                                            {book.cover_url ? (
+                                            {(book.cover_image_url || book.cover_url) ? (
                                                 <Image
-                                                    src={book.cover_url}
+                                                    src={book.cover_image_url || book.cover_url}
                                                     alt={book.title}
                                                     fill
                                                     className="object-cover group-hover:scale-110 transition-transform duration-500"

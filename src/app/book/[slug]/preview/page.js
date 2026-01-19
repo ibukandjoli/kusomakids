@@ -9,6 +9,7 @@ import { fal } from '@fal-ai/client';
 import BookReader from '@/app/components/BookReader';
 import { STATIC_COVERS } from '@/lib/static-covers';
 import { formatTitle } from '@/utils/format';
+import PaymentModal from '@/app/components/PaymentModal';
 
 fal.config({
     proxyUrl: '/api/fal/proxy',
@@ -32,6 +33,10 @@ export default function PreviewPage() {
     // User State
     const [user, setUser] = useState(null);
 
+    // Modals
+    const [showPaymentModal, setShowPaymentModal] = useState(false);
+    const [userProfile, setUserProfile] = useState(null);
+
     // Fun & Educational Loading Steps
     const loadingSteps = {
         init: { icon: "🪄", text: "Préparation de la formule magique..." },
@@ -49,13 +54,29 @@ export default function PreviewPage() {
     useEffect(() => { statusRef.current = status; }, [status]);
 
     useEffect(() => {
+
+
         const init = async () => {
             if (hasStartedRef.current) return;
-            hasStartedRef.current = true;
+            // Wrapped init call inside to handle double firing in dev
+            await initLogic();
+        };
 
-            // 1. User Session
+        // Extracted logic to avoid recursion issues in replace
+        const initLogic = async () => {
+            // 1. User Session & Profile
             const { data: { session } } = await supabase.auth.getSession();
             setUser(session?.user);
+
+            if (session?.user) {
+                // Fetch Profile for Subscription Status
+                const { data: profile } = await supabase
+                    .from('users')
+                    .select('subscription_status, child_name, child_age')
+                    .eq('id', session.user.id)
+                    .single();
+                setUserProfile(profile);
+            }
 
             // 2. Load Cart Data
             const storedOrder = localStorage.getItem('cart_item');
@@ -112,6 +133,10 @@ export default function PreviewPage() {
             }
 
             // 4. Start Generation with Real Theme
+            // Note: startGeneration is defined below, ensure it's accessible or moved if using this approach
+            if (hasStartedRef.current) return; // Simple check again
+            hasStartedRef.current = true;
+
             startGeneration(parsed, themeToUse);
 
             // 5. Timed Magic Messages & Progress
@@ -134,7 +159,7 @@ export default function PreviewPage() {
                 setProgressMessage(currentStep.text);
             }, 1000);
 
-            // 5. Rotating Tips (Keep existing)
+            // 5. Rotating Tips
             const tips = [
                 "💡 Le lion rugit si fort qu'on l'entend à 8 km !",
                 "🦒 La girafe a une langue bleue de 50 cm !",
@@ -155,9 +180,9 @@ export default function PreviewPage() {
                 clearInterval(timerInterval);
                 clearInterval(tipInterval);
             };
-        };
+        }
 
-        init();
+        initLogic();
     }, [router]);
 
     const startGeneration = async (data, themeSlug) => {
@@ -202,8 +227,6 @@ export default function PreviewPage() {
             // --- COVER STRATEGY: STATIC TEMPLATE + FACE SWAP ---
             const hasPhoto = !!data.personalization?.photoUrl;
 
-            // PRIORITY 1: Authenticated/Database Template URL (Supabase) - Accessible by Fal AI
-            // PRIORITY 2: Static Local Fallback (Dev/Offline)
             // PRIORITY 1: Authenticated/Database Template URL
             // PRIORITY 2: Static Local Fallback
             let coverUrl = data.coverUrl || STATIC_COVERS[themeSlug] || STATIC_COVERS['default'];
@@ -239,7 +262,6 @@ export default function PreviewPage() {
                     console.log("🔍 Full Face Swap Result:", JSON.stringify(swapResult, null, 2));
 
                     // Handle various Fal response formats (Arrays or Single Object)
-                    // Handle various Fal response formats (Arrays or Single Object)
                     const swapUrl = swapResult.image?.url || swapResult.images?.[0]?.url || swapResult.data?.image?.url || swapResult.data?.images?.[0]?.url;
 
                     if (swapUrl) {
@@ -267,9 +289,6 @@ export default function PreviewPage() {
             for (let i = 0; i < pagesToGenerate.length; i++) {
                 const page = pagesToGenerate[i];
                 setProgressMessage(`Illustration de la page ${i + 1} / ${pagesToGenerate.length}...`);
-
-                // Prepare Input
-                // Prepare Input (Refactored)
 
                 // --- PARTIAL GENERATION LOGIC (Cost Optimization) ---
                 if (i >= 2) {
@@ -314,12 +333,10 @@ export default function PreviewPage() {
                         const pHair = data.personalization.gender === 'girl' ? 'braided hair' : 'short hair';
 
                         // "looking at camera, detailed face" helps Face Swap
-                        // Added "middle shot" to ensure face is big enough for swap
                         // V1.5.3: Added specific features for better resemblance (beads, braids)
                         const pGenderTraits = data.personalization.gender === 'girl' ? 'cornrows, colorful beads, detailed african features' : '';
                         const physicalAttributes = `cute little african ${pGender}, ${pSkin}, ${pHair}, ${pGenderTraits}, detailed face, looking at camera, middle shot`;
 
-                        // "wide shot" removed from physical to allow scene variety, but kept in Composition
                         const composition = "centered composition, detailed background, cinematic lighting, 8k";
 
                         const scenePrompt = `${physicalAttributes}, ${page.imagePrompt || page.text}, ${composition}, pixar style, 3d render, high fidelity, masterpiece, best quality, vibrant colors`;
@@ -361,9 +378,6 @@ export default function PreviewPage() {
                             swap_image_url: data.personalization.photoUrl // Source (The Face)
                         };
 
-                        // NOTE: If using 'fal-ai/face-swap' specifically, parameters are usually:
-                        // base_image_url (target) AND swap_image_url (source)
-                        // BUT let's log specifically to be sure we aren't missing something
                         console.log("🔍 Fal Face Swap Input:", JSON.stringify(swapInput, null, 2));
 
                         const swapResult = await fal.subscribe("fal-ai/face-swap", {
@@ -371,7 +385,6 @@ export default function PreviewPage() {
                             logs: true,
                         });
 
-                        // DEBUG: Log Full Result
                         // DEBUG: Log Full Result
                         console.log("🔍 Page Face Swap Result:", JSON.stringify(swapResult, null, 2));
 
@@ -428,10 +441,6 @@ export default function PreviewPage() {
                     if (saveRes.ok) {
                         console.log("✅ Draft Saved to DB:", saveData.bookId);
                         setSavedBookId(saveData.bookId);
-
-                        // Optional: Update URL to point to real ID? 
-                        // For now, keep as is.
-
                     } else {
                         console.error("❌ Failed to auto-save draft:", saveData);
                     }
@@ -487,7 +496,8 @@ export default function PreviewPage() {
     };
 
     const handleUnlock = () => {
-        router.push(`/signup?plan=club&redirect_book_id=${orderData?.bookId}`);
+        // OPEN MODAL instead of redirect
+        setShowPaymentModal(true);
     };
 
     // PAYWALL LOGIC: Only Active Subscribers can read freely during Draft mode.
@@ -495,7 +505,7 @@ export default function PreviewPage() {
     // NOTE: In 'Preview' mode, the book is usually a Draft.
     // If it was already purchased, we probably wouldn't be in this creation flow (or we'd check status).
     // Assuming this page is for Creation/Draft only.
-    const isSubscriber = user?.subscription_status === 'active';
+    const isSubscriber = user?.subscription_status === 'active' || userProfile?.subscription_status === 'active';
     const showReadButton = isSubscriber;
 
     if (status !== "complete") {
@@ -601,13 +611,16 @@ export default function PreviewPage() {
                         ) : (
                             <>
                                 <button
-                                    onClick={() => router.push(`/signup?plan=club&redirect_book_id=${orderData?.bookId}`)}
+                                    // OPEN MODAL ON CLICK
+                                    onClick={() => setShowPaymentModal(true)}
                                     className="w-full md:w-auto text-orange-600 border-2 border-orange-100 bg-orange-50 px-6 py-3 rounded-full font-bold hover:bg-orange-100 transition-colors order-2 md:order-1"
                                 >
                                     Rejoindre le Club
                                 </button>
                                 <button
-                                    onClick={handleConfirm}
+                                    onClick={handleConfirm} // This still triggers checkout flow for "One-Off", maybe should join modal too? 
+                                    // User flow: "Acheter" button usually goes to Checkout directly.
+                                    // But "Rejoindre le Club" must show the modal.
                                     className="w-full md:w-auto bg-green-600 text-white px-6 py-3 rounded-full font-bold text-lg hover:bg-green-700 transition-all shadow-xl flex items-center justify-center gap-3 order-1 md:order-2"
                                 >
                                     Acheter <span className="bg-white/20 px-2 py-1 rounded text-sm text-green-100 whitespace-nowrap">3000 FCFA</span>
@@ -617,6 +630,17 @@ export default function PreviewPage() {
                     </div>
                 </div>
             </div>
+
+            {/* PAYMENT MODAL */}
+            <PaymentModal
+                isOpen={showPaymentModal}
+                onClose={() => setShowPaymentModal(false)}
+                user={user}
+                profile={userProfile}
+                bookId={orderData?.bookId || savedBookId}
+            // Note: book object passed to modal is minimal, mostly needs ID and Child Name if available
+            // Adjust PaymentModal props if needed, but it looked robust.
+            />
         </div>
     );
 }

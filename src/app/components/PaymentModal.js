@@ -56,7 +56,9 @@ export default function PaymentModal({ isOpen, onClose, user, bookId, profile })
                     userId: user.id,
                     email: user.email,
                     bookId: bookId,
-                    amount: profile?.subscription_status === 'active' ? 1500 : 3000 // Club members get 50% off
+                    amount: profile?.subscription_status === 'active' ? 1500 : 3000, // Club members get 50% off
+                    childName: book?.child_name,
+                    bookTitle: book?.title
                 }),
             });
 

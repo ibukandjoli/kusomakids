@@ -40,8 +40,8 @@ export default function BookReader({ book, user, onUnlock, isEditable = false, o
         if (!text) return '';
         const name = book.child_name || 'Votre Enfant';
         return text
-            .replace(/\\[Son prénom\\]/gi, name)
-            .replace(/\\{childName\\}/gi, name);
+            .replace(/\[Son prénom\]/gi, name)
+            .replace(/\{childName\}/gi, name);
     };
 
     // 1. Mobile View (Vertical Scroll)

@@ -60,7 +60,8 @@ export async function POST(req) {
             metadata: {
                 userId: userId,
                 bookId: bookId,
-                type: 'one_time'
+                type: 'one_time',
+                childName: childName || ''
             },
         });
 

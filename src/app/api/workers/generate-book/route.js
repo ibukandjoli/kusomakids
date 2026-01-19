@@ -14,11 +14,11 @@ if (process.env.FAL_KEY) {
 }
 
 /**
- * Shared worker logic that can be called directly or via API
+ * Internal worker logic
  * @param {string} bookId - ID of the book to generate images for
  * @returns {Promise<{success: boolean, generatedCount: number, error?: string}>}
  */
-export async function executeGeneration(bookId) {
+async function executeGeneration(bookId) {
     console.log(`👷 WORKER START: Generate Book ${bookId}`);
 
     try {

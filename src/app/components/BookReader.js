@@ -154,8 +154,8 @@ export default function BookReader({ book, user, onUnlock, isEditable = false, o
                         exit={{ opacity: 0 }}
                         className="w-full h-full flex items-center justify-center bg-gradient-to-br from-orange-50 to-white relative"
                     >
-                        {/* Cover Image - Centered & Larger (Responsive) */}
-                        <div className="relative w-[75vh] h-[75vh] max-w-[800px] max-h-[800px] shadow-2xl rounded-3xl overflow-hidden">
+                        {/* Cover Image - Centered & Responsive (Reduced to 65vh to avoid clipping) */}
+                        <div className="relative w-[65vh] h-[65vh] max-w-[800px] max-h-[800px] shadow-2xl rounded-3xl overflow-hidden shadow-orange-500/20">
                             {coverUrl ? (
                                 <Image src={coverUrl} alt="Cover" fill className="object-cover" />
                             ) : (
@@ -166,16 +166,16 @@ export default function BookReader({ book, user, onUnlock, isEditable = false, o
                             )}
 
                             {/* Title Overlay */}
-                            <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-transparent p-8 flex items-start justify-center">
-                                <h1 className="text-3xl font-bold text-white text-center drop-shadow-2xl mt-8 max-w-md">
+                            <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-transparent p-8 flex items-start justify-center">
+                                <h1 className="text-4xl md:text-5xl font-black text-white text-center drop-shadow-2xl mt-8 max-w-2xl leading-tight font-serif">
                                     {personalize(book.title)}
                                 </h1>
                             </div>
                         </div>
 
                         {/* Subtitle */}
-                        <div className="absolute bottom-10 bg-white px-8 py-4 rounded-full shadow-lg z-10">
-                            <p className="text-lg text-gray-600 italic">
+                        <div className="absolute bottom-10 bg-white/90 backdrop-blur-md px-10 py-4 rounded-full shadow-xl z-10 border border-orange-100">
+                            <p className="text-xl text-gray-700 italic font-medium">
                                 Une aventure pour <span className="text-orange-600 font-bold">{book.child_name}</span>
                             </p>
                         </div>
@@ -233,19 +233,20 @@ export default function BookReader({ book, user, onUnlock, isEditable = false, o
                         </div>
 
                         {/* RIGHT: Text (50%) */}
-                        <div className="w-1/2 h-full flex flex-col items-center justify-center bg-white p-12 relative">
-                            <span className="absolute top-6 right-6 text-gray-400 text-sm font-bold">PAGE {currentPage}</span>
+                        <div className="w-1/2 h-full flex flex-col items-center justify-center bg-white p-12 relative overflow-y-auto">
+                            <span className="absolute top-6 right-6 text-orange-200 text-sm font-black tracking-widest uppercase">PAGE {currentPage}</span>
 
                             {isEditable && onTextChange ? (
                                 <textarea
                                     value={pages[currentPage - 1]?.text}
                                     onChange={(e) => onTextChange(currentPage - 1, e.target.value)}
-                                    // WIDENED TEXT AREA
-                                    className="w-full max-w-3xl h-[60vh] p-6 bg-orange-50/20 rounded-2xl border-2 border-orange-100 text-xl text-gray-800 leading-relaxed focus:ring-2 focus:ring-orange-500 outline-none resize-none"
+                                    rows={12}
+                                    // FIXED: Removed fixed height, added min-h, centered with max-w
+                                    className="w-full max-w-2xl min-h-[300px] p-8 bg-white rounded-2xl border-2 border-orange-50 text-xl text-gray-800 leading-relaxed focus:ring-4 focus:ring-orange-100 focus:border-orange-300 outline-none resize-none shadow-sm transition-all text-center"
                                 />
                             ) : (
-                                <div className="max-w-3xl text-center">
-                                    <p className="text-2xl text-gray-800 leading-relaxed">
+                                <div className="max-w-2xl text-center">
+                                    <p className="text-2xl text-gray-800 leading-relaxed font-serif">
                                         {pages[currentPage - 1]?.text}
                                     </p>
                                 </div>

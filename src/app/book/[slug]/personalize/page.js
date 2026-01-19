@@ -178,16 +178,29 @@ export default function PersonalizePage() {
                                         {/* Photo Tips - Horizontal Row Centered */}
                                         <div className="flex flex-wrap justify-center md:justify-start gap-2 mt-6">
                                             {[
-                                                { icon: "👤", text: "Solo" },
-                                                { icon: "🌞", text: "Lumière" },
-                                                { icon: "🚫", text: "No Cache" },
-                                                { icon: "✨", text: "Visage" }
+                                                { icon: "👤", text: "De face" },
+                                                { icon: "🌞", text: "Eclairé(e)" },
+                                                { icon: "🚫", text: "Seul(e)" },
+                                                { icon: "✨", text: "Qualité" }
                                             ].map((tip, i) => (
                                                 <div key={i} className="flex flex-col items-center bg-white/60 p-2 rounded-xl border border-orange-50 w-16 md:w-20">
                                                     <span className="text-xl mb-1">{tip.icon}</span>
                                                     <span className="text-[10px] font-bold text-gray-500 uppercase leading-none">{tip.text}</span>
                                                 </div>
                                             ))}
+                                        </div>
+
+                                        {/* Quality Warning */}
+                                        <div className="mt-6 flex items-start gap-3 bg-orange-50 border border-orange-100 p-4 rounded-xl">
+                                            <span className="text-2xl">⚠️</span>
+                                            <div>
+                                                <p className="text-sm text-orange-800 font-bold mb-1">Important pour un résultat magique :</p>
+                                                <p className="text-xs text-orange-700 leading-relaxed">
+                                                    La qualité des illustrations dépend directement de votre photo.
+                                                    Une photo floue, sombre ou de loin donnera un résultat moins ressemblant.
+                                                    Prenez le temps de choisir une belle photo ! 📸
+                                                </p>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>

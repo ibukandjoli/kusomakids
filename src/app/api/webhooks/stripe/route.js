@@ -188,16 +188,33 @@ async function handleCheckoutSessionCompleted(session) {
                 }
             }
 
-            // 2. TRIGGER GENERATION WORKER
+            // 2. TRIGGER GENERATION (New System with Status Tracking)
             try {
-                const workerUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://kusomakids.com'}/api/workers/generate-book`;
-                fetch(workerUrl, {
+                console.log(`🎨 Triggering image generation for book ${bookId}...`);
+
+                const triggerUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://kusomakids.com'}/api/admin/trigger-generation`;
+
+                // Call the new trigger endpoint (it will handle everything synchronously)
+                const response = await fetch(triggerUrl, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ bookId: bookId })
-                }).catch(err => console.error("Worker Catch:", err));
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-webhook-source': 'stripe'
+                    },
+                    body: JSON.stringify({ bookId })
+                });
+
+                const result = await response.json();
+
+                if (response.ok && result.success) {
+                    console.log(`✅ Generation completed: ${result.generatedCount} images`);
+                } else {
+                    console.error(`❌ Generation failed:`, result.error || result);
+                    // Book status will be 'failed' in DB, can be retried manually
+                }
             } catch (e) {
-                console.error("Worker Trigger Error:", e);
+                console.error("❌ Generation Trigger Error:", e.message);
+                // Book status will remain 'pending', can be retried manually
             }
         }
     } else {

@@ -44,220 +44,6 @@ export default function BookReader({ book, user, onUnlock, isEditable = false, o
             .replace(/\{childName\}/gi, name);
     };
 
-    // 1. Mobile View (Vertical Scroll)
-    const MobileView = () => (
-        <div className="md:hidden w-full h-full overflow-y-auto pb-20 space-y-6 p-4 bg-gradient-to-b from-orange-50 to-white">
-            {/* Cover */}
-            <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
-                <div className="w-full aspect-square relative">
-                    {coverUrl ? (
-                        <Image src={coverUrl} alt="Cover" fill className="object-cover" />
-                    ) : (
-                        <div className="absolute inset-0 flex items-center justify-center flex-col text-orange-300 animate-pulse">
-                            <span className="text-4xl mb-2">✨</span>
-                            <span className="text-xs font-bold">Création...</span>
-                        </div>
-                    )}
-
-                    {/* Title Overlay - SMALLER */}
-                    <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-transparent p-4 flex items-start justify-center">
-                        <h1 className="text-xl font-bold text-white text-center drop-shadow-lg mt-4">
-                            {personalize(book.title)}
-                        </h1>
-                    </div>
-                </div>
-                <div className="p-4 text-center">
-                    <p className="text-sm text-gray-600 italic">
-                        Une aventure pour <span className="font-bold text-orange-600">{book.child_name}</span>
-                    </p>
-                </div>
-            </div>
-
-            {/* Pages */}
-            {pages.map((page, index) => {
-                const isPageLocked = !isUnlocked && (index + 1) >= 3;
-                return (
-                    <div key={index} className="bg-white rounded-2xl shadow-md overflow-hidden">
-                        {/* Image */}
-                        <div className="aspect-[4/3] relative bg-gray-100">
-                            {page.image ? (
-                                <Image
-                                    src={page.image}
-                                    alt={`Page ${index + 1}`}
-                                    fill
-                                    className={`object-cover ${isPageLocked ? 'blur-lg opacity-50' : ''}`}
-                                />
-                            ) : (
-                                <div className="absolute inset-0 flex items-center justify-center text-gray-400">
-                                    <span className="text-4xl animate-pulse">🎨</span>
-                                </div>
-                            )}
-
-                            {/* Lock Overlay */}
-                            {isPageLocked && (
-                                <div className="absolute inset-0 flex items-center justify-center bg-black/20 backdrop-blur-sm">
-                                    <div className="bg-white/95 p-4 rounded-2xl shadow-xl text-center">
-                                        <div className="text-3xl mb-2">🔒</div>
-                                        <p className="text-sm font-bold text-gray-800">Débloquez pour voir</p>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Text */}
-                        <div className="p-6">
-                            <span className="text-xs font-bold text-gray-400 mb-2 block">Page {index + 1}</span>
-                            {isEditable && onTextChange ? (
-                                <textarea
-                                    value={page.text}
-                                    onChange={(e) => onTextChange(index, e.target.value)}
-                                    className="w-full h-32 p-3 bg-orange-50/30 rounded-lg border border-orange-100 text-gray-800 text-base leading-relaxed focus:ring-2 focus:ring-orange-500 outline-none resize-none"
-                                />
-                            ) : (
-                                <p className="text-base text-gray-800 leading-relaxed">
-                                    {page.text}
-                                </p>
-                            )}
-                        </div>
-                    </div>
-                );
-            })}
-        </div>
-    );
-
-    // 2. Desktop View (Full Screen - NO BLACK BARS)
-    const DesktopView = () => (
-        <div className="hidden md:flex w-full h-screen bg-white overflow-hidden relative">
-            {/* Navigation Buttons */}
-            <button
-                onClick={handlePrev}
-                disabled={currentPage === 0}
-                className="absolute left-6 top-1/2 -translate-y-1/2 z-50 w-14 h-14 rounded-full bg-white shadow-xl flex items-center justify-center text-gray-700 hover:bg-orange-500 hover:text-white transition-all disabled:opacity-0 disabled:pointer-events-none"
-            >
-                ←
-            </button>
-            <button
-                onClick={handleNext}
-                disabled={currentPage === totalPages}
-                className="absolute right-6 top-1/2 -translate-y-1/2 z-50 w-14 h-14 rounded-full bg-white shadow-xl flex items-center justify-center text-gray-700 hover:bg-orange-500 hover:text-white transition-all disabled:opacity-0 disabled:pointer-events-none"
-            >
-                →
-            </button>
-
-            {/* Content */}
-            <AnimatePresence mode="wait">
-                {currentPage === 0 ? (
-                    <motion.div
-                        key="cover"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="w-full h-full flex items-center justify-center bg-gradient-to-br from-orange-50 to-white relative"
-                    >
-                        {/* Cover Image - Centered & Responsive (Reduced to 65vh to avoid clipping) */}
-                        <div className="relative w-[65vh] h-[65vh] max-w-[800px] max-h-[800px] shadow-2xl rounded-3xl overflow-hidden shadow-orange-500/20">
-                            {coverUrl ? (
-                                <Image src={coverUrl} alt="Cover" fill className="object-cover" />
-                            ) : (
-                                <div className="absolute inset-0 flex items-center justify-center flex-col text-orange-300 animate-pulse">
-                                    <span className="text-6xl mb-4">✨</span>
-                                    <span className="text-lg font-bold">Création...</span>
-                                </div>
-                            )}
-
-                            {/* Title Overlay */}
-                            <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-transparent p-8 flex items-start justify-center">
-                                <h1 className="text-4xl md:text-5xl font-black text-white text-center drop-shadow-2xl mt-8 max-w-2xl leading-tight font-serif">
-                                    {personalize(book.title)}
-                                </h1>
-                            </div>
-                        </div>
-
-                        {/* Subtitle */}
-                        <div className="absolute bottom-10 bg-white/90 backdrop-blur-md px-10 py-4 rounded-full shadow-xl z-10 border border-orange-100">
-                            <p className="text-xl text-gray-700 italic font-medium">
-                                Une aventure pour <span className="text-orange-600 font-bold">{book.child_name}</span>
-                            </p>
-                        </div>
-                    </motion.div>
-                ) : (
-                    <motion.div
-                        key={currentPage}
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="w-full h-full flex"
-                    >
-                        {/* LEFT: Image (50%) */}
-                        <div className="w-1/2 h-full relative bg-gray-100">
-                            {(() => {
-                                const pageData = pages[currentPage - 1];
-                                const imageUrl = pageData?.image || pageData?.image_url || pageData?.imageUrl || coverUrl;
-                                const hasImage = !!(pageData?.image || pageData?.image_url || pageData?.imageUrl);
-
-                                if (hasImage || (!isUnlocked && currentPage >= 3)) {
-                                    return (
-                                        <Image
-                                            src={imageUrl}
-                                            alt={`Page ${currentPage}`}
-                                            fill
-                                            className={`object-cover ${(!isUnlocked && currentPage >= 3) ? 'blur-md opacity-50' : ''}`}
-                                        />
-                                    );
-                                } else {
-                                    return (
-                                        <div className="absolute inset-0 flex items-center justify-center flex-col text-gray-400">
-                                            <span className="text-6xl animate-bounce mb-4">🎨</span>
-                                            <p>Illustration en cours...</p>
-                                        </div>
-                                    );
-                                }
-                            })()}
-
-                            {/* Lock Overlay */}
-                            {(!isUnlocked && currentPage >= 3) && (
-                                <div className="absolute inset-0 flex items-center justify-center bg-black/10 backdrop-blur-sm">
-                                    <div className="bg-white/95 p-6 rounded-3xl shadow-2xl text-center">
-                                        <div className="text-5xl mb-3">🔒</div>
-                                        <p className="text-gray-900 font-bold">Illustration à débloquer</p>
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Watermark */}
-                            {!isUnlocked && (
-                                <div className="absolute inset-0 flex items-center justify-center opacity-20 pointer-events-none">
-                                    <span className="text-white font-black text-4xl -rotate-12 uppercase">Kusoma Kids</span>
-                                </div>
-                            )}
-                        </div>
-
-                        {/* RIGHT: Text (50%) */}
-                        <div className="w-1/2 h-full flex flex-col items-center justify-center bg-white p-12 relative overflow-y-auto">
-                            <span className="absolute top-6 right-6 text-orange-200 text-sm font-black tracking-widest uppercase">PAGE {currentPage}</span>
-
-                            {isEditable && onTextChange ? (
-                                <textarea
-                                    value={pages[currentPage - 1]?.text}
-                                    onChange={(e) => onTextChange(currentPage - 1, e.target.value)}
-                                    rows={12}
-                                    // FIXED: Removed fixed height, added min-h, centered with max-w
-                                    className="w-full max-w-2xl min-h-[300px] p-8 bg-white rounded-2xl border-2 border-orange-50 text-xl text-gray-800 leading-relaxed focus:ring-4 focus:ring-orange-100 focus:border-orange-300 outline-none resize-none shadow-sm transition-all text-center"
-                                />
-                            ) : (
-                                <div className="max-w-2xl text-center">
-                                    <p className="text-2xl text-gray-800 leading-relaxed font-serif">
-                                        {pages[currentPage - 1]?.text}
-                                    </p>
-                                </div>
-                            )}
-                        </div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
-        </div>
-    );
-
     // Audio Logic
     const [isPlaying, setIsPlaying] = useState(false);
     const [isAudioLoading, setIsAudioLoading] = useState(false);
@@ -387,10 +173,214 @@ export default function BookReader({ book, user, onUnlock, isEditable = false, o
             )}
 
             {/* Mobile View */}
-            <MobileView />
+            <div className="md:hidden w-full h-full overflow-y-auto pb-20 space-y-6 p-4 bg-gradient-to-b from-orange-50 to-white">
+                {/* Cover */}
+                <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
+                    <div className="w-full aspect-square relative">
+                        {coverUrl ? (
+                            <Image src={coverUrl} alt="Cover" fill className="object-cover" />
+                        ) : (
+                            <div className="absolute inset-0 flex items-center justify-center flex-col text-orange-300 animate-pulse">
+                                <span className="text-4xl mb-2">✨</span>
+                                <span className="text-xs font-bold">Création...</span>
+                            </div>
+                        )}
+
+                        {/* Title Overlay - SMALLER */}
+                        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-transparent p-4 flex items-start justify-center">
+                            <h1 className="text-xl font-bold text-white text-center drop-shadow-lg mt-4">
+                                {personalize(book.title)}
+                            </h1>
+                        </div>
+                    </div>
+                    <div className="p-4 text-center">
+                        <p className="text-sm text-gray-600 italic">
+                            Une aventure pour <span className="font-bold text-orange-600">{book.child_name}</span>
+                        </p>
+                    </div>
+                </div>
+
+                {/* Pages */}
+                {pages.map((page, index) => {
+                    const isPageLocked = !isUnlocked && (index + 1) >= 3;
+                    return (
+                        <div key={index} className="bg-white rounded-2xl shadow-md overflow-hidden">
+                            {/* Image */}
+                            <div className="aspect-[4/3] relative bg-gray-100">
+                                {page.image ? (
+                                    <Image
+                                        src={page.image}
+                                        alt={`Page ${index + 1}`}
+                                        fill
+                                        className={`object-cover ${isPageLocked ? 'blur-lg opacity-50' : ''}`}
+                                    />
+                                ) : (
+                                    <div className="absolute inset-0 flex items-center justify-center text-gray-400">
+                                        <span className="text-4xl animate-pulse">🎨</span>
+                                    </div>
+                                )}
+
+                                {/* Lock Overlay */}
+                                {isPageLocked && (
+                                    <div className="absolute inset-0 flex items-center justify-center bg-black/20 backdrop-blur-sm">
+                                        <div className="bg-white/95 p-4 rounded-2xl shadow-xl text-center">
+                                            <div className="text-3xl mb-2">🔒</div>
+                                            <p className="text-sm font-bold text-gray-800">Débloquez pour voir</p>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Text */}
+                            <div className="p-6">
+                                <span className="text-xs font-bold text-gray-400 mb-2 block">Page {index + 1}</span>
+                                {isEditable && onTextChange ? (
+                                    <textarea
+                                        value={page.text}
+                                        onChange={(e) => onTextChange(index, e.target.value)}
+                                        className="w-full h-32 p-3 bg-orange-50/30 rounded-lg border border-orange-100 text-gray-800 text-base leading-relaxed focus:ring-2 focus:ring-orange-500 outline-none resize-none"
+                                    />
+                                ) : (
+                                    <p className="text-base text-gray-800 leading-relaxed">
+                                        {page.text}
+                                    </p>
+                                )}
+                            </div>
+                        </div>
+                    );
+                })}
+            </div>
 
             {/* Desktop View */}
-            <DesktopView />
+            <div className="hidden md:flex w-full h-screen bg-white overflow-hidden relative">
+                {/* Navigation Buttons */}
+                <button
+                    onClick={handlePrev}
+                    disabled={currentPage === 0}
+                    className="absolute left-6 top-1/2 -translate-y-1/2 z-50 w-14 h-14 rounded-full bg-white shadow-xl flex items-center justify-center text-gray-700 hover:bg-orange-500 hover:text-white transition-all disabled:opacity-0 disabled:pointer-events-none"
+                >
+                    ←
+                </button>
+                <button
+                    onClick={handleNext}
+                    disabled={currentPage === totalPages}
+                    className="absolute right-6 top-1/2 -translate-y-1/2 z-50 w-14 h-14 rounded-full bg-white shadow-xl flex items-center justify-center text-gray-700 hover:bg-orange-500 hover:text-white transition-all disabled:opacity-0 disabled:pointer-events-none"
+                >
+                    →
+                </button>
+
+                {/* Content */}
+                <AnimatePresence mode="wait">
+                    {currentPage === 0 ? (
+                        <motion.div
+                            key="cover"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="w-full h-full flex items-center justify-center bg-gradient-to-br from-orange-50 to-white relative"
+                        >
+                            {/* Cover Image - Centered & Responsive (Reduced to 65vh to avoid clipping) */}
+                            <div className="relative w-[65vh] h-[65vh] max-w-[800px] max-h-[800px] shadow-2xl rounded-3xl overflow-hidden shadow-orange-500/20">
+                                {coverUrl ? (
+                                    <Image src={coverUrl} alt="Cover" fill className="object-cover" />
+                                ) : (
+                                    <div className="absolute inset-0 flex items-center justify-center flex-col text-orange-300 animate-pulse">
+                                        <span className="text-6xl mb-4">✨</span>
+                                        <span className="text-lg font-bold">Création...</span>
+                                    </div>
+                                )}
+
+                                {/* Title Overlay */}
+                                <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-transparent p-8 flex items-start justify-center">
+                                    <h1 className="text-4xl md:text-5xl font-black text-white text-center drop-shadow-2xl mt-8 max-w-2xl leading-tight font-serif">
+                                        {personalize(book.title)}
+                                    </h1>
+                                </div>
+                            </div>
+
+                            {/* Subtitle */}
+                            <div className="absolute bottom-10 bg-white/90 backdrop-blur-md px-10 py-4 rounded-full shadow-xl z-10 border border-orange-100">
+                                <p className="text-xl text-gray-700 italic font-medium">
+                                    Une aventure pour <span className="text-orange-600 font-bold">{book.child_name}</span>
+                                </p>
+                            </div>
+                        </motion.div>
+                    ) : (
+                        <motion.div
+                            key={currentPage}
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="w-full h-full flex"
+                        >
+                            {/* LEFT: Image (50%) */}
+                            <div className="w-1/2 h-full relative bg-gray-100">
+                                {(() => {
+                                    const pageData = pages[currentPage - 1];
+                                    const imageUrl = pageData?.image || pageData?.image_url || pageData?.imageUrl || coverUrl;
+                                    const hasImage = !!(pageData?.image || pageData?.image_url || pageData?.imageUrl);
+
+                                    if (hasImage || (!isUnlocked && currentPage >= 3)) {
+                                        return (
+                                            <Image
+                                                src={imageUrl}
+                                                alt={`Page ${currentPage}`}
+                                                fill
+                                                className={`object-cover ${(!isUnlocked && currentPage >= 3) ? 'blur-md opacity-50' : ''}`}
+                                            />
+                                        );
+                                    } else {
+                                        return (
+                                            <div className="absolute inset-0 flex items-center justify-center flex-col text-gray-400">
+                                                <span className="text-6xl animate-bounce mb-4">🎨</span>
+                                                <p>Illustration en cours...</p>
+                                            </div>
+                                        );
+                                    }
+                                })()}
+
+                                {/* Lock Overlay */}
+                                {(!isUnlocked && currentPage >= 3) && (
+                                    <div className="absolute inset-0 flex items-center justify-center bg-black/10 backdrop-blur-sm">
+                                        <div className="bg-white/95 p-6 rounded-3xl shadow-2xl text-center">
+                                            <div className="text-5xl mb-3">🔒</div>
+                                            <p className="text-gray-900 font-bold">Illustration à débloquer</p>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Watermark */}
+                                {!isUnlocked && (
+                                    <div className="absolute inset-0 flex items-center justify-center opacity-20 pointer-events-none">
+                                        <span className="text-white font-black text-4xl -rotate-12 uppercase">Kusoma Kids</span>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* RIGHT: Text (50%) */}
+                            <div className="w-1/2 h-full flex flex-col items-center justify-center bg-white p-12 relative overflow-y-auto">
+                                <span className="absolute top-6 right-6 text-orange-200 text-sm font-black tracking-widest uppercase">PAGE {currentPage}</span>
+
+                                {isEditable && onTextChange ? (
+                                    <textarea
+                                        value={pages[currentPage - 1]?.text}
+                                        onChange={(e) => onTextChange(currentPage - 1, e.target.value)}
+                                        rows={12}
+                                        // FIXED: Removed fixed height, added min-h, centered with max-w
+                                        className="w-full max-w-2xl min-h-[300px] p-8 bg-white rounded-2xl border-2 border-orange-50 text-xl text-gray-800 leading-relaxed focus:ring-4 focus:ring-orange-100 focus:border-orange-300 outline-none resize-none shadow-sm transition-all text-center"
+                                    />
+                                ) : (
+                                    <div className="max-w-2xl text-center">
+                                        <p className="text-2xl text-gray-800 leading-relaxed font-serif">
+                                            {pages[currentPage - 1]?.text}
+                                        </p>
+                                    </div>
+                                )}
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+            </div>
         </div>
     );
 }

@@ -252,7 +252,7 @@ export default function BookReader({ book, user, onUnlock, isEditable = false, o
             </div>
 
             {/* Desktop View */}
-            <div className="hidden md:flex w-full h-screen bg-white overflow-hidden relative">
+            <div className="hidden md:flex w-full h-full bg-white overflow-hidden relative">
                 {/* Navigation Buttons */}
                 <button
                     onClick={handlePrev}
@@ -292,7 +292,7 @@ export default function BookReader({ book, user, onUnlock, isEditable = false, o
 
                                 {/* Title Overlay */}
                                 <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-transparent p-8 flex items-start justify-center">
-                                    <h1 className="text-4xl md:text-5xl font-black text-white text-center drop-shadow-2xl mt-8 max-w-2xl leading-tight font-serif">
+                                    <h1 className="text-4xl md:text-5xl text-white text-center drop-shadow-2xl mt-8 max-w-2xl leading-tight font-[family-name:var(--font-chewy)] tracking-wide">
                                         {personalize(book.title)}
                                     </h1>
                                 </div>

@@ -83,7 +83,7 @@ function DashboardContent() {
         if (canAccessBook(book)) {
             // Authorized
             if (action === 'read') router.push(`/read/${book.id}`);
-            if (action === 'download') window.open(`/api/download/${book.id}`, '_blank');
+            if (action === 'download') window.open(`/api/download-secure/${book.id}`, '_blank');
         } else {
             // Unauthorized -> Show Payment Modal
             setSelectedBookId(book.id);
@@ -206,7 +206,13 @@ function DashboardContent() {
                                         {canAccessBook(book) && (
                                             <button
                                                 className="w-full py-2 px-4 rounded-xl font-bold text-sm bg-gray-50 text-gray-400 border border-gray-100 hover:bg-gray-100 transition-colors flex items-center justify-center gap-2"
-                                                onClick={() => alert("Bientôt disponible ! L'imprimerie magique se prépare...")}
+                                                onClick={() => {
+                                                    const notification = document.createElement('div');
+                                                    notification.className = 'fixed top-24 left-1/2 -translate-x-1/2 z-50 bg-white border-2 border-orange-500 text-gray-800 px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-3 animate-bounce';
+                                                    notification.innerHTML = '<span class="text-2xl">🖨️</span><div><p class="font-bold text-orange-600">Bientôt disponible !</p><p class="text-sm text-gray-600">L\'imprimerie magique se prépare...</p></div>';
+                                                    document.body.appendChild(notification);
+                                                    setTimeout(() => notification.remove(), 3000);
+                                                }}
                                             >
                                                 <span>🖨️</span> Commander en papier
                                             </button>

@@ -35,56 +35,30 @@ export async function POST(req) {
             return NextResponse.json({ error: "Book not found" }, { status: 404 });
         }
 
-        // 4. Call the worker and WAIT for completion
-        const workerUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/workers/generate-book`;
+        // 4. Execute generation directly (no HTTP call needed)
+        console.log(`🚀 Starting generation for book ${bookId}...`);
+        console.log(`⏳ This may take 60-90 seconds...`);
 
-        console.log(`📞 Calling worker at: ${workerUrl}`);
-        console.log(`⏳ Waiting for worker to complete (may take 60-90 seconds)...`);
+        // Import and execute worker logic directly
+        const { executeGeneration } = await import('@/app/api/workers/generate-book/route');
+        const result = await executeGeneration(bookId);
 
-        let workerResponse;
-        let workerData;
-
-        try {
-            workerResponse = await fetch(workerUrl, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'x-trigger-source': 'admin' // Identify source
-                },
-                body: JSON.stringify({ bookId }),
-                // Increase timeout to 5 minutes
-                signal: AbortSignal.timeout(300000)
-            });
-
-            workerData = await workerResponse.json();
-
-        } catch (fetchError) {
-            console.error(`❌ Worker fetch failed:`, fetchError);
+        if (!result.success) {
+            console.error(`❌ Generation failed:`, result.error);
             return NextResponse.json({
-                error: "Worker connection failed",
-                details: fetchError.message,
-                bookId,
-                hint: "Check if worker endpoint is accessible"
+                error: "Generation failed",
+                details: result.error,
+                bookId
             }, { status: 500 });
         }
 
-        if (!workerResponse.ok) {
-            console.error(`❌ Worker returned error:`, workerData);
-            return NextResponse.json({
-                error: "Worker failed",
-                details: workerData,
-                status: book.generation_status
-            }, { status: 500 });
-        }
-
-        console.log(`✅ Worker completed successfully:`, workerData);
+        console.log(`✅ Generation completed: ${result.generatedCount} images`);
 
         return NextResponse.json({
             success: true,
             message: "Generation completed successfully",
             bookId,
-            generatedCount: workerData.generatedCount || 0,
-            workerResponse: workerData
+            generatedCount: result.generatedCount
         });
 
     } catch (error) {

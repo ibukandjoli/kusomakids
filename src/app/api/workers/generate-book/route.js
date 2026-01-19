@@ -1,150 +1,277 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { createClient } from '@/lib/supabase-server';
 import * as fal from '@fal-ai/serverless-client';
+import { sendEmail } from '@/lib/resend';
+import { BookReadyEmail } from '@/lib/emails/BookReadyEmail';
+import { SENDERS } from '@/lib/senders';
 
-// Initialize Supabase Admin Client
-const supabaseAdmin = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.SUPABASE_SERVICE_ROLE_KEY
-);
+// Force dynamic to allow long-running processes
+export const dynamic = 'force-dynamic';
+export const maxDuration = 300; // 5 minutes allow enough time for 2-step generation
 
-// Configure Fal
+// 🔧 Configure Fal explicitly for Server-Side usage
 if (process.env.FAL_KEY) {
-    fal.config({ credentials: process.env.FAL_KEY });
+    fal.config({
+        credentials: process.env.FAL_KEY,
+    });
 }
 
 /**
- * Internal worker logic
- * @param {string} bookId - ID of the book to generate images for
- * @returns {Promise<{success: boolean, generatedCount: number, error?: string}>}
+ * 2-STEP GENERATION PIPELINE
+ * Step 1: Face Swap (Preserves 100% context/background)
+ * Step 2: Flux Polish (Unifies lighting/texture, removes sticker effect)
  */
-async function executeGeneration(bookId) {
-    console.log(`👷 WORKER START: Generate Book ${bookId}`);
+async function generatePersonalizedImage(baseImageUrl, childPhotoUrl, scenePrompt) {
+    try {
+        console.log("   🔄 Step 1: Face Swap (Identity Injection)...");
+        // 1. Face Swap - The Context Keeper
+        const swapResult = await fal.subscribe("fal-ai/face-swap", {
+            input: {
+                base_image_url: baseImageUrl,
+                swap_image_url: childPhotoUrl
+            },
+            logs: true,
+        });
+
+        // Robust parsing of Swap Result
+        const swappedUrl = swapResult.image?.url || swapResult.images?.[0]?.url;
+
+        if (!swappedUrl) {
+            throw new Error("Face Swap returned no URL");
+        }
+
+        console.log("   ✨ Step 2: Flux Polish (High Fidelity integration)...");
+        // 2. Flux Img2Img - The Quality Enhancer
+        // Uses low strength to keep the swapped face but fix lighting/texture
+        const polishResult = await fal.subscribe("fal-ai/flux/dev/image-to-image", {
+            input: {
+                image_url: swappedUrl,
+                prompt: scenePrompt + ", photorealistic, natural lighting, high quality, highly detailed skin texture, cinematic lighting, 8k",
+                strength: 0.35, // GOLDEN RATIO: Keeps identity (face) & context, fixes "sticker" look
+                num_inference_steps: 30,
+                guidance_scale: 3.5,
+                enable_safety_checker: false,
+                output_format: "jpeg" // JPEG is lighter/faster for final delivery
+            },
+            logs: true,
+        });
+
+        const finalUrl = polishResult.images?.[0]?.url;
+
+        if (!finalUrl) {
+            console.warn("   ⚠️ Polish step failed, falling back to swapped image");
+            return swappedUrl; // Fallback to at least having the swapped face
+        }
+
+        return finalUrl;
+
+    } catch (error) {
+        console.error("   ❌ Pipeline Error:", error.message);
+        throw error;
+    }
+}
+
+export async function POST(req) {
+    console.log("👷 WORKER START: Generate Book with FaceSwap V2 + Flux Polish");
 
     try {
-        // 1. Fetch book
-        const { data: book, error: fetchError } = await supabaseAdmin
+        const supabase = await createClient();
+        const body = await req.json();
+        const { bookId } = body;
+
+        if (!bookId) {
+            return NextResponse.json({ error: "Missing bookId" }, { status: 400 });
+        }
+
+        console.log(`📘 Processing Book ID: ${bookId}`);
+
+        // 1. Fetch Book Data
+        const { data: book, error: fetchError } = await supabase
             .from('generated_books')
             .select('*')
             .eq('id', bookId)
             .single();
 
         if (fetchError || !book) {
-            throw new Error(`Book not found: ${fetchError?.message}`);
+            console.error("❌ Book lookup failed:", fetchError);
+            return NextResponse.json({ error: "Book not found" }, { status: 404 });
         }
 
-        // 2. Set status to processing
-        await supabaseAdmin
-            .from('generated_books')
-            .update({
-                generation_status: 'processing',
-                generation_started_at: new Date().toISOString()
-            })
-            .eq('id', bookId);
-
-        console.log("📊 Status set to 'processing'");
-
-        // 3. Get pages
         const rawContent = book.story_content || {};
         const pages = Array.isArray(rawContent) ? rawContent : (rawContent.pages || []);
 
-        if (!pages || pages.length === 0) {
-            throw new Error("No pages found in book content");
+        if (!pages || !Array.isArray(pages) || pages.length === 0) {
+            return NextResponse.json({ error: "Invalid content" }, { status: 400 });
         }
 
         const photoUrl = book.child_photo_url;
+
         if (!photoUrl) {
-            throw new Error("No child photo URL found");
+            console.warn("⚠️ NO CHILD PHOTO URL FOUND. Cannot generate personalized images.");
+            return NextResponse.json({ error: "Child photo required" }, { status: 400 });
         }
 
-        console.log(`🎨 Generating ${pages.length} images in parallel...`);
+        console.log("✅ Child Photo found:", photoUrl);
 
-        // 4. Generate all images in parallel
-        const pagePromises = pages.map(async (page, index) => {
+        let updatedPages = [...pages];
+        let hasChanges = false;
+        let generatedCount = 0;
+
+        // 2. COVER IMAGE
+        let currentCoverUrl = book.cover_image_url || book.cover_url;
+
+        // Note: For cover, if it's already a generated illustration (from template), we apply the pipeline.
+        // If it's empty, we might skip. assuming cover_url exists from story template.
+        if (photoUrl && currentCoverUrl && !currentCoverUrl.includes("fal.media")) {
+            console.log("🎨 Generating Personalized Cover...");
             try {
-                const prompt = `${page.text || page.content}. Photorealistic children's book illustration, natural proportions, warm lighting.`;
+                // Use title + standard prompt for polish
+                const coverPrompt = `Cover illustration for children's book titled "${book.title}", ${book.child_gender === 'Fille' ? 'young african girl' : 'young african boy'} hero, vibrant colors`;
 
-                const result = await fal.subscribe("fal-ai/flux-pulid", {
-                    input: {
-                        prompt,
-                        reference_images: [{ image_url: photoUrl }],
-                        num_images: 1,
-                        guidance_scale: 3.5,
-                        num_inference_steps: 28,
-                        enable_safety_checker: false,
-                        output_format: "jpeg",
-                        negative_prompt: "exaggerated eyes, oversized eyes, anime eyes, cartoon eyes"
-                    },
-                    logs: false
-                });
+                const newCoverUrl = await generatePersonalizedImage(currentCoverUrl, photoUrl, coverPrompt);
 
-                const imageUrl = result.data?.images?.[0]?.url;
-                if (!imageUrl) throw new Error("No image URL returned");
+                if (newCoverUrl) {
+                    console.log("✅ Cover Generated Successfully!");
+                    currentCoverUrl = newCoverUrl;
+                    hasChanges = true;
+                }
+            } catch (err) {
+                console.error("❌ Cover Generation Failed:", err.message);
+            }
+        } else if (currentCoverUrl && currentCoverUrl.includes("fal.media")) {
+            console.log("ℹ️ Cover likely already personalized, skipping.");
+        }
 
-                console.log(`  ✅ Page ${index + 1} generated`);
-                return { ...page, image: imageUrl, base_image_url: imageUrl };
+        // 3. PAGES LOOP - Apply 2-Step Pipeline
+        // Loop through pages and personalize standard illustrations
+        for (let i = 0; i < updatedPages.length; i++) {
+            const page = updatedPages[i];
+
+            // We need a base image to swap onto.
+            // Usually 'image' field holds the template illustration URL initially.
+            // If page.image is already personalized (fal.media), we skip to avoid double-processing (cost saving).
+            // BUT for this overhaul, we might want to force regenerate if requested?
+            // For now, assume standard workflow: input is template image.
+
+            const baseImage = page.image || page.base_image_url;
+
+            if (!baseImage) {
+                console.log(`   ⏭️ Skating Page ${i + 1} (No base image)`);
+                continue;
+            }
+
+            // Skip if ALREADY personalized (safety check for idempotency)
+            // Remove check if you want to allow re-runs by clearing DB images first.
+            // For now, we process if it doesn't look like a fal result OR if we force it.
+            // Actually, let's process it.
+
+            console.log(`🎭 Processing Page ${i + 1} / ${updatedPages.length}...`);
+
+            try {
+                // Construct scene prompt based on page text for the Polish step
+                const pagePrompt = `${page.scene_description || page.text || "Children's book illustration"}, ${book.child_gender === 'Fille' ? 'african girl' : 'african boy'}`;
+
+                const generatedImageUrl = await generatePersonalizedImage(baseImage, photoUrl, pagePrompt);
+
+                updatedPages[i] = {
+                    ...page,
+                    image: generatedImageUrl,
+                    base_image_url: baseImage // Ensure we keep original ref
+                };
+
+                hasChanges = true;
+                generatedCount++;
+                console.log(`   ✅ Page ${i + 1} Done`);
 
             } catch (err) {
-                console.error(`❌ Page ${index + 1} failed:`, err.message);
-                return { ...page, image: page.image || 'https://placehold.co/1024x1024/png?text=Failed' };
+                console.error(`   ❌ Failed Page ${i + 1}:`, err.message);
+                // Keep original simple image if fail
             }
+        }
+
+        // 4. Save Updates & Send Email
+        if (hasChanges) {
+            let newStoryContent = Array.isArray(book.story_content) ? updatedPages : { ...book.story_content, pages: updatedPages };
+
+            let updates = {
+                story_content: newStoryContent,
+                cover_image_url: currentCoverUrl,
+                status: 'completed' // Mark as fully done
+            };
+
+            const { error: updateError } = await supabase
+                .from('generated_books')
+                .update(updates)
+                .eq('id', bookId);
+
+            if (updateError) {
+                console.error("❌ Failed to update book in DB:", updateError);
+                return NextResponse.json({ error: "DB Update Failed" }, { status: 500 });
+            }
+            console.log("💾 Book updated in Database.");
+
+            // GENERATE SECURE DOWNLOAD TOKEN & SEND PDF EMAIL
+            if (book.email) {
+                let downloadUrl = 'https://www.kusomakids.com/login';
+
+                try {
+                    const crypto = require('crypto');
+                    const downloadToken = crypto.randomBytes(32).toString('hex');
+
+                    // Admin client for token insert
+                    const { createClient: createAdmin } = require('@supabase/supabase-js');
+                    const supabaseAdmin = createAdmin(
+                        process.env.NEXT_PUBLIC_SUPABASE_URL,
+                        process.env.SUPABASE_SERVICE_ROLE_KEY,
+                        { auth: { autoRefreshToken: false, persistSession: false } }
+                    );
+
+                    const { error: tokenError } = await supabaseAdmin
+                        .from('download_tokens')
+                        .insert({
+                            book_id: bookId,
+                            token: downloadToken,
+                            email: book.email,
+                            downloads_remaining: 3,
+                            expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+                        });
+
+                    if (!tokenError) {
+                        downloadUrl = `https://www.kusomakids.com/api/download-secure/${bookId}?token=${downloadToken}`;
+                    }
+                } catch (e) { console.error("Token error", e); }
+
+                try {
+                    const emailHtml = BookReadyEmail({
+                        childName: book.child_name || 'votre enfant',
+                        bookTitle: book.title,
+                        downloadUrl: downloadUrl,
+                        userEmail: book.email
+                    });
+
+                    await sendEmail({
+                        to: book.email,
+                        from: SENDERS.TREASURE,
+                        subject: `📥 Votre PDF est prêt ! ${book.title}`,
+                        html: emailHtml
+                    });
+                    console.log("✅ Email sent.");
+                } catch (emailErr) {
+                    console.error("❌ Email failed:", emailErr);
+                }
+            }
+        }
+
+        console.log(`✨ Worker Complete: ${generatedCount} images personalized.`);
+
+        return NextResponse.json({
+            success: true,
+            generatedCount,
+            message: "Worker finished - FaceSwap V2 pipeline"
         });
 
-        const results = await Promise.all(pagePromises);
-        const successCount = results.filter(p => p.image && !p.image.includes('placehold')).length;
-
-        // 5. Update book with results
-        const newContent = Array.isArray(rawContent) ? results : { ...rawContent, pages: results };
-
-        await supabaseAdmin
-            .from('generated_books')
-            .update({
-                story_content: newContent,
-                generation_status: 'completed',
-                generation_completed_at: new Date().toISOString(),
-                images_generated_count: successCount,
-                generation_error: null
-            })
-            .eq('id', bookId);
-
-        console.log(`✅ Generation complete: ${successCount}/${pages.length} images`);
-
-        return { success: true, generatedCount: successCount };
-
     } catch (error) {
-        console.error("🚨 Worker Error:", error);
-
-        // Save error to DB
-        await supabaseAdmin
-            .from('generated_books')
-            .update({
-                generation_status: 'failed',
-                generation_error: error.message,
-                generation_completed_at: new Date().toISOString()
-            })
-            .eq('id', bookId);
-
-        return { success: false, error: error.message, generatedCount: 0 };
+        console.error("🚨 Worker Critical Error:", error);
+        return NextResponse.json({ error: error.message }, { status: 500 });
     }
 }
-
-/**
- * API endpoint (for backward compatibility)
- */
-export async function POST(req) {
-    const { bookId } = await req.json();
-    if (!bookId) {
-        return NextResponse.json({ error: "Missing bookId" }, { status: 400 });
-    }
-
-    const result = await executeGeneration(bookId);
-
-    if (!result.success) {
-        return NextResponse.json({ error: result.error }, { status: 500 });
-    }
-
-    return NextResponse.json(result);
-}
-
-export const dynamic = 'force-dynamic';
-export const maxDuration = 300;

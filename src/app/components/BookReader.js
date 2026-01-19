@@ -154,8 +154,8 @@ export default function BookReader({ book, user, onUnlock, isEditable = false, o
                         exit={{ opacity: 0 }}
                         className="w-full h-full flex items-center justify-center bg-gradient-to-br from-orange-50 to-white relative"
                     >
-                        {/* Cover Image - Centered */}
-                        <div className="relative w-[600px] h-[600px] shadow-2xl rounded-3xl overflow-hidden">
+                        {/* Cover Image - Centered & Larger (Responsive) */}
+                        <div className="relative w-[75vh] h-[75vh] max-w-[800px] max-h-[800px] shadow-2xl rounded-3xl overflow-hidden">
                             {coverUrl ? (
                                 <Image src={coverUrl} alt="Cover" fill className="object-cover" />
                             ) : (
@@ -165,7 +165,7 @@ export default function BookReader({ book, user, onUnlock, isEditable = false, o
                                 </div>
                             )}
 
-                            {/* Title Overlay - MUCH SMALLER */}
+                            {/* Title Overlay */}
                             <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-transparent p-8 flex items-start justify-center">
                                 <h1 className="text-3xl font-bold text-white text-center drop-shadow-2xl mt-8 max-w-md">
                                     {personalize(book.title)}
@@ -174,7 +174,7 @@ export default function BookReader({ book, user, onUnlock, isEditable = false, o
                         </div>
 
                         {/* Subtitle */}
-                        <div className="absolute bottom-20 bg-white px-8 py-4 rounded-full shadow-lg">
+                        <div className="absolute bottom-10 bg-white px-8 py-4 rounded-full shadow-lg z-10">
                             <p className="text-lg text-gray-600 italic">
                                 Une aventure pour <span className="text-orange-600 font-bold">{book.child_name}</span>
                             </p>
@@ -240,10 +240,11 @@ export default function BookReader({ book, user, onUnlock, isEditable = false, o
                                 <textarea
                                     value={pages[currentPage - 1]?.text}
                                     onChange={(e) => onTextChange(currentPage - 1, e.target.value)}
-                                    className="w-full max-w-xl h-[60vh] p-6 bg-orange-50/20 rounded-2xl border-2 border-orange-100 text-xl text-gray-800 leading-relaxed focus:ring-2 focus:ring-orange-500 outline-none resize-none"
+                                    // WIDENED TEXT AREA
+                                    className="w-full max-w-3xl h-[60vh] p-6 bg-orange-50/20 rounded-2xl border-2 border-orange-100 text-xl text-gray-800 leading-relaxed focus:ring-2 focus:ring-orange-500 outline-none resize-none"
                                 />
                             ) : (
-                                <div className="max-w-xl text-center">
+                                <div className="max-w-3xl text-center">
                                     <p className="text-2xl text-gray-800 leading-relaxed">
                                         {pages[currentPage - 1]?.text}
                                     </p>

@@ -1,10 +1,26 @@
 # KusomaKids - Project Context
 
-## Current Status (January 18, 2026)
+## Current Status (January 20, 2026)
 
-**Latest Update**: Two-email PDF delivery system with worker-based image generation, ghost account password setup, and secure download tokens.
+**Latest Update**: Site is Launch-Ready. Implemented Meta Pixel, SEO infrastructure (Sitemap/Robots/JSON-LD), Vercel Analytics, and resolved critical UX friction points (Signup flow, One-time payment, UI polish).
 
 ## ✅ Recent Major Accomplishments
+
+### Launch Readiness & UX Refinements (January 20, 2026)
+Final polish before public traffic:
+
+**Marketing, SEO & Analytics**:
+- **Meta Pixel**: Integrated via `src/app/components/MetaPixel.js` tracking PageViews.
+- **Advanced SEO**: Dynamic `sitemap.xml` & `robots.txt` generation. Added JSON-LD Organization schema.
+- **Performance**: Installed `@vercel/analytics` and `@vercel/speed-insights`.
+- **Fonts**: Added 'Chewy' font for child-friendly titles in Book Reader.
+
+**Critical UX Fixes**:
+- **Signup Flow**: Detects existing users and prompts login instead of generic error.
+- **One-Time Purchase**: Fixed connection between Dashboard and Payment Modal (missing `book` prop).
+- **Billing Page**: "Rejoindre le Club" now opens PaymentModal instead of redirecting.
+- **Personalization**: Simplified UI instructions and warnings for better clarity.
+- **Reader**: Fixed text focus loss and centered cover images properly.
 
 ### PDF Delivery & Image Generation System (January 18, 2026)
 Complete overhaul of PDF delivery flow with quality guarantees:
@@ -311,6 +327,6 @@ npm start      # Production server
 
 ---
 
-*Last Updated: January 18, 2026*
-*Version: 2.1 (PDF Delivery System Overhaul)*
+*Last Updated: January 20, 2026*
+*Version: 2.2 (Launch Readiness & UX Refinements)*
 

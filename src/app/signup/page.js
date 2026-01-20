@@ -43,7 +43,17 @@ function SignupContent() {
             router.push(`/verify-email?email=${encodeURIComponent(email)}`);
 
         } catch (err) {
-            setError(err.message);
+            console.error('Signup error:', err);
+            // Check for specific Supabase error messages regarding existing users
+            if (err.message?.includes('registered') || err.message?.includes('already exists')) {
+                setError(
+                    <span>
+                        Cette adresse e-mail est déjà utilisée. <Link href="/login" className="underline font-bold hover:text-red-700">Connectez-vous ici</Link>.
+                    </span>
+                );
+            } else {
+                setError(err.message);
+            }
         } finally {
             setLoading(false);
         }

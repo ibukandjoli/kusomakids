@@ -94,6 +94,15 @@ export default function AppHeader({ user, profile }) {
                         <>
                             {/* Desktop: 2 Buttons */}
                             <div className="hidden md:flex items-center gap-3">
+                                {(profile?.role === 'admin' || profile?.role === 'viewer') && (
+                                    <Link
+                                        href="/admin"
+                                        className="flex items-center gap-2 bg-purple-100 text-purple-700 hover:bg-purple-200 px-4 py-2.5 rounded-full font-bold text-sm transition-all"
+                                    >
+                                        <span>⚡️</span>
+                                        Admin
+                                    </Link>
+                                )}
                                 <Link
                                     href="/books"
                                     className="flex items-center gap-2 bg-orange-100 text-orange-600 hover:bg-orange-200 px-4 py-2.5 rounded-full font-bold text-sm transition-all"

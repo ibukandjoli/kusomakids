@@ -77,7 +77,15 @@ function DashboardContent() {
         if (action === 'club_welcome' && unlockBookId) {
             setSelectedBookId(unlockBookId);
             setWelcomeModalOpen(true);
-            // Clean URL? Optional but good UX.
+        } else if (action === 'subscribe') {
+            // Open Payment Modal in Subscription Mode
+            // We might need to ensure the modal knows it's for subscription.
+            // PaymentModal handles logic based on user interaction usually, 
+            // but we can prep it. 
+            // Actually PaymentModal shows BOTH options. 
+            // We might want to Auto-Trigger the subscription click? 
+            // Or just open it. 
+            setModalOpen(true);
         }
     }, [searchParams]);
 

@@ -37,8 +37,8 @@ function LoginContent() {
                 }
                 localStorage.removeItem('signup_context'); // Clean up
             } else if (searchParams.get('plan') === 'club') {
-                const bookId = searchParams.get('redirect_book_id');
-                nextUrl = `/checkout?plan=club${bookId ? `&book_id=${bookId}` : ''}`;
+                // Redirect to dashboard with action to open subscription modal
+                nextUrl = '/dashboard?action=subscribe';
             }
 
             console.log("Login success, redirecting to:", nextUrl);

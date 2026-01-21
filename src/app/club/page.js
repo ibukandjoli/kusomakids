@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
+import { supabase } from '@/lib/supabase';
 
 export default function ClubPage() {
     return (
@@ -21,12 +22,19 @@ export default function ClubPage() {
                     <p className="text-xl text-gray-600 max-w-2xl mx-auto mb-10">
                         Offrez à votre enfant une bibliothèque d'aventures dont il est le héros et développez son amour de la lecture pour moins que le prix d'un seul repas.
                     </p>
-                    <Link
-                        href="/login?plan=club"
+                    <button
+                        onClick={async () => {
+                            const { data: { session } } = await supabase.auth.getSession();
+                            if (session) {
+                                window.location.href = '/dashboard?action=subscribe';
+                            } else {
+                                window.location.href = '/login?plan=club';
+                            }
+                        }}
                         className="inline-block bg-orange-500 hover:bg-orange-600 text-white font-bold text-xl px-10 py-4 rounded-full shadow-xl shadow-orange-500/30 transform hover:-translate-y-1 transition-all"
                     >
                         Rejoindre le Club maintenant
-                    </Link>
+                    </button>
                     <p className="text-sm text-gray-400 mt-4">Annulable à tout moment • Pas de frais cachés</p>
                 </div>
 
@@ -72,9 +80,21 @@ export default function ClubPage() {
                             <li className="flex items-center gap-3"><span className="text-green-400">✓</span> Désabonnement en 1 clic</li>
                         </ul>
 
-                        <Link href="/login?plan=club" className="block w-full bg-orange-500 hover:bg-orange-600 py-4 rounded-xl font-bold text-center transition-colors shadow-lg shadow-orange-500/30">
+                        <button
+                            onClick={async () => {
+                                const { data: { session } } = await supabase.auth.getSession();
+                                if (session) {
+                                    // User logged in -> Go to Dashboard to trigger Modal/Stripe
+                                    window.location.href = '/dashboard?action=subscribe';
+                                } else {
+                                    // User logged out -> Login then Dashboard
+                                    window.location.href = '/login?plan=club';
+                                }
+                            }}
+                            className="block w-full bg-orange-500 hover:bg-orange-600 py-4 rounded-xl font-bold text-center transition-colors shadow-lg shadow-orange-500/30 text-white"
+                        >
                             Je m'abonne maintenant
-                        </Link>
+                        </button>
                     </div>
                 </div>
             </div>

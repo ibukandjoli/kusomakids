@@ -35,6 +35,7 @@ export default function ClubPage() {
                     <div className="grid md:grid-cols-3 gap-8">
                         {[
                             { title: "Accès Illimité", desc: "Lisez toutes nos histoires en ligne quand vous voulez.", icon: "📚" },
+                            { title: "Créez vos Historires", desc: "L'enfant imagine, l'IA écrit et illustre son livre magique (Nouveau !).", icon: "🪄" },
                             { title: "1 Livre PDF offert / mois", desc: "Téléchargez un livre à garder pour toujours chaque mois.", icon: "🎁" },
                             { title: "Contenu Exclusif", desc: "Accès en avant-première aux nouvelles sorties.", icon: "✨" },
                             { title: "Audio Inclus", desc: "Toutes les histoires sont narrées pour faciliter l'apprentissage.", icon: "🎧" },
@@ -66,6 +67,7 @@ export default function ClubPage() {
 
                         <ul className="space-y-4 mb-10">
                             <li className="flex items-center gap-3"><span className="text-green-400">✓</span> Accès illimité à toute la bibliothèque</li>
+                            <li className="flex items-center gap-3"><span className="text-green-400">✓</span> <strong>Nouveau :</strong> Créez vos propres histoires magiques</li>
                             <li className="flex items-center gap-3"><span className="text-green-400">✓</span> Lecture illimitée en streaming (+ audio)</li>
                             <li className="flex items-center gap-3"><span className="text-green-400">✓</span> 1 Téléchargement PDF Personnalisé inclus</li>
                             <li className="flex items-center gap-3"><span className="text-green-400">✓</span> Désabonnement en 1 clic</li>

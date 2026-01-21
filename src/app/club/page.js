@@ -34,12 +34,11 @@ export default function ClubPage() {
                 <div className="container mx-auto px-4 mb-20">
                     <div className="grid md:grid-cols-3 gap-8">
                         {[
-                            { title: "Accès Illimité", desc: "Lisez toutes nos histoires en ligne quand vous voulez.", icon: "📚" },
-                            { title: "Créez vos Historires", desc: "L'enfant imagine, l'IA écrit et illustre son livre magique (Nouveau !).", icon: "🪄" },
+                            { title: "Accès Illimité", desc: "Lisez toutes vos histoires en ligne quand vous voulez.", icon: "📚" },
+                            { title: "Créez vos Histoires", desc: "Vous imaginez, l'IA écrit, vous corrigez et l'IA illustre votre histoire.", icon: "🪄" },
                             { title: "1 Livre PDF offert / mois", desc: "Téléchargez un livre à garder pour toujours chaque mois.", icon: "🎁" },
-                            { title: "Contenu Exclusif", desc: "Accès en avant-première aux nouvelles sorties.", icon: "✨" },
+                            { title: "Contenu Exclusif", desc: "Accès en avant-première aux nouvelles histoires publiées.", icon: "✨" },
                             { title: "Audio Inclus", desc: "Toutes les histoires sont narrées pour faciliter l'apprentissage.", icon: "🎧" },
-                            { title: "Mode Hors-Ligne", desc: "Accédez à votre bibliothèque même sans internet (via PDF).", icon: "✈️" },
                             { title: "Support Prioritaire", desc: "Une équipe dédiée pour vous accompagner.", icon: "❤️" }
                         ].map((item, i) => (
                             <div key={i} className="bg-white/80 backdrop-blur-sm hover:bg-orange-50 p-8 rounded-2xl transition-colors border border-gray-100 shadow-sm">
@@ -67,7 +66,7 @@ export default function ClubPage() {
 
                         <ul className="space-y-4 mb-10">
                             <li className="flex items-center gap-3"><span className="text-green-400">✓</span> Accès illimité à toute la bibliothèque</li>
-                            <li className="flex items-center gap-3"><span className="text-green-400">✓</span> <strong>Nouveau :</strong> Créez vos propres histoires magiques</li>
+                            <li className="flex items-center gap-3"><span className="text-green-400">✓</span> Créez vos propres histoires magiques</li>
                             <li className="flex items-center gap-3"><span className="text-green-400">✓</span> Lecture illimitée en streaming (+ audio)</li>
                             <li className="flex items-center gap-3"><span className="text-green-400">✓</span> 1 Téléchargement PDF Personnalisé inclus</li>
                             <li className="flex items-center gap-3"><span className="text-green-400">✓</span> Désabonnement en 1 clic</li>

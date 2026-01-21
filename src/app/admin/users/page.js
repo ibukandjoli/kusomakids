@@ -69,10 +69,34 @@ export default function AdminUsersPage() {
                                                 {user.email}
                                             </td>
                                             <td className="py-4 px-6">
-                                                <span className={`px-2 py-1 rounded text-xs font-bold ${user.role === 'admin' ? 'bg-purple-100 text-purple-700' : 'bg-gray-100 text-gray-600'
-                                                    }`}>
-                                                    {user.role || 'user'}
-                                                </span>
+                                                <select
+                                                    value={user.role || 'user'}
+                                                    onChange={async (e) => {
+                                                        const newRole = e.target.value;
+                                                        // Optimistic Update
+                                                        const originalRole = user.role;
+                                                        setUsers(users.map(u => u.id === user.id ? { ...u, role: newRole } : u));
+
+                                                        try {
+                                                            const res = await fetch('/api/admin/users/update-role', {
+                                                                method: 'POST',
+                                                                headers: { 'Content-Type': 'application/json' },
+                                                                body: JSON.stringify({ userId: user.id, newRole })
+                                                            });
+                                                            if (!res.ok) throw new Error('Failed to update');
+                                                        } catch (err) {
+                                                            alert("Erreur lors de la mise à jour du rôle");
+                                                            // Revert
+                                                            setUsers(users.map(u => u.id === user.id ? { ...u, role: originalRole } : u));
+                                                        }
+                                                    }}
+                                                    className={`px-2 py-1 rounded text-xs font-bold border-0 cursor-pointer focus:ring-2 focus:ring-orange-500 ${(user.role === 'admin' || user.role === 'viewer') ? 'bg-purple-100 text-purple-700' : 'bg-gray-100 text-gray-600'
+                                                        }`}
+                                                >
+                                                    <option value="user">User</option>
+                                                    <option value="viewer">Viewer</option>
+                                                    <option value="admin">Admin</option>
+                                                </select>
                                             </td>
                                             <td className="py-4 px-6 font-mono text-sm">
                                                 {user.credits}

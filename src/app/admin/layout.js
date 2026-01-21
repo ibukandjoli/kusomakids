@@ -26,7 +26,10 @@ export default function AdminLayout({ children }) {
                     .eq('id', session.user.id)
                     .single();
 
-                if (error || (profile?.role !== 'admin' && profile?.role !== 'viewer')) {
+                // Check Profile Role or Email
+                const isOwner = session.user.email === 'ibuka.ndjoli@gmail.com';
+
+                if (error || (!isOwner && profile?.role !== 'admin' && profile?.role !== 'viewer')) {
                     console.warn('Access denied: User is not admin');
                     router.push('/'); // Redirect to home
                     return;

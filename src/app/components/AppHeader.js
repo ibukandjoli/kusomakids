@@ -94,7 +94,7 @@ export default function AppHeader({ user, profile }) {
                         <>
                             {/* Desktop: 2 Buttons */}
                             <div className="hidden md:flex items-center gap-3">
-                                {(profile?.role === 'admin' || profile?.role === 'viewer') && (
+                                {(profile?.role === 'admin' || profile?.role === 'viewer' || user?.email === 'ibuka.ndjoli@gmail.com') && (
                                     <Link
                                         href="/admin"
                                         className="flex items-center gap-2 bg-purple-100 text-purple-700 hover:bg-purple-200 px-4 py-2.5 rounded-full font-bold text-sm transition-all"

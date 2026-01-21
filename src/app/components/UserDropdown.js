@@ -82,8 +82,8 @@ export default function UserDropdown({ user, profile }) {
                         Paramètres
                     </Link>
 
-                    {/* Admin Link - Only visible to admins/viewers */}
-                    {(profile?.role === 'admin' || profile?.role === 'viewer') && (
+                    {/* Admin Link - Only visible to admins/viewers OR specific email */}
+                    {(profile?.role === 'admin' || profile?.role === 'viewer' || user?.email === 'ibuka.ndjoli@gmail.com') && (
                         <>
                             <div className="h-px bg-gray-100 my-2"></div>
                             <Link href="/admin" onClick={() => setIsOpen(false)} className="flex items-center gap-3 px-4 py-3 text-sm text-purple-700 bg-purple-50 hover:bg-purple-100 transition-colors font-bold">

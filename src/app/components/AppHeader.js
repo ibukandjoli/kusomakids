@@ -21,6 +21,11 @@ export default function AppHeader({ user, profile }) {
                     <span className="text-2xl font-black text-gray-900 tracking-tighter group-hover:text-orange-500 transition-colors">
                         Kusoma<span className="text-orange-500 group-hover:text-gray-900 transition-colors">Kids</span>
                     </span>
+                    {profile?.subscription_status === 'active' && (
+                        <span className="bg-gradient-to-r from-orange-400 to-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide shadow-sm transform -rotate-2 ml-1">
+                            Club
+                        </span>
+                    )}
                 </Link>
 
                 {/* CENTER: Navigation */}
@@ -83,21 +88,41 @@ export default function AppHeader({ user, profile }) {
 
                 {/* RIGHT: Actions */}
                 <div className="flex items-center gap-4">
-                    <Link
-                        href="/books"
-                        className="hidden md:flex items-center gap-2 bg-orange-500 text-white px-5 py-2.5 rounded-full font-bold text-sm shadow-lg shadow-orange-500/20 hover:bg-orange-600 hover:shadow-orange-500/40 hover:-translate-y-0.5 transition-all"
-                    >
-                        <span>+</span>
-                        Nouvelle Histoire
-                    </Link>
 
-                    {/* Mobile Create Button (Icon only) */}
-                    <Link
-                        href="/books"
-                        className="md:hidden flex items-center justify-center w-10 h-10 bg-orange-500 text-white rounded-full font-bold shadow-lg"
-                    >
-                        +
-                    </Link>
+                    {/* Club Logic for Buttons */}
+                    {profile?.subscription_status === 'active' ? (
+                        <>
+                            {/* Desktop: 2 Buttons */}
+                            <div className="hidden md:flex items-center gap-3">
+                                <Link
+                                    href="/books"
+                                    className="flex items-center gap-2 bg-orange-100 text-orange-600 hover:bg-orange-200 px-4 py-2.5 rounded-full font-bold text-sm transition-all"
+                                >
+                                    <span>📖</span>
+                                    Choisir une histoire
+                                </Link>
+                                <Link
+                                    href="/dashboard/create"
+                                    className="flex items-center gap-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-5 py-2.5 rounded-full font-bold text-sm shadow-lg shadow-purple-500/20 hover:shadow-purple-500/40 hover:-translate-y-0.5 transition-all"
+                                >
+                                    <span>✨</span>
+                                    Créer une histoire
+                                </Link>
+                            </div>
+
+                            {/* Mobile: 1 Button (Create) + Icon (Library) - HIDDEN as per user request (moved to BottomNav) */}
+                        </>
+                    ) : (
+                        // Non-Club: Just "Choose Story" (renamed from + Nouvelle Histoire)
+                        <Link
+                            href="/books"
+                            className="flex items-center gap-2 bg-orange-500 text-white px-5 py-2.5 rounded-full font-bold text-sm shadow-lg shadow-orange-500/20 hover:bg-orange-600 hover:shadow-orange-500/40 hover:-translate-y-0.5 transition-all"
+                        >
+                            <span>📖</span>
+                            <span className="hidden md:inline">Choisir une histoire</span>
+                            <span className="md:hidden">+</span>
+                        </Link>
+                    )}
 
                     <div className="h-8 w-px bg-gray-200 mx-2 hidden md:block"></div>
 

@@ -116,7 +116,7 @@ function MyPdfsContent() {
                                     </div>
 
                                     <h3 className="font-bold text-xl text-gray-900 mb-2 line-clamp-2">
-                                        {(book.title || book.title_template || 'l\'Aventure Magique').replace(/\{childName\}|\[Son prénom\]/gi, book.child_name || '')}
+                                        {(book.story_content?.title || book.title || book.title_template || 'l\'Aventure Magique').replace(/\{childName\}|\[Son prénom\]/gi, book.child_name || '')}
                                     </h3>
                                     <p className="text-gray-400 text-xs font-bold uppercase tracking-wider mb-6">
                                         Acquis le {new Date(book.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}

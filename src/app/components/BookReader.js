@@ -12,8 +12,28 @@ export default function BookReader({ book, user, onUnlock, isEditable = false, o
     // Normalize pages to objects { text, image }
     const dbContent = book.story_content || {};
     const dbPages = Array.isArray(dbContent) ? dbContent : (dbContent.pages || []);
-    const rawPages = extraPages.length > 0 ? extraPages : dbPages;
-    const pages = rawPages.map(p => typeof p === 'string' ? { text: p, image: null } : p);
+    // FIX: Ensure we use dbContent.pages if available, and preserve image property!
+    const rawPages = (Array.isArray(dbContent.pages) ? dbContent.pages : dbPages);
+
+    const pages = rawPages.map(p => {
+        if (typeof p === 'string') return { text: p, image: null };
+        // Ensure image property is preserved from DB
+        return {
+            ...p,
+            image: p.image || p.image_url || p.imageUrl || null
+        };
+    });
+
+    // DEBUG: Check what images we have
+    useEffect(() => {
+        console.log("📖 BookReader mounted/updated.");
+        console.log("   - Book ID:", book.id);
+        console.log("   - Raw Story Content:", book.story_content);
+        console.log("   - Parsed Pages:", pages);
+        pages.forEach((p, i) => {
+            console.log(`   - Page ${i + 1} image:`, p.image || p.image_url);
+        });
+    }, [book, pages]);
 
     const coverUrl = book.cover_image_url || book.cover_url || pages?.[0]?.image;
     const totalPages = pages.length;
@@ -293,7 +313,7 @@ export default function BookReader({ book, user, onUnlock, isEditable = false, o
                                 {/* Title Overlay */}
                                 <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-transparent p-8 flex items-start justify-center">
                                     <h1 className="text-4xl md:text-5xl text-white text-center drop-shadow-2xl mt-8 max-w-2xl leading-tight font-[family-name:var(--font-chewy)] tracking-wide">
-                                        {personalize(book.title)}
+                                        {personalize(book.story_content?.title || book.title || book.title_template || "Voyage Magique")}
                                     </h1>
                                 </div>
                             </div>
@@ -314,7 +334,7 @@ export default function BookReader({ book, user, onUnlock, isEditable = false, o
                             className="w-full h-full flex"
                         >
                             {/* LEFT: Image (50%) */}
-                            <div className="w-1/2 h-full relative bg-gray-100">
+                            <div className="w-1/2 h-full relative bg-gray-100 min-h-[600px] lg:min-h-[750px] xl:min-h-[850px]">
                                 {(() => {
                                     const pageData = pages[currentPage - 1];
                                     const imageUrl = pageData?.image || pageData?.image_url || pageData?.imageUrl || coverUrl;
@@ -331,9 +351,10 @@ export default function BookReader({ book, user, onUnlock, isEditable = false, o
                                         );
                                     } else {
                                         return (
-                                            <div className="absolute inset-0 flex items-center justify-center flex-col text-gray-400">
+                                            <div className="absolute inset-0 flex items-center justify-center flex-col text-gray-400 bg-gray-50">
                                                 <span className="text-6xl animate-bounce mb-4">🎨</span>
-                                                <p>Illustration en cours...</p>
+                                                <p className="font-bold">Illustration en cours...</p>
+                                                <p className="text-xs mt-2 opacity-60">Cela peut prendre quelques minutes</p>
                                             </div>
                                         );
                                     }
@@ -358,20 +379,18 @@ export default function BookReader({ book, user, onUnlock, isEditable = false, o
                             </div>
 
                             {/* RIGHT: Text (50%) */}
-                            <div className="w-1/2 h-full flex flex-col items-center justify-center bg-white p-12 relative overflow-y-auto">
+                            <div className="w-1/2 h-full flex flex-col items-center justify-center bg-white p-8 md:p-12 lg:p-16">
                                 <span className="absolute top-6 right-6 text-orange-200 text-sm font-black tracking-widest uppercase">PAGE {currentPage}</span>
 
                                 {isEditable && onTextChange ? (
                                     <textarea
                                         value={pages[currentPage - 1]?.text}
                                         onChange={(e) => onTextChange(currentPage - 1, e.target.value)}
-                                        rows={12}
-                                        // FIXED: Removed fixed height, added min-h, centered with max-w
-                                        className="w-full max-w-2xl min-h-[300px] p-8 bg-white rounded-2xl border-2 border-orange-50 text-xl text-gray-800 leading-relaxed focus:ring-4 focus:ring-orange-100 focus:border-orange-300 outline-none resize-none shadow-sm transition-all text-center"
+                                        className="w-full h-full max-h-[80%] p-6 bg-white rounded-xl border-2 border-orange-50 text-xl md:text-2xl text-gray-800 leading-relaxed focus:ring-4 focus:ring-orange-100 focus:border-orange-300 outline-none resize-none shadow-sm transition-all text-center flex items-center justify-center"
                                     />
                                 ) : (
-                                    <div className="max-w-2xl text-center">
-                                        <p className="text-2xl text-gray-800 leading-relaxed font-serif">
+                                    <div className="w-full max-h-full overflow-y-auto flex items-center justify-center">
+                                        <p className="text-xl md:text-2xl lg:text-3xl text-gray-800 leading-relaxed font-serif text-center max-w-xl mx-auto">
                                             {pages[currentPage - 1]?.text}
                                         </p>
                                     </div>

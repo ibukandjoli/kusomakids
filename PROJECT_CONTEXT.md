@@ -97,6 +97,26 @@ subscription_started_at timestamp
 - **Member Badge**: Displays subscription status and remaining credits
 - **Responsive Design**: Improved mobile experience across all pages
 
+### Magic Stories: Critical Fixes & Enhancements (January 21, 2026)
+Major stabilization of the "Create Your Own Story" feature:
+
+1.  **Image Persistence Architecture Refactor**:
+    *   **Problem**: Race condition between client-side text save and worker-side image save caused images to be overwritten/lost.
+    *   **Solution**: Refactored `src/app/api/workers/generate-magic-book/route.js` to accept the latest text content directly from the client request. The worker now performs a single, atomic update saving both text and images, eliminating the need for a separate client-side save.
+    *   **Schema Fix**: Removed erroneous `completed_at` column update in the worker which was causing silent database save failures.
+
+2.  **Generation Quality Improvements**:
+    *   **Style**: Enforced "Studio Ghibli/Anime" style in the Fal AI prompt (`src/app/api/workers/generate-magic-book/route.js`). explicitly banning "Disney/Pixar/3D" styles for a more artistic, 2D aesthetic.
+    *   **Content**: Updated LLM prompt (`src/app/api/magic/generate-text/route.js`) to generate longer, richer narratives (3-4 sentences/50 words per page) instead of short captions.
+
+3.  **UI/UX Improvements**:
+    *   **Dashboard Titles**: Fixed logic in `src/app/dashboard/page.js` and `purchased/page.js` to prioritize the generated story title (`story_content.title`) over the fallback template title.
+    *   **Reader Experience**: 
+        *   Increased desktop container height (`min-h-[850px]`) in `BookReader.js` to reduce letterboxing.
+        *   Fixed text centering alignment.
+        *   Corrected title overlay on the cover page.
+    *   **Image Loading**: Improved robustness of image URL retrieval in `BookReader.js` to handle both `image` and `image_url` property formats.
+
 ### Build & Deployment Fixes
 - **Header Component**: Fixed SSR errors by moving `totalBadgeCount` state to component level
 - **Fal-AI Imports**: Corrected to use namespace import (`import * as fal`)

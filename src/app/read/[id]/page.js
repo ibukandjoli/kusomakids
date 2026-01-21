@@ -14,6 +14,33 @@ export default function ReadPage() {
     const [loading, setLoading] = useState(true);
     const [isPaymentOpen, setIsPaymentOpen] = useState(false);
 
+    // Polling Logic for Pending Images
+    useEffect(() => {
+        if (!book) return;
+
+        const content = book.story_content || {};
+        const pages = Array.isArray(content.pages) ? content.pages : [];
+        const hasPendingImages = pages.some(p => !p.image && !p.image_url);
+
+        if (hasPendingImages) {
+            const interval = setInterval(async () => {
+                console.log("🔄 Checking for new illustrations...");
+                const { data: updatedBook } = await supabase
+                    .from('generated_books')
+                    .select('*')
+                    .eq('id', id)
+                    .single();
+
+                if (updatedBook) {
+                    setBook(updatedBook);
+                }
+            }, 5000);
+
+            return () => clearInterval(interval);
+        }
+    }, [book, id]);
+
+    // Initial Load
     useEffect(() => {
         async function init() {
             // 1. Get User
@@ -29,15 +56,14 @@ export default function ReadPage() {
             // 2. Get Book
             if (id) {
                 const { data: bookData, error } = await supabase
-                    .from('generated_books') // Assuming this is the table for USER books
+                    .from('generated_books')
                     .select('*')
                     .eq('id', id)
-                    .single();
+                    .single(); // Ensure we get fresh data
 
                 if (!error && bookData) {
                     setBook(bookData);
                 } else {
-                    // Fallback: Check if it's a template? Or redirect
                     console.error("Book not found", error);
                 }
             }
@@ -88,10 +114,30 @@ export default function ReadPage() {
             <PaymentModal
                 isOpen={isPaymentOpen}
                 onClose={() => setIsPaymentOpen(false)}
-                user={user || {}} // Handle guest if needed? Assuming logged in for now based on dashboard flow
+                user={user || {}}
                 bookId={book.id}
-                bookCover={book.cover_image_url || book.cover_url} // Pass cover to modal
+                bookCover={book.cover_image_url || book.cover_url}
             />
+
+            {/* Manual Refresh Button - Debugging Aid */}
+            <button
+                onClick={async () => {
+                    console.log("🔄 Manual refresh...");
+                    const { data: updatedBook } = await supabase
+                        .from('generated_books')
+                        .select('*')
+                        .eq('id', id)
+                        .single();
+                    if (updatedBook) {
+                        setBook(updatedBook);
+                        alert("Images rafraîchies !");
+                    }
+                }}
+                className="fixed bottom-4 right-4 bg-white shadow-lg p-3 rounded-full z-50 hover:bg-gray-50 transition-colors border-2 border-orange-100"
+                title="Rafraîchir les images"
+            >
+                <span className="text-2xl">🔄</span>
+            </button>
         </div>
     );
 }

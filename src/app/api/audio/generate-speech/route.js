@@ -50,6 +50,15 @@ export async function POST(req) {
         const fileName = `${bookId}/${pageIndex}_${Date.now()}.mp3`;
         const bucketName = 'book-audio';
 
+        // Ensure bucket exists
+        const { data: buckets } = await supabase.storage.listBuckets();
+        const bucketExists = buckets?.some(b => b.name === bucketName);
+
+        if (!bucketExists) {
+            const { error: createError } = await supabase.storage.createBucket(bucketName, { public: true });
+            if (createError) console.error("Could not create bucket:", createError);
+        }
+
         const { data: uploadData, error: uploadError } = await supabase
             .storage
             .from(bucketName)

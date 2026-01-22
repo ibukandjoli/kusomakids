@@ -105,7 +105,7 @@ function DashboardContent() {
 
     const handleAction = (book, action) => {
         if (action === 'read') {
-            if (canReadBook(book)) {
+            if (canAccessBook(book)) {
                 router.push(`/read/${book.id}`);
             } else {
                 setSelectedBookId(book.id);
@@ -245,7 +245,7 @@ function DashboardContent() {
                                     )}
 
                                     {/* Lock Overlay if Locked (Cannot Read) */}
-                                    {!canReadBook(book) && (
+                                    {!canAccessBook(book) && (
                                         <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px] flex flex-col items-center justify-center text-white p-6 text-center">
                                             <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-md mb-4 shadow-lg">
                                                 <span className="text-2xl">🔒</span>
@@ -268,12 +268,12 @@ function DashboardContent() {
                                         <div className="flex gap-3">
                                             <button
                                                 onClick={() => handleAction(book, 'read')}
-                                                className={`flex-1 py-3 px-4 rounded-xl font-bold border-2 transition-colors flex items-center justify-center gap-2 ${canReadBook(book)
+                                                className={`flex-1 py-3 px-4 rounded-xl font-bold border-2 transition-colors flex items-center justify-center gap-2 ${canAccessBook(book)
                                                     ? 'border-orange-500 bg-orange-500 text-white hover:bg-orange-600 hover:border-orange-600 shadow-lg hover:shadow-orange-500/30'
                                                     : 'border-orange-200 text-orange-500 hover:bg-orange-50'
                                                     }`}
                                             >
-                                                {canReadBook(book) ? (
+                                                {canAccessBook(book) ? (
                                                     <><span className="text-lg">📖</span> Lire</>
                                                 ) : (
                                                     <><span className="text-lg">🔓</span> Débloquer</>
@@ -281,7 +281,7 @@ function DashboardContent() {
                                             </button>
 
                                             {/* Download Button: Show lock if Club member hasn't unlocked PDF yet */}
-                                            {canReadBook(book) && (
+                                            {canAccessBook(book) && (
                                                 <button
                                                     onClick={() => handleAction(book, 'download')}
                                                     className={`w-12 h-12 flex items-center justify-center rounded-xl font-bold border-2 transition-colors ${canDownloadBook(book)

@@ -17,43 +17,20 @@ export default function AdminDashboard() {
     useEffect(() => {
         async function fetchStats() {
             try {
-                // 1. Users Count
-                const { count: userCount, error: userError } = await supabase
-                    .from('profiles')
-                    .select('*', { count: 'exact', head: true });
-
-                // 2. Books Created (Total)
-                const { count: booksCount, error: booksError } = await supabase
-                    .from('generated_books')
-                    .select('*', { count: 'exact', head: true });
-
-                // 3. Books Purchased (Unlocked) - Approximation of Revenue
-                const { count: purchasedCount, error: purchasedError } = await supabase
-                    .from('generated_books')
-                    .select('*', { count: 'exact', head: true })
-                    .eq('is_unlocked', true);
-
-                // 4. Club Members (Active subscription)
-                const { count: clubCount, error: clubError } = await supabase
-                    .from('profiles')
-                    .select('*', { count: 'exact', head: true })
-                    .eq('subscription_status', 'active'); // Assuming 'active' means paid member
-
-                if (userError || booksError || purchasedError || clubError) {
-                    console.error("Error fetching stats", { userError, booksError, purchasedError, clubError });
-                }
+                const response = await fetch('/api/admin/stats');
+                if (!response.ok) throw new Error('Failed to fetch stats');
+                const data = await response.json();
 
                 // Calculate Revenue (Approximation: 3000 FCFA per book)
-                // Note: This is naive. Ideally we used a 'orders' table.
-                const revenue = (purchasedCount || 0) * 3000;
+                const revenue = (data.booksPurchased || 0) * 3000;
                 const formattedRevenue = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'XOF' }).format(revenue);
 
                 setStats({
-                    users: userCount || 0,
-                    booksCreated: booksCount || 0,
-                    booksPurchased: purchasedCount || 0,
+                    users: data.users || 0,
+                    booksCreated: data.booksCreated || 0,
+                    booksPurchased: data.booksPurchased || 0,
                     revenue: formattedRevenue,
-                    clubMembers: clubCount || 0
+                    clubMembers: data.clubMembers || 0
                 });
 
             } catch (error) {

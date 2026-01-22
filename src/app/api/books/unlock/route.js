@@ -52,7 +52,9 @@ export async function POST(req) {
         const { error: bookError } = await supabaseServer
             .from('generated_books')
             .update({
-                is_unlocked: true
+                is_unlocked: true,
+                purchase_type: 'credit',
+                purchase_amount: 1500
             })
             .eq('id', bookId)
             .eq('user_id', session.user.id);

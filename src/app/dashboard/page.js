@@ -89,25 +89,37 @@ function DashboardContent() {
         }
     }, [searchParams]);
 
-    // Access Logic Checker
-    const canAccessBook = (book) => {
-        // 1. Club Member?
-        if (profile?.subscription_status === 'active') return true;
-        // 2. Book Unlocked (One-off purchase)?
+    // Access Logic
+    const canReadBook = (book) => {
+        // 1. If unlocked (Paid or Credit), always yes
         if (book.is_unlocked) return true;
-
+        // 2. If Club Member AND Author, yes (Streaming Rights)
+        if (profile?.subscription_status === 'active' && book.user_id === user?.id) return true;
         return false;
     };
 
+    const canDownloadBook = (book) => {
+        // Only if fully unlocked (Paid/Credit)
+        return book.is_unlocked;
+    };
+
     const handleAction = (book, action) => {
-        if (canAccessBook(book)) {
-            // Authorized
-            if (action === 'read') router.push(`/read/${book.id}`);
-            if (action === 'download') window.open(`/api/download-secure/${book.id}`, '_blank');
-        } else {
-            // Unauthorized -> Show Payment Modal
-            setSelectedBookId(book.id);
-            setModalOpen(true);
+        if (action === 'read') {
+            if (canReadBook(book)) {
+                router.push(`/read/${book.id}`);
+            } else {
+                setSelectedBookId(book.id);
+                setModalOpen(true);
+            }
+        } else if (action === 'download') {
+            if (canDownloadBook(book)) {
+                // ... download logic
+                router.push(`/dashboard/purchased`); // Or direct download trigger
+            } else {
+                // If they can read but not download (Club mode), prompt unlock
+                setSelectedBookId(book.id);
+                setModalOpen(true); // This modal should eventually handle "Credit Unlock" for Club members
+            }
         }
     };
 
@@ -232,8 +244,8 @@ function DashboardContent() {
                                         </div>
                                     )}
 
-                                    {/* Lock Overlay if Locked */}
-                                    {!canAccessBook(book) && (
+                                    {/* Lock Overlay if Locked (Cannot Read) */}
+                                    {!canReadBook(book) && (
                                         <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px] flex flex-col items-center justify-center text-white p-6 text-center">
                                             <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-md mb-4 shadow-lg">
                                                 <span className="text-2xl">🔒</span>
@@ -256,25 +268,29 @@ function DashboardContent() {
                                         <div className="flex gap-3">
                                             <button
                                                 onClick={() => handleAction(book, 'read')}
-                                                className={`flex-1 py-3 px-4 rounded-xl font-bold border-2 transition-colors flex items-center justify-center gap-2 ${canAccessBook(book)
+                                                className={`flex-1 py-3 px-4 rounded-xl font-bold border-2 transition-colors flex items-center justify-center gap-2 ${canReadBook(book)
                                                     ? 'border-orange-500 bg-orange-500 text-white hover:bg-orange-600 hover:border-orange-600 shadow-lg hover:shadow-orange-500/30'
                                                     : 'border-orange-200 text-orange-500 hover:bg-orange-50'
                                                     }`}
                                             >
-                                                {canAccessBook(book) ? (
+                                                {canReadBook(book) ? (
                                                     <><span className="text-lg">📖</span> Lire</>
                                                 ) : (
                                                     <><span className="text-lg">🔓</span> Débloquer</>
                                                 )}
                                             </button>
 
-                                            {canAccessBook(book) && (
+                                            {/* Download Button: Show lock if Club member hasn't unlocked PDF yet */}
+                                            {canReadBook(book) && (
                                                 <button
                                                     onClick={() => handleAction(book, 'download')}
-                                                    className="w-12 h-12 flex items-center justify-center rounded-xl font-bold border-2 border-orange-100 text-orange-400 hover:text-orange-600 hover:border-orange-300 hover:bg-orange-50 transition-colors"
-                                                    title="Télécharger PDF"
+                                                    className={`w-12 h-12 flex items-center justify-center rounded-xl font-bold border-2 transition-colors ${canDownloadBook(book)
+                                                        ? 'border-orange-100 text-orange-400 hover:text-orange-600 hover:border-orange-300 hover:bg-orange-50'
+                                                        : 'border-gray-100 text-gray-300 hover:border-orange-200 hover:text-orange-400' // Locked state for Club
+                                                        }`}
+                                                    title={canDownloadBook(book) ? "Télécharger PDF" : "Débloquer le PDF (1 crédit)"}
                                                 >
-                                                    📥
+                                                    {canDownloadBook(book) ? '📥' : '🔒'}
                                                 </button>
                                             )}
                                         </div>

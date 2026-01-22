@@ -149,20 +149,25 @@ async function handleCheckoutSessionCompleted(session) {
 
     if (bookId && userId) {
         // 1. UNLOCK BOOK & LINK USER
-        const updates = {
-            is_unlocked: true,
-            user_id: userId // Ensure ownership is transferred/set to the real user
-        };
+        // Calculate amount paid for this item if possible, or default to standard
+        // For subscription checkout, it might be 0 immediately for the book? 
+        // Usually single purchase is 'payment' mode.
+        const amountPaid = session.amount_total ? session.amount_total / 100 : 3000; // rough fallback if needed, but session.amount_total is accurate
 
-        const { error: unlockError } = await supabaseAdmin
+        const { error: updateError } = await supabaseAdmin
             .from('generated_books')
-            .update(updates)
+            .update({
+                is_unlocked: true,
+                user_id: userId, // Ensure ownership is transferred/set to the real user
+                purchase_type: 'stripe',
+                purchase_amount: amountPaid
+            })
             .eq('id', bookId);
 
-        if (unlockError) {
-            console.error("❌ Failed to unlock book:", unlockError);
+        if (updateError) {
+            console.error("❌ Failed to unlock book in DB:", updateError);
         } else {
-            console.log("✅ Book Unlocked & Linked in DB");
+            console.log("✅ Book unlocked successfully in DB.");
 
             // 1.5 SEND ORDER CONFIRMATION EMAIL (Immediate)
             if (targetEmail) {

@@ -41,7 +41,7 @@ export async function GET(request) {
         const [
             { count: userCount },
             { count: booksCount },
-            { count: purchasedCount },
+            { data: allSalesData }, // Was purchasedCount
             { count: clubCount },
             { data: recentBooks },
             { data: allBooksForTemplates }

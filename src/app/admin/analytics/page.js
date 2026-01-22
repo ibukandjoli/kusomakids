@@ -15,27 +15,54 @@ export default function AdminAnalyticsDashboard() {
         recentBooks: [
             {
                 id: 'mock-1',
-                title: 'Le Secret de la Forêt',
+                title: 'L\'héritage du Maillot Magique',
                 cover_image_url: null,
                 created_at: new Date().toISOString(),
                 user_name: 'Parent Test',
-                user_email: 'test@example.com',
+                user_email: 'malick1987@gmail.com',
                 is_unlocked: true
             },
             {
                 id: 'mock-2',
-                title: 'L\'aventure Spatiale',
+                title: 'L\'héritage du Maillot Magique',
                 cover_image_url: null,
                 created_at: new Date(Date.now() - 86400000).toISOString(),
-                user_name: 'Autre Parent',
-                user_email: 'autre@example.com',
+                user_name: 'Inconnu',
+                user_email: 'adjadione15@gmail.com',
+                is_unlocked: true
+            },
+            {
+                id: 'mock-3',
+                title: 'L\'héritage du Maillot Magique',
+                cover_image_url: null,
+                created_at: new Date(Date.now() - 86400000).toISOString(),
+                user_name: 'Inconnu',
+                user_email: 'famadabo01@gmail.com',
+                is_unlocked: true
+            },
+            {
+                id: 'mock-4',
+                title: 'L\'héritage du Maillot Magique',
+                cover_image_url: null,
+                created_at: new Date(Date.now() - 86400000).toISOString(),
+                user_name: 'Inconnu',
+                user_email: 'sabinendieme12@gmail.com',
+                is_unlocked: false
+            },
+            {
+                id: 'mock-5',
+                title: 'L\'héritage du Maillot Magique',
+                cover_image_url: null,
+                created_at: new Date(Date.now() - 86400000).toISOString(),
+                user_name: 'Inconnu',
+                user_email: 'anta.badiagne12@gmail.com',
                 is_unlocked: false
             }
         ],
         topTemplates: [
-            { id: 'Magic', count: 45 },
-            { id: 'Space', count: 32 },
-            { id: 'Animals', count: 28 }
+            { id: 'Sport & Patriotisme', count: 95 },
+            { id: 'Fête & Joie', count: 2 },
+            { id: 'Ambition & Rêve', count: 8 }
         ]
     });
     const [loading, setLoading] = useState(true);
@@ -63,7 +90,7 @@ export default function AdminAnalyticsDashboard() {
                     <Link href="/admin" className="text-gray-400 hover:text-gray-600">
                         ← Retour
                     </Link>
-                    <h1 className="text-3xl font-bold text-gray-900">Analytics (Mock)</h1>
+                    <h1 className="text-3xl font-bold text-gray-900">Tableau de bord Admin</h1>
                 </div>
 
                 {/* Stats Grid */}
@@ -93,7 +120,7 @@ export default function AdminAnalyticsDashboard() {
                     {/* Recent Activity Table (Span 2) */}
                     <div className="lg:col-span-2 bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
                         <div className="p-6 border-b border-gray-50 flex justify-between items-center">
-                            <h2 className="text-lg font-bold text-gray-900">Activité Récente (Mock)</h2>
+                            <h2 className="text-lg font-bold text-gray-900">Activité Récente</h2>
                             <span className="text-sm text-gray-400">Données fictives</span>
                         </div>
                         <div className="overflow-x-auto">

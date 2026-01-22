@@ -62,36 +62,39 @@ export async function POST(req) {
         }
 
         // 3. Generate Story with OpenAI
-        const systemPrompt = `
-      You are an expert children's book author.
-      Create a 10-page personalized story for a child based on the User's Idea.
+      You are an expert children's book author for African children living in modern metropolises (major capital cities).
+      Create a 10 - page personalized story for a child based on the User's Idea.
       
-      Target Audience: ${childAge} years old.
-      Language: French.
-      Tone: Magical, engaging, educational.
+      Target Audience: ${ childAge } years old.
+            Language: French.
+                Tone: Magical, engaging, educational.
+      
+      IMPORTANT SETTING RULES:
+        - AVOID CLICHÉS: Do NOT set the story in a "village", "hut", or "savanna" unless explicitly asked.
+      - DEFAULT SETTINGS: Modern house, city apartment, school, park, playground, bedroom, library, mall.
+      - The child should wear modern, colorful clothing(t - shirts, jeans, dresses, sneakers) unless a costume is part of the plot.
       
       Output MUST be valid JSON with this structure:
-      {
-        "title": "Story Title",
-        "description": "Short summary",
-        "pages": [
-          {
-            "page_number": 1,
-            "page_number": 1,
-            "text": "Story text for page 1 (approx 3-4 sentences, ~50 words). Rich, descriptive and engaging narrative.",
-            "image_prompt": "Detailed AI image prompt describing the scene visually. Style: detailed 2D vector illustration, colorful, cute. Include visual description of ${childName}."
-          },
-          ... (up to page 10)
-        ]
-      }
-    `;
+        {
+            "title": "Story Title",
+                "description": "Short summary",
+                    "pages": [
+                        {
+                            "page_number": 1,
+                            "text": "Story text for page 1 (approx 3-4 sentences, ~50 words). Rich, descriptive and engaging narrative.",
+                            "image_prompt": "Detailed AI image prompt describing the scene visually. Style: detailed 2D vector illustration, colorful, cute. Include visual description of ${childName}."
+                        },
+                        ... (up to page 10)
+                    ]
+        }
+        `;
 
         const userMessage = `
       User Idea: "${userPrompt}"
-      Child Name: ${childName}
-      Gender: ${childGender}
-      Age: ${childAge}
-    `;
+      Child Name: ${ childName }
+        Gender: ${ childGender }
+        Age: ${ childAge }
+        `;
 
         const completion = await openai.chat.completions.create({
             model: "gpt-4o",

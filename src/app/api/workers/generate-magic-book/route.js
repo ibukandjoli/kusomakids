@@ -116,7 +116,18 @@ export async function POST(req) {
                 // The user clicked "Generate", so usually implies force (or missing).
                 // Let's force generate for now.
 
-                const prompt = (page.image_prompt || page.text) + STYLE_SUFFIX;
+
+                // REORDERED PROMPT: Character Description FIRST
+                // Structure: [Character Desc] doing [Action] in [Setting], [Style Tags]
+                // We strip the "Story Text" if it's too long or rely on 'image_prompt' from LLM which we hope includes action.
+                // But the LLM 'image_prompt' often includes the character desc again. 
+                // We'll prefix our STRONG consistent description.
+
+                const basePrompt = page.image_prompt || page.text;
+                // Clean base prompt of generic terms if possible, but hard to do safely.
+                // We just prepend.
+
+                const prompt = `${CHARACTER_STYLE}, ${basePrompt}` + STYLE_SUFFIX;
 
                 // Using fal.subscribe for checking status
                 const result = await fal.subscribe("fal-ai/flux/dev", {

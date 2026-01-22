@@ -392,10 +392,12 @@ export default function BookReader({ book, user, onUnlock, isEditable = false, o
                                         />
                                     </div>
                                 ) : (
-                                    <div className="flex-1 w-full flex items-center justify-center overflow-y-auto">
-                                        <p className="text-xl md:text-2xl lg:text-3xl text-gray-800 leading-loose font-serif text-center max-w-2xl mx-auto drop-shadow-sm">
-                                            {pages[currentPage - 1]?.text}
-                                        </p>
+                                    <div className="flex-1 w-full relative overflow-y-auto">
+                                        <div className="min-h-full flex items-center justify-center p-4">
+                                            <p className="text-xl md:text-2xl lg:text-3xl text-gray-800 leading-loose font-serif text-center max-w-2xl mx-auto drop-shadow-sm">
+                                                {pages[currentPage - 1]?.text}
+                                            </p>
+                                        </div>
                                     </div>
                                 )}
                             </div>

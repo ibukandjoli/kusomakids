@@ -14,6 +14,15 @@ const supabaseAdmin = createClient(
     }
 );
 
+// Import Font
+import { Font } from '@react-pdf/renderer';
+
+// Register Chewy Font
+Font.register({
+    family: 'Chewy',
+    src: 'https://fonts.gstatic.com/s/chewy/v18/uK_94ruUb-k-3eJZj5yR.ttf'
+});
+
 // PDF Styles - Landscape format for children's book
 const styles = StyleSheet.create({
     page: {
@@ -26,37 +35,36 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         backgroundColor: '#FDFBF7',
-        padding: 60,
+        padding: 40,
         height: '100%'
     },
     coverImage: {
         width: '80%',
         height: 400,
         objectFit: 'contain',
-        marginBottom: 40,
+        marginBottom: 30,
         borderRadius: 15
     },
     title: {
-        fontSize: 42,
-        fontWeight: 'bold',
+        fontSize: 48,
         textAlign: 'center',
-        marginBottom: 15,
-        color: '#1a1a1a',
-        fontFamily: 'Helvetica-Bold' // Child-friendly
+        marginBottom: 10,
+        color: '#e65100', // Orange-900 like
+        fontFamily: 'Chewy'
     },
     subtitle: {
-        fontSize: 22,
+        fontSize: 24,
         textAlign: 'center',
         color: '#666666',
-        marginBottom: 25,
-        fontFamily: 'Helvetica'
+        marginBottom: 30,
+        fontFamily: 'Chewy'
     },
-    // Story page - split layout
+    // Story page - split layout - NO PADDING for Image Section
     imageSection: {
         width: '50%',
         height: '100%',
-        backgroundColor: '#F8F8F8',
-        padding: 40,
+        backgroundColor: '#F8F8F8', // Or white if preferred
+        padding: 0,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center'
@@ -68,28 +76,29 @@ const styles = StyleSheet.create({
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'center',
+        alignItems: 'center', // Center content
         backgroundColor: '#FFFFFF'
     },
     storyImage: {
         width: '100%',
-        maxHeight: '90%',
-        objectFit: 'contain',
-        borderRadius: 12
+        height: '100%', // Fill the section
+        objectFit: 'cover' // Full bleed feel
     },
     storyText: {
-        fontSize: 18,
-        lineHeight: 1.8,
+        fontSize: 24, // Larger for kids
+        lineHeight: 1.6,
         color: '#2d2d2d',
-        textAlign: 'left', // Left align to avoid hyphenation
-        fontFamily: 'Helvetica' // Readable for children
+        textAlign: 'center', // Centered like the UI
+        fontFamily: 'Chewy',
+        marginBottom: 20
     },
     pageNumber: {
         position: 'absolute',
         bottom: 20,
         right: 30,
-        fontSize: 14,
+        fontSize: 16,
         color: '#999999',
-        fontFamily: 'Helvetica'
+        fontFamily: 'Chewy'
     }
 });
 
@@ -97,7 +106,8 @@ const BookDocument = ({ book }) => {
     const rawContent = book.story_content || {};
     const pages = Array.isArray(rawContent) ? rawContent : (rawContent.pages || []);
 
-    const formattedTitle = (book.title || "Histoire Personnalisée")
+    // FIX: Use actual story title first
+    const formattedTitle = (rawContent.title || book.title || "Histoire Personnalisée")
         .replace(/\{childName\}|\[Son prénom\]/gi, book.child_name || 'Votre enfant');
 
     return (
@@ -111,22 +121,24 @@ const BookDocument = ({ book }) => {
                     <Image src={book.cover_image_url} style={styles.coverImage} />
                 )}
 
-                <Text style={{ marginTop: 60, fontSize: 14, color: '#999' }}>KusomaKids - Créateur d'Histoires Magiques</Text>
+                <Text style={{ marginTop: 60, fontSize: 14, color: '#999', fontFamily: 'Chewy' }}>KusomaKids.com</Text>
             </Page>
 
             {/* STORY PAGES - Landscape with side-by-side layout */}
             {pages.map((page, index) => (
                 <Page key={index} size="A4" orientation="landscape" style={styles.page}>
-                    {/* LEFT: Image */}
+                    {/* LEFT: Image (Full Bleed) */}
                     <View style={styles.imageSection}>
-                        {page.image && (
-                            <Image src={page.image} style={styles.storyImage} />
-                        )}
+                        {page.image || page.image_url ? (
+                            <Image src={page.image || page.image_url} style={styles.storyImage} />
+                        ) : null}
                     </View>
 
                     {/* RIGHT: Text */}
                     <View style={styles.textSection}>
-                        <Text style={styles.storyText}>{page.text}</Text>
+                        <Text style={styles.storyText} hyphenationCallback={(word) => [word]}>
+                            {page.text}
+                        </Text>
                         <Text style={styles.pageNumber}>{index + 1}</Text>
                     </View>
                 </Page>

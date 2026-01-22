@@ -53,6 +53,12 @@ export async function POST(req) {
         const pages = Array.isArray(submittedPages) ? submittedPages : dbPages;
         const childName = book.child_name || "l'enfant";
 
+        // Define mergedPages (Missing Fix)
+        const mergedPages = pages.map((p, i) => ({
+            ...dbPages[i],
+            ...p
+        }));
+
         // --- DYNAMIC CHARACTER DESCRIPTION ---
         let CHARACTER_STYLE = "enfant africain, peau noire, cheveux crépus ou tressés"; // Default
         const referenceImage = rawContent.reference_image;

@@ -46,7 +46,13 @@ function LoginContent() {
             router.push(nextUrl);
         } catch (err) {
             console.error("Login Error:", err);
-            setError(err.message);
+            let message = err.message;
+            if (message === "Invalid login credentials") {
+                message = "Identifiant ou mot de passe incorrect.";
+            } else if (message.includes("Email not confirmed")) {
+                message = "Veuillez confirmer votre email avant de vous connecter.";
+            }
+            setError(message);
         } finally {
             setLoading(false);
         }

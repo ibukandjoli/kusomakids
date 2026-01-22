@@ -90,7 +90,7 @@ function DashboardContent() {
     }, [searchParams]);
 
     // Access Logic
-    const canReadBook = (book) => {
+    const canAccessBook = (book) => {
         // 1. If unlocked (Paid or Credit), always yes
         if (book.is_unlocked) return true;
         // 2. If Club Member AND Author, yes (Streaming Rights)

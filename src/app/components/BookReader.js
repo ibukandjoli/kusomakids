@@ -379,18 +379,21 @@ export default function BookReader({ book, user, onUnlock, isEditable = false, o
                             </div>
 
                             {/* RIGHT: Text (50%) */}
-                            <div className="w-1/2 h-full flex flex-col items-center justify-center bg-white p-8 md:p-12 lg:p-16">
-                                <span className="absolute top-6 right-6 text-orange-200 text-sm font-black tracking-widest uppercase">PAGE {currentPage}</span>
+                            <div className="w-1/2 h-full flex flex-col items-center justify-center bg-white p-12 lg:p-20 relative">
+                                <span className="absolute top-8 right-8 text-orange-200 text-sm font-black tracking-widest uppercase">PAGE {currentPage}</span>
 
                                 {isEditable && onTextChange ? (
-                                    <textarea
-                                        value={pages[currentPage - 1]?.text}
-                                        onChange={(e) => onTextChange(currentPage - 1, e.target.value)}
-                                        className="w-full h-full max-h-[80%] p-6 bg-white rounded-xl border-2 border-orange-50 text-xl md:text-2xl text-gray-800 leading-relaxed focus:ring-4 focus:ring-orange-100 focus:border-orange-300 outline-none resize-none shadow-sm transition-all text-center flex items-center justify-center"
-                                    />
+                                    <div className="w-full h-full flex items-center justify-center">
+                                        <textarea
+                                            value={pages[currentPage - 1]?.text}
+                                            onChange={(e) => onTextChange(currentPage - 1, e.target.value)}
+                                            className="w-full bg-transparent text-xl md:text-2xl text-gray-800 leading-relaxed focus:ring-4 focus:ring-orange-100 focus:border-orange-300 outline-none resize-none text-center font-serif border-2 border-dashed border-gray-200 rounded-xl p-4 focus:bg-orange-50/10 min-h-[300px]"
+                                            style={{ fieldSizing: 'content' }}
+                                        />
+                                    </div>
                                 ) : (
-                                    <div className="w-full max-h-full overflow-y-auto flex items-center justify-center">
-                                        <p className="text-xl md:text-2xl lg:text-3xl text-gray-800 leading-relaxed font-serif text-center max-w-xl mx-auto">
+                                    <div className="flex-1 w-full flex items-center justify-center overflow-y-auto">
+                                        <p className="text-xl md:text-2xl lg:text-3xl text-gray-800 leading-loose font-serif text-center max-w-2xl mx-auto drop-shadow-sm">
                                             {pages[currentPage - 1]?.text}
                                         </p>
                                     </div>

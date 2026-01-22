@@ -5,6 +5,6 @@ export default function robots() {
             allow: '/',
             disallow: ['/dashboard/', '/api/'],
         },
-        sitemap: 'https://kusomakids.com/sitemap.xml',
+        sitemap: 'https://www.kusomakids.com/sitemap.xml',
     };
 }

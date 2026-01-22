@@ -73,7 +73,10 @@ export async function GET() {
             user_id: '00000000-0000-0000-0000-000000000000',
             title: 'Probe Book Cover',
             pages: [],
-            cover: 'http://test.com'
+            cover_url: 'https://example.com',
+            cover_image_url: 'https://example.com',
+            cover_image: 'https://example.com',
+            cover: 'https://example.com'
         }).select('id').single();
 
         if (error) results.cover = error.message;

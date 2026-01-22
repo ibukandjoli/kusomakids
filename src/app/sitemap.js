@@ -1,5 +1,5 @@
 export default function sitemap() {
-    const baseUrl = 'https://kusomakids.com';
+    const baseUrl = 'https://www.kusomakids.com';
 
     // Static routes
     const routes = [

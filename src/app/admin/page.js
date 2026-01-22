@@ -10,7 +10,9 @@ export default function AdminDashboard() {
         booksCreated: 0,
         booksPurchased: 0,
         revenue: '0 F',
-        clubMembers: 0
+        clubMembers: 0,
+        visitors: 0,
+        visitsByDay: {}
     });
     const [loading, setLoading] = useState(true);
 

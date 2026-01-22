@@ -7,6 +7,7 @@ import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import MetaPixel from './components/MetaPixel';
 import Script from 'next/script';
+import AnalyticsTracker from './components/AnalyticsTracker';
 
 const nunito = Nunito({ subsets: ['latin'], variable: '--font-nunito' });
 const fredoka = Fredoka({ subsets: ['latin'], variable: '--font-fredoka' });
@@ -88,6 +89,7 @@ export default function RootLayout({ children }) {
         <MetaPixel />
         <Analytics />
         <SpeedInsights />
+        <AnalyticsTracker />
 
         <BookProvider>
           <div className="flex flex-col min-h-screen">

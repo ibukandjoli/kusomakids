@@ -1,4 +1,5 @@
 import './globals.css';
+import { Suspense } from 'react';
 import { Nunito, Fredoka, Chewy } from 'next/font/google';
 import Header from './components/Header';
 import Footer from './components/Footer';
@@ -89,7 +90,9 @@ export default function RootLayout({ children }) {
         <MetaPixel />
         <Analytics />
         <SpeedInsights />
-        <AnalyticsTracker />
+        <Suspense fallback={null}>
+          <AnalyticsTracker />
+        </Suspense>
 
         <BookProvider>
           <div className="flex flex-col min-h-screen">

@@ -62,7 +62,7 @@ export async function GET(request) {
             // Counts
             supabaseAdmin.from('profiles').select('*', { count: 'exact', head: true }),
             supabaseAdmin.from('generated_books').select('*', { count: 'exact', head: true }),
-            supabaseAdmin.from('generated_books').select('*', { count: 'exact', head: true }).eq('is_unlocked', true),
+            supabaseAdmin.from('generated_books').select('*', { count: 'exact', head: true }).eq('pdf_unlocked', true),
             supabaseAdmin.from('profiles').select('*', { count: 'exact', head: true }).eq('subscription_status', 'active'),
 
             // Analytics Count (Total)

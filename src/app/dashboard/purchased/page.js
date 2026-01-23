@@ -30,7 +30,7 @@ function MyPdfsContent() {
                     .from('generated_books')
                     .select('*')
                     .eq('user_id', session.user.id)
-                    .eq('is_unlocked', true) // Only unlocked/paid books
+                    .eq('pdf_unlocked', true) // Only ACTUALLY unlocked PDFs
                     .order('created_at', { ascending: false });
 
                 setBooks(booksData || []);

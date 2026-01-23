@@ -18,7 +18,7 @@ export default function AdminAnalyticsDashboard() {
                 title: 'L\'héritage du Maillot Magique',
                 cover_image_url: null,
                 created_at: new Date().toISOString(),
-                user_name: 'Parent Test',
+                user_name: 'Inconnu',
                 user_email: 'malick1987@gmail.com',
                 is_unlocked: true
             },
@@ -47,7 +47,7 @@ export default function AdminAnalyticsDashboard() {
                 created_at: new Date(Date.now() - 86400000).toISOString(),
                 user_name: 'Inconnu',
                 user_email: 'sabinendieme12@gmail.com',
-                is_unlocked: false
+                is_unlocked: true
             },
             {
                 id: 'mock-5',
@@ -56,7 +56,7 @@ export default function AdminAnalyticsDashboard() {
                 created_at: new Date(Date.now() - 86400000).toISOString(),
                 user_name: 'Inconnu',
                 user_email: 'anta.badiagne12@gmail.com',
-                is_unlocked: false
+                is_unlocked: true
             }
         ],
         topTemplates: [

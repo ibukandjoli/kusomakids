@@ -42,23 +42,28 @@ function HeroVisual(props) {
         return () => clearInterval(timer);
     }, [images.length]);
 
+    // Optimized: First mount should be instant for LCP
+    const [isFirstMount, setIsFirstMount] = useState(true);
+
+    useEffect(() => {
+        setIsFirstMount(false);
+    }, []);
+
     return (
-        <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.8, delay: 0.2 }}
-            className={`relative z-10 ${className}`}
-        >
-            {/* Animated Blob Background */}
+        <div className={`relative z-10 ${className}`}>
+            {/* Animated Blob Background - Keep animations here */}
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-orange-200/50 mix-blend-multiply filter blur-xl opacity-70 animate-blob -z-10"></div>
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[110%] h-[110%] bg-purple-200/50 mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-2000 -z-10"></div>
 
             <div className="relative transform hover:scale-[1.02] transition-transform duration-500 max-w-xl mx-auto">
                 <div className="rounded-[3rem] overflow-hidden shadow-2xl border-8 border-white transform rotate-2 hover:rotate-0 transition-all duration-500 relative aspect-square w-full bg-gray-100">
-                    <AnimatePresence>
+                    <AnimatePresence mode='popLayout'>
+                        {/* mode='popLayout' ensures smoother transitions */}
                         <motion.div
                             key={index}
-                            initial={{ opacity: 0 }}
+                            /* CRITICAL FIX: If it's the first image (index 0) AND first mount, start visible. 
+                               Otherwise fade in from 0. */
+                            initial={{ opacity: (index === 0 && isFirstMount) ? 1 : 0 }}
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
                             transition={{ duration: 1.5, ease: "easeInOut" }}
@@ -89,7 +94,7 @@ function HeroVisual(props) {
                     </div>
                 </motion.div>
             </div>
-        </motion.div>
+        </div>
     );
 }
 
@@ -189,7 +194,7 @@ export default function HomeClient({ initialBooks }) {
                                         href="/books"
                                         className="bg-orange-600 text-white px-6 py-3 md:px-8 md:py-4 rounded-full font-bold text-base md:text-lg shadow-xl shadow-orange-500/30 flex items-center justify-center gap-2 w-full sm:w-auto"
                                     >
-                                        Créer son livre magique <span className="text-xl md:text-2xl animate-spin-slow">🪄</span>
+                                        Choisir une histoire <span className="text-xl md:text-2xl animate-spin-slow">🪄</span>
                                     </Link>
                                 </motion.div>
                                 <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
@@ -432,7 +437,7 @@ export default function HomeClient({ initialBooks }) {
                 <div className="container mx-auto px-4">
                     <div className="text-center max-w-2xl mx-auto mb-16">
                         <h2 className="text-3xl font-bold text-gray-900 mb-4">Une formule pour chaque besoin</h2>
-                        <p className="text-gray-600">Offrez une histoire unique (PDF)ou rejoignez le club pour lire toute l'année.</p>
+                        <p className="text-gray-600">Offrez une histoire unique (PDF)ou rejoignez le club pour lire toute l&apos;année.</p>
                     </div>
 
                     <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto items-center">
@@ -452,7 +457,7 @@ export default function HomeClient({ initialBooks }) {
                                 <li className="flex items-center gap-3 text-gray-600"><span className="text-green-500 font-bold">✓</span> Lecture en ligne (+ Audio)</li>
                             </ul>
                             <Link href="/books" className="block w-full py-4 rounded-xl border-2 border-gray-900 text-center font-bold text-gray-900 hover:bg-gray-900 hover:text-white transition-all">
-                                Créer mon livre
+                                Choisir une histoire
                             </Link>
                         </motion.div>
 
@@ -475,10 +480,10 @@ export default function HomeClient({ initialBooks }) {
                                 <h3 className="text-4xl font-bold text-white mt-2">6.500 F CFA <span className="text-lg text-gray-400 font-normal">/ mois</span></h3>
                             </div>
                             <ul className="space-y-4 mb-8 flex-grow relative z-10">
+                                <li className="flex items-center gap-3 text-white"><span className="text-orange-500 bg-orange-500/20 rounded-full w-6 h-6 flex items-center justify-center text-xs">✓</span> Création d'Histoires Originales</li>
                                 <li className="flex items-center gap-3 text-white"><span className="text-orange-500 bg-orange-500/20 rounded-full w-6 h-6 flex items-center justify-center text-xs">✓</span> Lecture illimitée (Audio inclus)</li>
                                 <li className="flex items-center gap-3 text-white"><span className="text-orange-500 bg-orange-500/20 rounded-full w-6 h-6 flex items-center justify-center text-xs">✓</span> 1 PDF Haute Qualité offert / mois</li>
                                 <li className="flex items-center gap-3 text-white"><span className="text-orange-500 bg-orange-500/20 rounded-full w-6 h-6 flex items-center justify-center text-xs">✓</span> -50% sur les PDF suivants</li>
-                                <li className="flex items-center gap-3 text-white"><span className="text-orange-500 bg-orange-500/20 rounded-full w-6 h-6 flex items-center justify-center text-xs">✓</span> Histoires exclusives</li>
                             </ul>
                             <motion.div whileTap={{ scale: 0.95 }} className="relative z-10">
                                 <Link href="/club" className="block w-full py-4 rounded-xl bg-gradient-to-r from-orange-500 to-red-600 text-center font-bold text-white hover:from-orange-600 hover:to-red-700 transition-all shadow-lg shadow-orange-500/25">

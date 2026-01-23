@@ -62,10 +62,11 @@ export async function POST(req) {
         }
 
         // 3. Generate Story with OpenAI
+        const systemPrompt = `
       You are an expert children's book author for African children living in modern metropolises (major capital cities).
       Create a 10 - page personalized story for a child based on the User's Idea.
       
-      Target Audience: ${ childAge } years old.
+      Target Audience: ${childAge} years old.
             Language: French.
                 Tone: Magical, engaging, educational.
       
@@ -91,9 +92,9 @@ export async function POST(req) {
 
         const userMessage = `
       User Idea: "${userPrompt}"
-      Child Name: ${ childName }
-        Gender: ${ childGender }
-        Age: ${ childAge }
+      Child Name: ${childName}
+        Gender: ${childGender}
+        Age: ${childAge}
         `;
 
         const completion = await openai.chat.completions.create({

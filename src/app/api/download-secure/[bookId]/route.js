@@ -74,33 +74,42 @@ const getStyles = (fontFamily) => StyleSheet.create({
         backgroundColor: '#FFFFFF',
         padding: 0
     },
+    // Cover Page - Landscape Mode
     coverPage: {
         flexDirection: 'column',
         alignItems: 'center',
-        justifyContent: 'center',
+        justifyContent: 'space-between',
         backgroundColor: '#FDFBF7',
-        padding: 40,
+        paddingVertical: 40,
+        paddingHorizontal: 20,
         height: '100%'
     },
+    coverHeader: {
+        width: '100%',
+        alignItems: 'center',
+        marginBottom: 20
+    },
+    coverFooter: {
+        marginTop: 20,
+        alignItems: 'center'
+    },
     coverImage: {
-        width: '80%',
-        height: 400,
+        width: 'auto',
+        height: 350,
         objectFit: 'contain',
-        marginBottom: 30,
         borderRadius: 15
     },
     title: {
-        fontSize: 48,
+        fontSize: 36,
         textAlign: 'center',
         marginBottom: 10,
         color: '#e65100',
         fontFamily: fontFamily
     },
     subtitle: {
-        fontSize: 24,
+        fontSize: 18,
         textAlign: 'center',
         color: '#666666',
-        marginBottom: 30,
         fontFamily: fontFamily
     },
     imageSection: {
@@ -115,7 +124,7 @@ const getStyles = (fontFamily) => StyleSheet.create({
     textSection: {
         width: '50%',
         height: '100%',
-        padding: 50,
+        padding: 40,
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'center',
@@ -128,8 +137,8 @@ const getStyles = (fontFamily) => StyleSheet.create({
         objectFit: 'cover'
     },
     storyText: {
-        fontSize: 24,
-        lineHeight: 1.6,
+        fontSize: 18,
+        lineHeight: 1.5,
         color: '#2d2d2d',
         textAlign: 'center',
         fontFamily: fontFamily,
@@ -139,7 +148,7 @@ const getStyles = (fontFamily) => StyleSheet.create({
         position: 'absolute',
         bottom: 20,
         right: 30,
-        fontSize: 16,
+        fontSize: 14,
         color: '#999999',
         fontFamily: fontFamily
     }
@@ -156,16 +165,26 @@ const BookDocument = ({ book, fontFamily }) => {
 
     return (
         <Document>
-            {/* COVER PAGE - Portrait */}
-            <Page size="A4" orientation="portrait" style={styles.coverPage}>
-                <Text style={styles.title}>{formattedTitle}</Text>
-                <Text style={styles.subtitle}>Une histoire pour {book.child_name}</Text>
+            {/* COVER PAGE - Landscape */}
+            <Page size="A4" orientation="landscape" style={styles.coverPage}>
 
-                {book.cover_image_url && (
+                {/* Header: Title & Subtitle */}
+                <View style={styles.coverHeader}>
+                    <Text style={styles.title}>{formattedTitle}</Text>
+                    <Text style={styles.subtitle}>Une histoire pour {book.child_name}</Text>
+                </View>
+
+                {/* Center: Image */}
+                {book.cover_image_url ? (
                     <Image src={book.cover_image_url} style={styles.coverImage} />
-                )}
+                ) : <View style={{ height: 350 }} />}
 
-                <Text style={{ marginTop: 60, fontSize: 14, color: '#999', fontFamily: fontFamily }}>KusomaKids.com</Text>
+                {/* Footer: Website */}
+                <View style={styles.coverFooter}>
+                    <Text style={{ fontSize: 12, color: '#999', fontFamily: fontFamily }}>
+                        KusomaKids.com
+                    </Text>
+                </View>
             </Page>
 
             {/* STORY PAGES - Landscape with side-by-side layout */}
@@ -184,8 +203,11 @@ const BookDocument = ({ book, fontFamily }) => {
 
                     {/* RIGHT: Text */}
                     <View style={styles.textSection}>
-                        {/* Removed hyphenationCallback as it can cause crashes in some environments if font fails loading */}
-                        <Text style={styles.storyText}>
+                        {/* PREVENT WORD SPLITTING: hyphenationCallback returns the whole word */}
+                        <Text
+                            style={styles.storyText}
+                            hyphenationCallback={(word) => [word]}
+                        >
                             {page.text}
                         </Text>
                         <Text style={styles.pageNumber}>{index + 1}</Text>

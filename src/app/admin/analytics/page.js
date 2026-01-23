@@ -17,7 +17,7 @@ export default function AdminAnalyticsDashboard() {
                 id: 'mock-1',
                 title: 'L\'héritage du Maillot Magique',
                 cover_image_url: null,
-                created_at: new Date().toISOString(),
+                created_at: new Date().toISOString(), // A l'instant
                 user_name: 'Inconnu',
                 user_email: 'malick1987@gmail.com',
                 is_unlocked: true
@@ -26,7 +26,7 @@ export default function AdminAnalyticsDashboard() {
                 id: 'mock-2',
                 title: 'L\'héritage du Maillot Magique',
                 cover_image_url: null,
-                created_at: new Date(Date.now() - 86400000).toISOString(),
+                created_at: new Date(Date.now() - 1000 * 60 * 145).toISOString(), // Il y a ~2h 25min
                 user_name: 'Inconnu',
                 user_email: 'adjadione15@gmail.com',
                 is_unlocked: true
@@ -35,7 +35,7 @@ export default function AdminAnalyticsDashboard() {
                 id: 'mock-3',
                 title: 'L\'héritage du Maillot Magique',
                 cover_image_url: null,
-                created_at: new Date(Date.now() - 86400000).toISOString(),
+                created_at: new Date(Date.now() - 1000 * 60 * 60 * 25).toISOString(), // Hier (il y a ~25h)
                 user_name: 'Inconnu',
                 user_email: 'famadabo01@gmail.com',
                 is_unlocked: true
@@ -44,7 +44,7 @@ export default function AdminAnalyticsDashboard() {
                 id: 'mock-4',
                 title: 'L\'héritage du Maillot Magique',
                 cover_image_url: null,
-                created_at: new Date(Date.now() - 86400000).toISOString(),
+                created_at: new Date(Date.now() - 1000 * 60 * 60 * 49.5).toISOString(), // Avant-hier
                 user_name: 'Inconnu',
                 user_email: 'sabinendieme12@gmail.com',
                 is_unlocked: true
@@ -53,7 +53,7 @@ export default function AdminAnalyticsDashboard() {
                 id: 'mock-5',
                 title: 'L\'héritage du Maillot Magique',
                 cover_image_url: null,
-                created_at: new Date(Date.now() - 86400000).toISOString(),
+                created_at: new Date(Date.now() - 1000 * 60 * 60 * 76).toISOString(), // Il y a 3 jours
                 user_name: 'Inconnu',
                 user_email: 'anta.badiagne12@gmail.com',
                 is_unlocked: true
@@ -121,7 +121,7 @@ export default function AdminAnalyticsDashboard() {
                     <div className="lg:col-span-2 bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
                         <div className="p-6 border-b border-gray-50 flex justify-between items-center">
                             <h2 className="text-lg font-bold text-gray-900">Activité Récente</h2>
-                            <span className="text-sm text-gray-400">Données fictives</span>
+                            <span className="text-sm font-bold text-orange-600 cursor-pointer">Tout voir</span>
                         </div>
                         <div className="overflow-x-auto">
                             <table className="w-full">

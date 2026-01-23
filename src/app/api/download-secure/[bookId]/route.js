@@ -78,40 +78,52 @@ const getStyles = (fontFamily) => StyleSheet.create({
     coverPage: {
         flexDirection: 'column',
         alignItems: 'center',
-        justifyContent: 'space-between',
-        backgroundColor: '#FDFBF7',
-        paddingVertical: 40,
-        paddingHorizontal: 20,
-        height: '100%'
+        justifyContent: 'center', // Center everything vertically
+        backgroundColor: '#FFFFFF',
+        padding: 0,
+        height: '100%',
+        width: '100%'
     },
-    coverHeader: {
-        width: '100%',
+    // Container for the Square Cover (Image + Text Overlay)
+    coverContainer: {
+        width: 500,
+        height: 500,
+        position: 'relative',
+        display: 'flex',
         alignItems: 'center',
-        marginBottom: 20
-    },
-    coverFooter: {
-        marginTop: 20,
-        alignItems: 'center'
+        justifyContent: 'center'
     },
     coverImage: {
-        width: 'auto',
-        height: 350,
-        objectFit: 'contain',
-        borderRadius: 15
+        width: '100%',
+        height: '100%',
+        objectFit: 'cover', // Fill the square
+        borderRadius: 0
     },
-    title: {
-        fontSize: 36,
+    // Text Overlay Styles
+    overlayTitle: {
+        position: 'absolute',
+        top: 40,
+        left: 0,
+        right: 0,
         textAlign: 'center',
-        marginBottom: 10,
-        color: '#e65100',
-        fontFamily: fontFamily
+        fontSize: 32,
+        color: '#FFFFFF',
+        fontFamily: fontFamily,
+        textShadow: '2px 2px 4px rgba(0,0,0,0.5)'
     },
-    subtitle: {
-        fontSize: 18,
+    overlaySubtitle: {
+        position: 'absolute',
+        bottom: 50,
+        left: 0,
+        right: 0,
         textAlign: 'center',
-        color: '#666666',
-        fontFamily: fontFamily
+        fontSize: 14,
+        color: '#FFFFFF',
+        fontFamily: fontFamily,
+        textShadow: '1px 1px 2px rgba(0,0,0,0.5)'
     },
+
+    // Story Page Styles
     imageSection: {
         width: '50%',
         height: '100%',
@@ -121,6 +133,21 @@ const getStyles = (fontFamily) => StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center'
     },
+    // Improved Story Image: Square
+    storyImageContainer: {
+        width: 400,
+        height: 400,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: '#EEEEEE'
+    },
+    storyImage: {
+        width: '100%',
+        height: '100%',
+        objectFit: 'cover'
+    },
+
     textSection: {
         width: '50%',
         height: '100%',
@@ -130,11 +157,6 @@ const getStyles = (fontFamily) => StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         backgroundColor: '#FFFFFF'
-    },
-    storyImage: {
-        width: '100%',
-        height: '100%',
-        objectFit: 'cover'
     },
     storyText: {
         fontSize: 18,

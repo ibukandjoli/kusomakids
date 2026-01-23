@@ -96,9 +96,8 @@ export async function POST(req) {
             }
         }
 
-        // MODIFIED: More specific style instructions for Ghibli/Anime look
-        // Uses "Studio Ghibli screencap" and "cel shaded" which are stronger triggers
-        const STYLE_SUFFIX = `, ${CHARACTER_STYLE}, masterpiece, studio ghibli style, anime screencap, cel shaded, hayao miyazaki style, vibrant colors, detailed background, no 3d render, no cgi, flat color`;
+        // MODIFIED: Ghibli style but with REALISTIC PROPORTIONS (No Chibi/Big Head)
+        const STYLE_SUFFIX = `, ${CHARACTER_STYLE}, studio ghibli style, detailed 2D illustration, masterpiece, vibrant colors, hayao miyazaki style, correct human anatomy, proportional head, small eyes, natural face features, detailed background, no 3d render, no cgi, flat color`;
 
 
         if (mergedPages.length === 0) {

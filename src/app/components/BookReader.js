@@ -65,69 +65,61 @@ export default function BookReader({ book, user, onUnlock, isEditable = false, o
     };
 
     // Audio Logic
+    // Audio Logic - Native TTS
     const [isPlaying, setIsPlaying] = useState(false);
-    const [isAudioLoading, setIsAudioLoading] = useState(false);
-    const audioRef = useRef(null);
 
-    const handlePlayAudio = async () => {
+    // Cleanup audio on unmount
+    useEffect(() => {
+        return () => {
+            if (window.speechSynthesis) {
+                window.speechSynthesis.cancel();
+            }
+        };
+    }, []);
+
+    // Stop audio when changing pages
+    useEffect(() => {
+        if (window.speechSynthesis) {
+            window.speechSynthesis.cancel();
+            setIsPlaying(false);
+        }
+    }, [currentPage]);
+
+    const handlePlayAudio = () => {
+        if (!window.speechSynthesis) {
+            alert("Votre navigateur ne supporte pas la lecture audio.");
+            return;
+        }
+
         if (isPlaying) {
-            audioRef.current?.pause();
+            window.speechSynthesis.cancel();
             setIsPlaying(false);
             return;
         }
 
         const currentPageData = pages[currentPage > 0 ? currentPage - 1 : 0];
         const textToRead = currentPage === 0
-            ? `${book.title}. ${book.tagline || ''}`
+            ? `${book.title}. ${book.tagline || 'Une histoire Kusoma Kids.'}`
             : currentPageData?.text;
 
         if (!textToRead) return;
 
-        let audioUrl = currentPageData?.audio_url;
+        const utterance = new SpeechSynthesisUtterance(personalize(textToRead));
+        utterance.lang = 'fr-FR'; // Force French
 
-        if (!audioUrl) {
-            try {
-                setIsAudioLoading(true);
+        // Find a french voice if possible
+        const voices = window.speechSynthesis.getVoices();
+        const frenchVoice = voices.find(v => v.lang.startsWith('fr'));
+        if (frenchVoice) utterance.voice = frenchVoice;
 
-                const res = await fetch('/api/audio/generate-speech', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        text: textToRead,
-                        bookId: book.id,
-                        pageIndex: currentPage > 0 ? currentPage - 1 : 0
-                    })
-                });
+        utterance.rate = 0.9; // Slightly slower for kids
+        utterance.pitch = 1.0;
 
-                const data = await res.json();
-                setIsAudioLoading(false);
+        utterance.onend = () => setIsPlaying(false);
+        utterance.onerror = () => setIsPlaying(false);
 
-                if (!res.ok) {
-                    console.error("Audio Error:", data);
-                    alert("Impossible de générer l'audio pour le moment.");
-                    return;
-                }
-
-                audioUrl = data.audioUrl;
-
-                if (currentPage > 0) {
-                    currentPageData.audio_url = audioUrl;
-                }
-
-            } catch (e) {
-                setIsAudioLoading(false);
-                console.error(e);
-                return;
-            }
-        }
-
-        if (audioUrl) {
-            const audio = new Audio(audioUrl);
-            audioRef.current = audio;
-            audio.play();
-            setIsPlaying(true);
-            audio.onended = () => setIsPlaying(false);
-        }
+        setIsPlaying(true);
+        window.speechSynthesis.speak(utterance);
     };
 
     // Fullscreen Logic
@@ -159,13 +151,10 @@ export default function BookReader({ book, user, onUnlock, isEditable = false, o
             {enableAudio && (
                 <button
                     onClick={handlePlayAudio}
-                    disabled={isAudioLoading}
-                    className={`absolute top-6 right-6 z-50 bg-white shadow-xl p-3 rounded-full transition-all hover:scale-110 ${isPlaying ? 'text-orange-500 ring-2 ring-orange-500' : 'text-gray-600'} ${isAudioLoading ? 'opacity-70' : ''}`}
+                    className={`absolute top-6 right-6 z-50 bg-white shadow-xl p-3 rounded-full transition-all hover:scale-110 ${isPlaying ? 'text-orange-500 ring-2 ring-orange-500' : 'text-gray-600'}`}
                     title="Écouter l'histoire"
                 >
-                    {isAudioLoading ? (
-                        <div className="w-6 h-6 border-2 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
-                    ) : isPlaying ? (
+                    {isPlaying ? (
                         <span className="text-xl">🔊</span>
                     ) : (
                         <span className="text-xl">🔈</span>

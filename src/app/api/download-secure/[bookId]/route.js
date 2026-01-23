@@ -14,17 +14,28 @@ const supabaseAdmin = createClient(
     }
 );
 
-// Import Font
-import { Font } from '@react-pdf/renderer';
+import path from 'path';
+import fs from 'fs';
 
-// Register Chewy Font (Try-Catch to prevent route crash on init)
+// Register Chewy Font (Load locally for stability)
 try {
+    const fontPath = path.join(process.cwd(), 'public', 'fonts', 'Chewy-Regular.ttf');
+    const fontBuffer = fs.readFileSync(fontPath);
     Font.register({
         family: 'Chewy',
-        src: 'https://fonts.gstatic.com/s/chewy/v18/uK_94ruUb-k-3eJZj5yR.ttf'
+        src: fontBuffer
     });
 } catch (e) {
-    console.error("Font registration failed:", e);
+    console.error("Font registration failed (Local):", e);
+    // Fallback to GitHub URL if local fails (e.g. Vercel file tracing issue)
+    try {
+        Font.register({
+            family: 'Chewy',
+            src: 'https://github.com/google/fonts/raw/main/apache/chewy/Chewy-Regular.ttf'
+        });
+    } catch (e2) {
+        console.error("Font registration failed (Remote Fallback):", e2);
+    }
 }
 
 // PDF Styles - Landscape format for children's book

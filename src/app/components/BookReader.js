@@ -107,13 +107,32 @@ export default function BookReader({ book, user, onUnlock, isEditable = false, o
         const utterance = new SpeechSynthesisUtterance(personalize(textToRead));
         utterance.lang = 'fr-FR'; // Force French
 
-        // Find a french voice if possible
+        // Find the best available French voice
         const voices = window.speechSynthesis.getVoices();
-        const frenchVoice = voices.find(v => v.lang.startsWith('fr'));
-        if (frenchVoice) utterance.voice = frenchVoice;
+        // Priority list of known high-quality voices on Mac/iOS/Windows/Android
+        const preferredHelper = [
+            'Thomas', 'Audrey', 'Aurélie', 'Amelie', // Apple/Mac
+            'Google français', // Chrome/Android
+            'Microsoft Paul', 'Microsoft Julie' // Windows
+        ];
 
-        utterance.rate = 0.9; // Slightly slower for kids
-        utterance.pitch = 1.0;
+        const frenchVoices = voices.filter(v => v.lang.startsWith('fr') || v.lang.includes('fr-FR'));
+
+        // Try to find a preferred voice
+        let selectedVoice = frenchVoices.find(v => preferredHelper.some(name => v.name.includes(name)));
+
+        // Fallback to any French voice if no preferred one is found
+        if (!selectedVoice) {
+            selectedVoice = frenchVoices[0];
+        }
+
+        if (selectedVoice) {
+            utterance.voice = selectedVoice;
+            // console.log("Selected voice:", selectedVoice.name);
+        }
+
+        utterance.rate = 0.95; // Just slightly slower than normal for clarity
+        utterance.pitch = 1.05; // Slightly higher pitch often sounds friendlier for kids
 
         utterance.onend = () => setIsPlaying(false);
         utterance.onerror = () => setIsPlaying(false);

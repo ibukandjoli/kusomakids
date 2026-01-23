@@ -18,6 +18,8 @@ function DashboardContent() {
     const [selectedBookId, setSelectedBookId] = useState(null);
     const [childName, setChildName] = useState('Votre enfant');
 
+    const [creditModalOpen, setCreditModalOpen] = useState(false);
+
     const router = useRouter();
     const searchParams = useSearchParams();
 
@@ -78,13 +80,6 @@ function DashboardContent() {
             setSelectedBookId(unlockBookId);
             setWelcomeModalOpen(true);
         } else if (action === 'subscribe') {
-            // Open Payment Modal in Subscription Mode
-            // We might need to ensure the modal knows it's for subscription.
-            // PaymentModal handles logic based on user interaction usually, 
-            // but we can prep it. 
-            // Actually PaymentModal shows BOTH options. 
-            // We might want to Auto-Trigger the subscription click? 
-            // Or just open it. 
             setModalOpen(true);
         }
     }, [searchParams]);
@@ -99,8 +94,42 @@ function DashboardContent() {
     };
 
     const canDownloadBook = (book) => {
-        // Only if fully unlocked (Paid/Credit)
-        return book.is_unlocked;
+        // Only if fully unlocked PDF
+        return book.pdf_unlocked === true;
+    };
+
+    const downloadBook = async (bookId) => {
+        try {
+            // Get or create download token
+            // If locked and user has credits, this endpoint will AUTO-DEDUCT (so only call if confirmed or already unlocked)
+            const response = await fetch(`/api/download-secure/${bookId}/get-token`, {
+                method: 'POST'
+            });
+
+            if (response.status === 402) {
+                // Payment Required (Should be caught by UI logic before, but failsafe)
+                alert("Crédits insuffisants.");
+                return;
+            }
+
+            if (!response.ok) {
+                alert('Erreur lors de la génération du lien.');
+                return;
+            }
+
+            const { token } = await response.json();
+
+            // If successful, optimistically update UI
+            setBooks(books.map(b => b.id === bookId ? { ...b, pdf_unlocked: true } : b));
+            // Also decrement credits locally if we just used one? (Complex to know if we used one or if it was already unlocked)
+            // But get-token logic is idempotent if already unlocked.
+            // Ideally we should reload profile or track it.
+
+            window.open(`/api/download-secure/${bookId}?token=${token}`, '_blank');
+        } catch (error) {
+            console.error('Download error:', error);
+            alert('Erreur lors du téléchargement');
+        }
     };
 
     const handleAction = (book, action) => {
@@ -113,12 +142,18 @@ function DashboardContent() {
             }
         } else if (action === 'download') {
             if (canDownloadBook(book)) {
-                // ... download logic
-                router.push(`/dashboard/purchased`); // Or direct download trigger
+                // Already owned/unlocked PDF -> Download directly
+                downloadBook(book.id);
             } else {
-                // If they can read but not download (Club mode), prompt unlock
+                // Locked PDF. Check credits.
                 setSelectedBookId(book.id);
-                setModalOpen(true); // This modal should eventually handle "Credit Unlock" for Club members
+                if ((profile?.monthly_credits || 0) > 0) {
+                    // Has credits -> Confirm Use
+                    setCreditModalOpen(true);
+                } else {
+                    // No credits -> Pay
+                    setModalOpen(true);
+                }
             }
         }
     };
@@ -164,18 +199,7 @@ function DashboardContent() {
                         </div>
                         <button
                             onClick={() => {
-                                if (profile?.subscription_status === 'active') {
-                                    router.push('/dashboard/create');
-                                } else {
-                                    // Upsell: Open Payment Modal for Subscription
-                                    // For now, simple alert or redirect to Create which handles error, 
-                                    // BUT better to just open modal with Club intent.
-                                    // We'll mimic 'Unlock' logic but for subscription.
-                                    // Since PaymentModal handles "Club Subscription" if we pass a special prop or just let user navigate?
-                                    // We will redirect to /dashboard/create and let it error/show lock.
-                                    // Actually, let's just push.
-                                    router.push('/dashboard/create');
-                                }
+                                router.push('/dashboard/create');
                             }}
                             className="bg-white text-purple-600 px-8 py-4 rounded-full font-bold text-lg shadow-lg hover:shadow-xl hover:bg-gray-50 transform hover:-translate-y-1 transition-all flex items-center gap-2"
                         >
@@ -280,19 +304,17 @@ function DashboardContent() {
                                                 )}
                                             </button>
 
-                                            {/* Download Button: Show lock if Club member hasn't unlocked PDF yet */}
-                                            {canAccessBook(book) && (
-                                                <button
-                                                    onClick={() => handleAction(book, 'download')}
-                                                    className={`w-12 h-12 flex items-center justify-center rounded-xl font-bold border-2 transition-colors ${canDownloadBook(book)
-                                                        ? 'border-orange-100 text-orange-400 hover:text-orange-600 hover:border-orange-300 hover:bg-orange-50'
-                                                        : 'border-gray-100 text-gray-300 hover:border-orange-200 hover:text-orange-400' // Locked state for Club
-                                                        }`}
-                                                    title={canDownloadBook(book) ? "Télécharger PDF" : "Débloquer le PDF (1 crédit)"}
-                                                >
-                                                    {canDownloadBook(book) ? '📥' : '🔒'}
-                                                </button>
-                                            )}
+                                            {/* Download Button: Handles Unlock via Credit or Pay */}
+                                            <button
+                                                onClick={() => handleAction(book, 'download')}
+                                                className={`w-12 h-12 flex items-center justify-center rounded-xl font-bold border-2 transition-colors ${canDownloadBook(book)
+                                                    ? 'border-orange-100 text-orange-400 hover:text-orange-600 hover:border-orange-300 hover:bg-orange-50'
+                                                    : 'border-gray-100 text-gray-300 hover:border-orange-200 hover:text-orange-400'
+                                                    }`}
+                                                title={canDownloadBook(book) ? "Télécharger PDF" : "Débloquer le PDF (1 crédit ou Achat)"}
+                                            >
+                                                {canDownloadBook(book) ? '📥' : '🔒'}
+                                            </button>
                                         </div>
 
                                         {/* "Commander en papier" - Only if unlocked */}
@@ -327,6 +349,42 @@ function DashboardContent() {
                 book={books.find(b => b.id === selectedBookId)}
                 profile={profile}
             />
+
+            {/* Credit Confirmation Modal */}
+            {creditModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setCreditModalOpen(false)}></div>
+                    <div className="relative bg-white rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl animate-in zoom-in-95">
+                        <div className="text-5xl mb-4">🎫</div>
+                        <h2 className="text-2xl font-black text-gray-900 mb-2">Utiliser 1 Crédit ?</h2>
+                        <p className="text-gray-600 mb-8">
+                            Il vous reste <strong className="text-orange-600">{profile?.monthly_credits || 0} crédit(s)</strong>.
+                            Voulez-vous débloquer le PDF de cette histoire ?
+                        </p>
+                        <div className="flex flex-col gap-3">
+                            <button
+                                onClick={() => {
+                                    setCreditModalOpen(false);
+                                    downloadBook(selectedBookId);
+                                    // Update local credit count optimistically
+                                    if (profile) {
+                                        setProfile({ ...profile, monthly_credits: (profile.monthly_credits || 0) - 1 });
+                                    }
+                                }}
+                                className="w-full bg-orange-600 text-white py-3 rounded-xl font-bold hover:bg-orange-700 transition-colors"
+                            >
+                                Oui, débloquer (1 Crédit)
+                            </button>
+                            <button
+                                onClick={() => setCreditModalOpen(false)}
+                                className="w-full py-3 rounded-xl text-gray-400 font-bold hover:bg-gray-50 transition-colors"
+                            >
+                                Annuler
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* WELCOME CLUB MODAL */}
             {welcomeModalOpen && (

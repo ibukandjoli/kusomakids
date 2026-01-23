@@ -46,7 +46,7 @@ export async function POST(req) {
                             description: `Débloquez le PDF et la lecture de cette histoire${childName ? ' pour ' + childName : ''}.`,
                             images: ['https://kusomakids.com/logo.png'], // Replace with actual
                         },
-                        unit_amount: 3000, // 3000 XOF
+                        unit_amount: amount || 3000, // Use provided amount or default to 3000 XOF
                         // CHECK: XOF is a zero-decimal currency? Stripe says: "For zero-decimal currencies, the amount should be passed as an integer."
                         // XOF is zero-decimal. So 3000 means 3000 XOF.
                     },

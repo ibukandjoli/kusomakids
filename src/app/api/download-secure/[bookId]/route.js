@@ -17,11 +17,15 @@ const supabaseAdmin = createClient(
 // Import Font
 import { Font } from '@react-pdf/renderer';
 
-// Register Chewy Font
-Font.register({
-    family: 'Chewy',
-    src: 'https://fonts.gstatic.com/s/chewy/v18/uK_94ruUb-k-3eJZj5yR.ttf'
-});
+// Register Chewy Font (Try-Catch to prevent route crash on init)
+try {
+    Font.register({
+        family: 'Chewy',
+        src: 'https://fonts.gstatic.com/s/chewy/v18/uK_94ruUb-k-3eJZj5yR.ttf'
+    });
+} catch (e) {
+    console.error("Font registration failed:", e);
+}
 
 // PDF Styles - Landscape format for children's book
 const styles = StyleSheet.create({
@@ -129,14 +133,19 @@ const BookDocument = ({ book }) => {
                 <Page key={index} size="A4" orientation="landscape" style={styles.page}>
                     {/* LEFT: Image (Full Bleed) */}
                     <View style={styles.imageSection}>
-                        {page.image || page.image_url ? (
-                            <Image src={page.image || page.image_url} style={styles.storyImage} />
+                        {/* Ensure image URL is valid before rendering Image component */}
+                        {(page.image || page.image_url) ? (
+                            <Image
+                                src={page.image || page.image_url}
+                                style={styles.storyImage}
+                            />
                         ) : null}
                     </View>
 
                     {/* RIGHT: Text */}
                     <View style={styles.textSection}>
-                        <Text style={styles.storyText} hyphenationCallback={(word) => [word]}>
+                        {/* Removed hyphenationCallback as it can cause crashes in some environments if font fails loading */}
+                        <Text style={styles.storyText}>
                             {page.text}
                         </Text>
                         <Text style={styles.pageNumber}>{index + 1}</Text>
@@ -162,9 +171,6 @@ export async function GET(req, { params }) {
     try {
         // 2. Fetch and validate token
         console.log('🔍 Searching for token in database...');
-        console.log('   Token (first 20 chars):', token?.substring(0, 20));
-        console.log('   Token length:', token?.length);
-        console.log('   Book ID:', bookId);
 
         const { data: tokenData, error: tokenError } = await supabaseAdmin
             .from('download_tokens')
@@ -173,29 +179,8 @@ export async function GET(req, { params }) {
             .eq('book_id', bookId)
             .single();
 
-        console.log('📊 Query result:', {
-            found: !!tokenData,
-            error: tokenError?.message,
-            tokenDataId: tokenData?.id
-        });
-
         if (tokenError || !tokenData) {
             console.error("❌ Invalid token:", tokenError);
-
-            // Try to find ANY token for this book to help debug
-            const { data: anyTokens } = await supabaseAdmin
-                .from('download_tokens')
-                .select('id, token, book_id')
-                .eq('book_id', bookId)
-                .limit(1);
-
-            console.log('🔎 Debug - Tokens for this book:', anyTokens?.map(t => ({
-                id: t.id,
-                tokenMatch: t.token === token,
-                tokenLengthDB: t.token.length,
-                tokenLengthProvided: token?.length
-            })));
-
             return NextResponse.json({ error: "Invalid or expired download link" }, { status: 403 });
         }
 
@@ -236,17 +221,20 @@ export async function GET(req, { params }) {
         }
 
         // 7. Generate PDF
+        console.log("📄 Generating PDF stream...");
         const stream = await renderToStream(<BookDocument book={book} />);
+        console.log("📄 PDF stream generated successfully.");
 
         return new NextResponse(stream, {
             headers: {
                 'Content-Type': 'application/pdf',
-                'Content-Disposition': `attachment; filename="kusomakids-${book.child_name || 'story'}.pdf"`,
+                'Content-Disposition': `attachment; filename="kusomakids-${(book.child_name || 'story').replace(/[^a-z0-9]/gi, '_')}.pdf"`,
             },
         });
 
     } catch (err) {
         console.error("❌ Secure download error:", err);
-        return NextResponse.json({ error: "Failed to generate PDF" }, { status: 500 });
+        // Return explicit error to user for debugging
+        return NextResponse.json({ error: `Failed to generate PDF: ${err.message}` }, { status: 500 });
     }
 }

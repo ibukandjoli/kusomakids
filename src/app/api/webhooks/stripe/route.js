@@ -158,6 +158,7 @@ async function handleCheckoutSessionCompleted(session) {
             .from('generated_books')
             .update({
                 is_unlocked: true,
+                pdf_unlocked: true, // Purchase unlocks PDF download
                 user_id: userId, // Ensure ownership is transferred/set to the real user
                 purchase_type: 'stripe',
                 purchase_amount: amountPaid

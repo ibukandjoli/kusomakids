@@ -14,34 +14,63 @@ const supabaseAdmin = createClient(
     }
 );
 
-import path from 'path';
-import fs from 'fs';
+// Font Registration State
+let isFontRegistered = false;
 
-// Register Chewy Font (Load locally for stability)
-try {
-    const fontPath = path.join(process.cwd(), 'public', 'fonts', 'Chewy-Regular.ttf');
-    const fontBuffer = fs.readFileSync(fontPath);
-    Font.register({
-        family: 'Chewy',
-        src: fontBuffer
-    });
-} catch (e) {
-    console.error("Font registration failed (Local):", e);
-    // Fallback to GitHub URL if local fails (e.g. Vercel file tracing issue)
+async function registerFont() {
+    if (isFontRegistered) return true;
+
     try {
+        console.log("🔄 Attempting to register font...");
+
+        // Strategy 1: Fetch from reliable CDN (Raw GitHub)
+        // Avoids FS issues in serverless and Redirect issues with some URLs
+        const response = await fetch('https://raw.githubusercontent.com/google/fonts/main/apache/chewy/Chewy-Regular.ttf');
+
+        if (!response.ok) {
+            throw new Error(`Failed to fetch font: ${response.statusText}`);
+        }
+
+        const arrayBuffer = await response.arrayBuffer();
+        const buffer = Buffer.from(arrayBuffer);
+
         Font.register({
             family: 'Chewy',
-            src: 'https://github.com/google/fonts/raw/main/apache/chewy/Chewy-Regular.ttf'
+            src: buffer
         });
-    } catch (e2) {
-        console.error("Font registration failed (Remote Fallback):", e2);
+
+        isFontRegistered = true;
+        console.log("✅ Font 'Chewy' registered successfully via Fetch.");
+        return true;
+
+    } catch (e) {
+        console.error("⚠️ Font registration failed (Fetch):", e);
+
+        // Strategy 2: Try Local FS as fallback
+        try {
+            const fontPath = path.join(process.cwd(), 'public', 'fonts', 'Chewy-Regular.ttf');
+            if (fs.existsSync(fontPath)) {
+                const fontBuffer = fs.readFileSync(fontPath);
+                Font.register({
+                    family: 'Chewy',
+                    src: fontBuffer
+                });
+                isFontRegistered = true;
+                console.log("✅ Font 'Chewy' registered successfully via FS.");
+                return true;
+            }
+        } catch (fsError) {
+            console.error("⚠️ Font registration failed (FS):", fsError);
+        }
     }
+
+    return false;
 }
 
-// PDF Styles - Landscape format for children's book
-const styles = StyleSheet.create({
+// Dynamic Styles Generator
+const getStyles = (fontFamily) => StyleSheet.create({
     page: {
-        flexDirection: 'row', // Side by side layout
+        flexDirection: 'row',
         backgroundColor: '#FFFFFF',
         padding: 0
     },
@@ -64,21 +93,20 @@ const styles = StyleSheet.create({
         fontSize: 48,
         textAlign: 'center',
         marginBottom: 10,
-        color: '#e65100', // Orange-900 like
-        fontFamily: 'Chewy'
+        color: '#e65100',
+        fontFamily: fontFamily
     },
     subtitle: {
         fontSize: 24,
         textAlign: 'center',
         color: '#666666',
         marginBottom: 30,
-        fontFamily: 'Chewy'
+        fontFamily: fontFamily
     },
-    // Story page - split layout - NO PADDING for Image Section
     imageSection: {
         width: '50%',
         height: '100%',
-        backgroundColor: '#F8F8F8', // Or white if preferred
+        backgroundColor: '#F8F8F8',
         padding: 0,
         display: 'flex',
         alignItems: 'center',
@@ -91,20 +119,20 @@ const styles = StyleSheet.create({
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'center',
-        alignItems: 'center', // Center content
+        alignItems: 'center',
         backgroundColor: '#FFFFFF'
     },
     storyImage: {
         width: '100%',
-        height: '100%', // Fill the section
-        objectFit: 'cover' // Full bleed feel
+        height: '100%',
+        objectFit: 'cover'
     },
     storyText: {
-        fontSize: 24, // Larger for kids
+        fontSize: 24,
         lineHeight: 1.6,
         color: '#2d2d2d',
-        textAlign: 'center', // Centered like the UI
-        fontFamily: 'Chewy',
+        textAlign: 'center',
+        fontFamily: fontFamily,
         marginBottom: 20
     },
     pageNumber: {
@@ -113,13 +141,14 @@ const styles = StyleSheet.create({
         right: 30,
         fontSize: 16,
         color: '#999999',
-        fontFamily: 'Chewy'
+        fontFamily: fontFamily
     }
 });
 
-const BookDocument = ({ book }) => {
+const BookDocument = ({ book, fontFamily }) => {
     const rawContent = book.story_content || {};
     const pages = Array.isArray(rawContent) ? rawContent : (rawContent.pages || []);
+    const styles = getStyles(fontFamily);
 
     // FIX: Use actual story title first
     const formattedTitle = (rawContent.title || book.title || "Histoire Personnalisée")
@@ -136,7 +165,7 @@ const BookDocument = ({ book }) => {
                     <Image src={book.cover_image_url} style={styles.coverImage} />
                 )}
 
-                <Text style={{ marginTop: 60, fontSize: 14, color: '#999', fontFamily: 'Chewy' }}>KusomaKids.com</Text>
+                <Text style={{ marginTop: 60, fontSize: 14, color: '#999', fontFamily: fontFamily }}>KusomaKids.com</Text>
             </Page>
 
             {/* STORY PAGES - Landscape with side-by-side layout */}
@@ -231,9 +260,14 @@ export async function GET(req, { params }) {
             console.log(`✅ Downloads remaining: ${tokenData.downloads_remaining - 1}`);
         }
 
-        // 7. Generate PDF
+        // 7. Ensure Font is Registered
+        const fontSuccess = await registerFont();
+        const fontFamilyToUse = fontSuccess ? 'Chewy' : 'Helvetica';
+        console.log(`🎨 Using Font: ${fontFamilyToUse}`);
+
+        // 8. Generate PDF
         console.log("📄 Generating PDF stream...");
-        const stream = await renderToStream(<BookDocument book={book} />);
+        const stream = await renderToStream(<BookDocument book={book} fontFamily={fontFamilyToUse} />);
         console.log("📄 PDF stream generated successfully.");
 
         return new NextResponse(stream, {

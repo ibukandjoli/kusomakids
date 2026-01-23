@@ -61,12 +61,13 @@ export default function BooksClient() {
     const filteredBooks = books.filter(book => {
         if (filterAge === 'all') return true;
 
-        // Parse Filter Range
+        // Explicit mapping to avoid parsing errors
         let fMin = 0, fMax = 100;
-        if (filterAge.includes('+')) {
-            fMin = parseInt(filterAge);
-        } else if (filterAge.includes('-')) {
-            [fMin, fMax] = filterAge.split('-').map(Number);
+        switch (filterAge) {
+            case '2-4': fMin = 2; fMax = 4; break;
+            case '4-6': fMin = 4; fMax = 6; break;
+            case '6+': fMin = 6; fMax = 100; break;
+            default: return true;
         }
 
         // Parse Book Range (e.g. "3-6 ans", "4-8")
@@ -74,12 +75,17 @@ export default function BooksClient() {
         const matches = book.age_range ? String(book.age_range).match(/(\d+)/g) : null;
         if (!matches) return true; // Show if no age defined
 
-        const bMin = parseInt(matches[0]);
-        const bMax = matches[1] ? parseInt(matches[1]) : bMin; // Handle single age "4 ans"
+        const bMin = parseInt(matches[0], 10);
+        const bMax = matches[1] ? parseInt(matches[1], 10) : bMin; // Handle single age "4 ans"
 
         // Check if ranges overlap
         // Overlap condition: max(start1, start2) <= min(end1, end2)
-        return Math.max(fMin, bMin) <= Math.min(fMax, bMax);
+        const isMatch = Math.max(fMin, bMin) <= Math.min(fMax, bMax);
+
+        // Debug log (optional, remove in production if too noisy)
+        // console.log(`Filter ${filterAge} [${fMin}-${fMax}] vs Book ${book.age_range} [${bMin}-${bMax}] => ${isMatch}`);
+
+        return isMatch;
     });
 
     return (

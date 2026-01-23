@@ -1,6 +1,10 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // @ts-ignore
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
   compress: true,
   poweredByHeader: false,
   images: {

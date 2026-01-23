@@ -96,8 +96,7 @@ const getStyles = (fontFamily) => StyleSheet.create({
     coverImage: {
         width: '100%',
         height: '100%',
-        objectFit: 'cover', // Fill the square
-        borderRadius: 0
+        objectFit: 'cover' // Fill the square
     },
     // Text Overlay Styles
     overlayTitle: {

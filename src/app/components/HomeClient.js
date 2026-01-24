@@ -1,6 +1,8 @@
 'use client';
 
 import Link from 'next/link';
+import GeneratedBooksGallery from './GeneratedBooksGallery';
+import ClubPromoModal from './ClubPromoModal';
 import Image from 'next/image';
 import { useState, useEffect } from 'react';
 import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion';

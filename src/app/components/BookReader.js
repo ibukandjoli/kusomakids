@@ -64,36 +64,30 @@ export default function BookReader({ book, user, onUnlock, isEditable = false, o
             .replace(/\{childName\}/gi, name);
     };
 
-    // Audio Logic
-    // Audio Logic - Native TTS
+    // Audio Logic - OpenAI TTS
     const [isPlaying, setIsPlaying] = useState(false);
-
-    // Cleanup audio on unmount
-    useEffect(() => {
-        return () => {
-            if (window.speechSynthesis) {
-                window.speechSynthesis.cancel();
-            }
-        };
-    }, []);
+    const [audioLoading, setAudioLoading] = useState(false);
+    const audioRef = useRef(null);
 
     // Stop audio when changing pages
     useEffect(() => {
-        if (window.speechSynthesis) {
-            window.speechSynthesis.cancel();
+        if (audioRef.current) {
+            audioRef.current.pause();
+            audioRef.current.currentTime = 0;
             setIsPlaying(false);
+            setAudioLoading(false);
         }
     }, [currentPage]);
 
-    const handlePlayAudio = () => {
-        if (!window.speechSynthesis) {
-            alert("Votre navigateur ne supporte pas la lecture audio.");
-            return;
-        }
-
-        if (isPlaying) {
-            window.speechSynthesis.cancel();
+    const handlePlayAudio = async () => {
+        // Toggle Stop if playing
+        if (isPlaying || audioLoading) {
+            if (audioRef.current) {
+                audioRef.current.pause();
+                audioRef.current.currentTime = 0;
+            }
             setIsPlaying(false);
+            setAudioLoading(false);
             return;
         }
 
@@ -104,41 +98,84 @@ export default function BookReader({ book, user, onUnlock, isEditable = false, o
 
         if (!textToRead) return;
 
-        const utterance = new SpeechSynthesisUtterance(personalize(textToRead));
-        utterance.lang = 'fr-FR'; // Force French
+        // Check if we already have a cached URL in book data for this page?
+        // Ideally the API handles caching, but if we updated the book object locally... 
+        // For now, let's just hit the API, it's fast enough or handles cache.
+        // Actually, dbPages has audio_url if we reload, but here we might not have it yet.
 
-        // Find the best available French voice
-        const voices = window.speechSynthesis.getVoices();
-        // Priority list of known high-quality voices on Mac/iOS/Windows/Android
-        const preferredHelper = [
-            'Thomas', 'Audrey', 'Aurélie', 'Amelie', // Apple/Mac
-            'Google français', // Chrome/Android
-            'Microsoft Paul', 'Microsoft Julie' // Windows
-        ];
+        try {
+            setAudioLoading(true);
 
-        const frenchVoices = voices.filter(v => v.lang.startsWith('fr') || v.lang.includes('fr-FR'));
+            // 1. Check local audio element override (if previously fetched in session)
+            // Use a simple map or just fetch again (API caches url lookup).
 
-        // Try to find a preferred voice
-        let selectedVoice = frenchVoices.find(v => preferredHelper.some(name => v.name.includes(name)));
+            const response = await fetch('/api/audio/generate-speech', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    text: personalize(textToRead),
+                    bookId: book.id,
+                    pageIndex: currentPage > 0 ? currentPage - 1 : 'cover', // special key for cover? Let's use 0 for now or string?
+                    // The API expects pageIndex to index into array. Cover is not in array usually.
+                    // If currentPage == 0 (Cover), let's just use text-based hash or skip saving to array for now?
+                    // The API tries to update `pages[pageIndex]`. 
+                    // To be safe, ONLY read story pages for now or handle cover gracefully.
+                })
+            });
 
-        // Fallback to any French voice if no preferred one is found
-        if (!selectedVoice) {
-            selectedVoice = frenchVoices[0];
+            // Special case: If cover (index 0 but logic maps to cover), API might fail to save to DB but still return audioUrl.
+            // Let's pass pageIndex: -1 for cover and check API? 
+            // The current API implementation (lines 89+) checks `if (pages[pageIndex])`. 
+            // So if we pass -1, it wont save to DB but will return audio. Perfect.
+
+            const effectivePageIndex = currentPage === 0 ? -1 : (currentPage - 1);
+
+            const res = await fetch('/api/audio/generate-speech', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    text: personalize(textToRead),
+                    bookId: book.id,
+                    pageIndex: effectivePageIndex,
+                    voice: 'nova'
+                })
+            });
+
+            const data = await res.json();
+
+            if (!res.ok || !data.success) {
+                throw new Error(data.error || "Erreur de génération audio");
+            }
+
+            // Play Audio
+            if (audioRef.current) {
+                audioRef.current.pause();
+            }
+
+            const audio = new Audio(data.audioUrl);
+            audioRef.current = audio;
+
+            audio.onended = () => {
+                setIsPlaying(false);
+                setAudioLoading(false);
+            };
+
+            audio.onerror = (e) => {
+                console.error("Audio Playback Error", e);
+                setIsPlaying(false);
+                setAudioLoading(false);
+                alert("Erreur lors de la lecture audio.");
+            };
+
+            await audio.play();
+            setIsPlaying(true);
+
+        } catch (err) {
+            console.error("Audio Error:", err);
+            alert("Impossible de lire l'audio pour le moment.");
+        } finally {
+            setAudioLoading(false);
         }
-
-        if (selectedVoice) {
-            utterance.voice = selectedVoice;
-            // console.log("Selected voice:", selectedVoice.name);
-        }
-
-        utterance.rate = 0.95; // Just slightly slower than normal for clarity
-        utterance.pitch = 1.05; // Slightly higher pitch often sounds friendlier for kids
-
-        utterance.onend = () => setIsPlaying(false);
-        utterance.onerror = () => setIsPlaying(false);
-
-        setIsPlaying(true);
-        window.speechSynthesis.speak(utterance);
     };
 
     // Fullscreen Logic
@@ -171,12 +208,15 @@ export default function BookReader({ book, user, onUnlock, isEditable = false, o
                 <button
                     onClick={handlePlayAudio}
                     className={`absolute top-6 right-6 z-50 bg-white shadow-xl p-3 rounded-full transition-all hover:scale-110 ${isPlaying ? 'text-orange-500 ring-2 ring-orange-500' : 'text-gray-600'}`}
-                    title="Écouter l'histoire"
+                    title={isPlaying ? "Arrêter la lecture" : "Écouter l'histoire"}
+                    disabled={audioLoading}
                 >
-                    {isPlaying ? (
-                        <span className="text-xl">🔊</span>
+                    {audioLoading ? (
+                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-orange-500"></div>
+                    ) : isPlaying ? (
+                        <span className="text-xl">⏹️</span>
                     ) : (
-                        <span className="text-xl">🔈</span>
+                        <span className="text-xl">🔊</span>
                     )}
                 </button>
             )}

@@ -109,6 +109,10 @@ export async function POST(req) {
         // 2. Generate Images for Each Page (Parallel)
         console.log("🎨 Starting parallel generation for all pages...");
 
+        // CONSISTENCY FIX: Use a fixed seed for the entire book to ensure art style consistency
+        const bookSeed = Math.floor(Math.random() * 1000000000);
+        console.log("🎲 Using consistent seed:", bookSeed);
+
         const processedPages = await Promise.all(mergedPages.map(async (page, index) => {
             try {
                 // If page already has image, preserve it? Or force regenerate?
@@ -135,7 +139,9 @@ export async function POST(req) {
                         image_size: "landscape_4_3",
                         num_inference_steps: 28,
                         guidance_scale: 3.5,
-                        enable_safety_checker: false
+                        enable_safety_checker: false,
+                        seed: bookSeed, // FORCE SAME SEED
+                        sync_mode: true // Ensure consistent handling
                     },
                     logs: true
                 });

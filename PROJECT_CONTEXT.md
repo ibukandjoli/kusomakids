@@ -97,19 +97,40 @@ subscription_started_at timestamp
 - **Member Badge**: Displays subscription status and remaining credits
 - **Responsive Design**: Improved mobile experience across all pages
 
-### Magic Stories: Critical Fixes & Enhancements (January 21, 2026)
-Major stabilization of the "Create Your Own Story" feature:
+### Magic Stories: Critical Fixes & Enhancements (January 21-24, 2026)
+Major stabilization of the "Create Your Own Story" feature and Premium UX upgrades:
 
-1.  **Image Persistence Architecture Refactor**:
+1.  **Consistent Art Style & Character Persistence (January 24)**:
+    *   **Problem**: Random seeds caused character consistency issues (different faces/styles) across pages.
+    *   **Solution**: Implemented **Fixed Seed** logic in `generate-magic-book/route.js`. A unique seed is generated per book and applied to all page generations, ensuring the AI model maintains the same "artistic DNA" and character interpretation throughout the story.
+    *   **Result**: Drastically improved visual coherence.
+
+2.  **Premium AI Voice Narration (January 24)**:
+    *   **Feature**: Replaced robotic browser TTS with **OpenAI TTS (`tts-1-hd`)**.
+    *   **Voice**: "Nova" (Female, natural, energetic).
+    *   **Architecture**:
+        *   **API**: `src/app/api/audio/generate-speech/route.js` generates and caches audio.
+        *   **Client**: `BookReader.js` fetches from API and handles playback with loading states.
+        *   **Storage**: Audio files are cached in Supabase Storage (`book-audio` bucket) and linked in the DB (`generated_books` table) to prevent re-generation costs.
+
+3.  **Growth & Conversion (January 24)**:
+    *   **Club Promo Modal**: Created `ClubPromoModal.js` to upsell the Magic Story feature.
+        *   **Design**: Glassmorphism, 3D Magic Book asset, clear value proposition.
+        *   **Logic**: Appears after 5 seconds, once per session (sessionStorage).
+        *   **Outcome**: Increases visibility of the 6.500 FCFA subscription.
+
+4.  **Image Persistence Architecture Refactor**:
     *   **Problem**: Race condition between client-side text save and worker-side image save caused images to be overwritten/lost.
     *   **Solution**: Refactored `src/app/api/workers/generate-magic-book/route.js` to accept the latest text content directly from the client request. The worker now performs a single, atomic update saving both text and images, eliminating the need for a separate client-side save.
     *   **Schema Fix**: Removed erroneous `completed_at` column update in the worker which was causing silent database save failures.
 
-2.  **Generation Quality Improvements**:
+5.  **Generation Quality Improvements**:
     *   **Style**: Enforced "Studio Ghibli/Anime" style in the Fal AI prompt (`src/app/api/workers/generate-magic-book/route.js`). explicitly banning "Disney/Pixar/3D" styles for a more artistic, 2D aesthetic.
     *   **Content**: Updated LLM prompt (`src/app/api/magic/generate-text/route.js`) to generate longer, richer narratives (3-4 sentences/50 words per page) instead of short captions.
 
-3.  **UI/UX Improvements**:
+6.  **UI/UX Improvements**:
+    *   **PDF Revert**: Restored **Portrait** layout for PDF covers with centered title and image (user preference).
+    *   **Client Fixes**: Resolved `alt` tag warnings and Facebook Pixel `fbq` reference errors.
     *   **Dashboard Titles**: Fixed logic in `src/app/dashboard/page.js` and `purchased/page.js` to prioritize the generated story title (`story_content.title`) over the fallback template title.
     *   **Reader Experience**: 
         *   Increased desktop container height (`min-h-[850px]`) in `BookReader.js` to reduce letterboxing.

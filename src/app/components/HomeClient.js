@@ -505,6 +505,9 @@ export default function HomeClient({ initialBooks }) {
                 <FAQ />
             </MotionSection>
 
+            {/* Promo Modal */}
+            <ClubPromoModal />
+
         </div>
     );
 }

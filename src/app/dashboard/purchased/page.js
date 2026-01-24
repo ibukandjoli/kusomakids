@@ -101,7 +101,12 @@ function MyPdfsContent() {
                                 {/* Small Header Image */}
                                 <div className="h-32 bg-orange-50 relative overflow-hidden">
                                     {book.cover_image_url || book.cover_url || (book.story_content?.pages?.[0]?.image) ? (
-                                        <Image src={book.cover_image_url || book.cover_url || book.story_content?.pages?.[0]?.image} alt={book.title} fill className="object-cover opacity-80" />
+                                        <Image
+                                            src={book.cover_image_url || book.cover_url || book.story_content?.pages?.[0]?.image}
+                                            alt={book.title || 'Couverture du livre'}
+                                            fill
+                                            className="object-cover opacity-80"
+                                        />
                                     ) : (
                                         <div className="absolute inset-0 flex items-center justify-center text-orange-200">
                                             <span className="text-4xl">📄</span>

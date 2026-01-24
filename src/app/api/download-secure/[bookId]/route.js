@@ -74,52 +74,49 @@ const getStyles = (fontFamily) => StyleSheet.create({
         backgroundColor: '#FFFFFF',
         padding: 0
     },
-    // Cover Page - Landscape Mode
+    // Cover Page - PORTRAIT Mode
     coverPage: {
         flexDirection: 'column',
         alignItems: 'center',
-        justifyContent: 'center', // Center everything vertically
+        justifyContent: 'center',
         backgroundColor: '#FFFFFF',
-        padding: 0,
+        padding: 40,
         height: '100%',
         width: '100%'
     },
-    // Container for the Square Cover (Image + Text Overlay)
-    coverContainer: {
-        width: 500,
-        height: 500,
-        position: 'relative',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center'
+    // Centered Title
+    coverTitle: {
+        fontSize: 36,
+        textAlign: 'center',
+        fontFamily: fontFamily,
+        marginBottom: 10,
+        marginTop: 50,
+        color: '#2d2d2d'
     },
+    coverSubtitle: {
+        fontSize: 18,
+        textAlign: 'center',
+        fontFamily: fontFamily,
+        marginBottom: 40,
+        color: '#666666'
+    },
+    // Centered Image
     coverImage: {
-        width: '100%',
-        height: '100%',
-        objectFit: 'cover' // Fill the square
+        width: 450,
+        height: 450,
+        objectFit: 'contain',
+        marginBottom: 50,
+        borderRadius: 20
     },
-    // Text Overlay Styles
-    overlayTitle: {
+    coverFooter: {
         position: 'absolute',
-        top: 40,
+        bottom: 30,
         left: 0,
         right: 0,
         textAlign: 'center',
-        fontSize: 32,
-        color: '#FFFFFF',
-        fontFamily: fontFamily,
-        textShadow: '2px 2px 4px rgba(0,0,0,0.5)'
-    },
-    overlaySubtitle: {
-        position: 'absolute',
-        bottom: 50,
-        left: 0,
-        right: 0,
-        textAlign: 'center',
-        fontSize: 14,
-        color: '#FFFFFF',
-        fontFamily: fontFamily,
-        textShadow: '1px 1px 2px rgba(0,0,0,0.5)'
+        fontSize: 12,
+        color: '#999999',
+        fontFamily: fontFamily
     },
 
     // Story Page Styles
@@ -132,7 +129,6 @@ const getStyles = (fontFamily) => StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center'
     },
-    // Improved Story Image: Square
     storyImageContainer: {
         width: 400,
         height: 400,
@@ -186,40 +182,37 @@ const BookDocument = ({ book, fontFamily }) => {
 
     return (
         <Document>
-            {/* COVER PAGE - Landscape */}
-            <Page size="A4" orientation="landscape" style={styles.coverPage}>
+            {/* COVER PAGE - Portrait */}
+            <Page size="A4" orientation="portrait" style={styles.coverPage}>
 
-                {/* Header: Title & Subtitle */}
-                <View style={styles.coverHeader}>
-                    <Text style={styles.title}>{formattedTitle}</Text>
-                    <Text style={styles.subtitle}>Une histoire pour {book.child_name}</Text>
-                </View>
+                {/* Header */}
+                <Text style={styles.coverTitle}>{formattedTitle}</Text>
+                <Text style={styles.coverSubtitle}>Une aventure magique pour {book.child_name || 'votre enfant'}</Text>
 
-                {/* Center: Image */}
+                {/* Image */}
                 {book.cover_image_url ? (
                     <Image src={book.cover_image_url} style={styles.coverImage} />
-                ) : <View style={{ height: 350 }} />}
+                ) : <View style={{ width: 450, height: 450, backgroundColor: '#eee' }} />}
 
-                {/* Footer: Website */}
-                <View style={styles.coverFooter}>
-                    <Text style={{ fontSize: 12, color: '#999', fontFamily: fontFamily }}>
-                        KusomaKids.com
-                    </Text>
-                </View>
+                {/* Footer */}
+                <Text style={styles.coverFooter}>
+                    KusomaKids.com - Le héros, c'est votre enfant
+                </Text>
             </Page>
 
             {/* STORY PAGES - Landscape with side-by-side layout */}
             {pages.map((page, index) => (
                 <Page key={index} size="A4" orientation="landscape" style={styles.page}>
-                    {/* LEFT: Image (Full Bleed) */}
+                    {/* LEFT: Image (Square, Centered) */}
                     <View style={styles.imageSection}>
-                        {/* Ensure image URL is valid before rendering Image component */}
-                        {(page.image || page.image_url) ? (
-                            <Image
-                                src={page.image || page.image_url}
-                                style={styles.storyImage}
-                            />
-                        ) : null}
+                        <View style={styles.storyImageContainer}>
+                            {(page.image || page.image_url) ? (
+                                <Image
+                                    src={page.image || page.image_url}
+                                    style={styles.storyImage}
+                                />
+                            ) : null}
+                        </View>
                     </View>
 
                     {/* RIGHT: Text */}

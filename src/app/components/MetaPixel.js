@@ -8,15 +8,7 @@ export default function MetaPixel() {
     const [loaded, setLoaded] = useState(false);
     const pathname = usePathname();
 
-    useEffect(() => {
-        if (!loaded) return;
-        import('react-facebook-pixel')
-            .then((x) => x.default)
-            .then((ReactPixel) => {
-                ReactPixel.init(process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID);
-                ReactPixel.pageView();
-            });
-    }, [pathname, loaded]);
+    // useEffect removed - initialization handled in Script onLoad
 
     return (
         <>
@@ -24,8 +16,16 @@ export default function MetaPixel() {
                 id="fb-pixel"
                 src="https://connect.facebook.net/en_US/fbevents.js"
                 strategy="afterInteractive"
-                onLoad={() => setLoaded(true)}
                 data-pixel-id={process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID}
+                onLoad={() => {
+                    import('react-facebook-pixel')
+                        .then((x) => x.default)
+                        .then((ReactPixel) => {
+                            ReactPixel.init(process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID);
+                            ReactPixel.pageView();
+                            setLoaded(true);
+                        });
+                }}
             />
         </>
     );

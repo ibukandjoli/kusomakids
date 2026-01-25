@@ -139,6 +139,7 @@ Major stabilization of the "Create Your Own Story" feature and Premium UX upgrad
         *   Fixed text centering alignment.
         *   Corrected title overlay on the cover page.
     *   **Image Loading**: Improved robustness of image URL retrieval in `BookReader.js` to handle both `image` and `image_url` property formats.
+    *   **Audio API Fix**: Resolved "Book not found" (404) error in `generate-speech/route.js` by using Supabase Admin Client (Service Role) to bypass RLS restrictions during audio generation and caching.
 
 ### Build & Deployment Fixes
 - **Header Component**: Fixed SSR errors by moving `totalBadgeCount` state to component level

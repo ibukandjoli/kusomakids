@@ -6,6 +6,8 @@ import { sendEmail } from '@/lib/resend';
 import { OrderConfirmationEmail } from '@/lib/emails/OrderConfirmationEmail';
 import { WelcomeEmail } from '@/lib/emails/WelcomeEmail';
 import { MagicLinkEmail } from '@/lib/emails/MagicLinkEmail';
+import { SubscriptionSuccessEmail } from '@/lib/emails/SubscriptionSuccessEmail';
+import { SubscriptionFailedEmail } from '@/lib/emails/SubscriptionFailedEmail';
 import { SENDERS } from '@/lib/senders';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
@@ -53,6 +55,26 @@ export async function POST(req) {
             await handleInvoicePaymentSucceeded(invoice);
         } catch (error) {
             console.error("❌ Error handling invoice payment:", error);
+        }
+    }
+
+    // Handle payment failure
+    if (event.type === 'invoice.payment_failed') {
+        const invoice = event.data.object;
+        try {
+            await handleInvoicePaymentFailed(invoice);
+        } catch (error) {
+            console.error("❌ Error handling invoice failure:", error);
+        }
+    }
+
+    // Handle subscription cancellation
+    if (event.type === 'customer.subscription.deleted') {
+        const subscription = event.data.object;
+        try {
+            await handleSubscriptionDeleted(subscription);
+        } catch (error) {
+            console.error("❌ Error handling subscription deletion:", error);
         }
     }
 
@@ -283,6 +305,7 @@ async function handleInvoicePaymentSucceeded(invoice) {
         // Retrieve subscription to get metadata
         const subscription = await stripe.subscriptions.retrieve(invoice.subscription);
         const userId = subscription.metadata?.userId;
+        const userEmail = invoice.customer_email || subscription.customer_email; // Fallback
 
         if (!userId) {
             console.error("❌ No userId in subscription metadata");
@@ -304,8 +327,100 @@ async function handleInvoicePaymentSucceeded(invoice) {
             console.error("❌ Failed to reset monthly credits:", error);
         } else {
             console.log("✅ Monthly credits reset to 1 for user:", userId);
+
+            // Send Renewal Success Email
+            if (userEmail) {
+                try {
+                    const nextBillingDate = new Date(subscription.current_period_end * 1000).toLocaleDateString('fr-FR', {
+                        day: 'numeric',
+                        month: 'long',
+                        year: 'numeric'
+                    });
+
+                    await sendEmail({
+                        to: userEmail,
+                        from: SENDERS.WELCOME, // Using Welcome sender for relationship building
+                        subject: "🎉 Votre abonnement Club Kusoma est renouvelé !",
+                        html: SubscriptionSuccessEmail({
+                            userName: subscription.metadata?.childName || 'Membre du Club',
+                            nextBillingDate
+                        })
+                    });
+                    console.log(`📨 Renewal success email sent to ${userEmail}`);
+                } catch (e) {
+                    console.error("❌ Renewal email failed:", e);
+                }
+            }
         }
     } catch (err) {
         console.error("❌ Error processing invoice:", err);
+    }
+}
+
+async function handleInvoicePaymentFailed(invoice) {
+    if (!invoice.subscription) return;
+
+    try {
+        const subscription = await stripe.subscriptions.retrieve(invoice.subscription);
+        const userId = subscription.metadata?.userId;
+        const userEmail = invoice.customer_email || subscription.customer_email;
+
+        if (!userId) {
+            console.error("❌ No userId in failed subscription metadata");
+            return;
+        }
+
+        console.log(`⚠️ Handling payment failure for user: ${userId}`);
+
+        // Update status to past_due
+        await supabaseAdmin
+            .from('profiles')
+            .update({ subscription_status: 'past_due' })
+            .eq('id', userId);
+
+        // Send Failure Email
+        if (userEmail) {
+            await sendEmail({
+                to: userEmail,
+                from: SENDERS.SUPPORT,
+                subject: "⚠️ Action requise : Problème avec votre abonnement Kusoma",
+                html: SubscriptionFailedEmail({
+                    userName: subscription.metadata?.childName || 'Membre du Club',
+                    actionUrl: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/profile`
+                })
+            });
+            console.log(`📨 Payment failed email sent to ${userEmail}`);
+        }
+
+    } catch (err) {
+        console.error("❌ Error handling payment failure:", err);
+    }
+}
+
+async function handleSubscriptionDeleted(subscription) {
+    const userId = subscription.metadata?.userId;
+
+    if (!userId) {
+        console.error("❌ No userId in canceled subscription metadata");
+        return;
+    }
+
+    console.log(`🚫 Handling subscription cancellation for user: ${userId}`);
+
+    try {
+        await supabaseAdmin
+            .from('profiles')
+            .update({
+                subscription_status: 'canceled',
+                monthly_credits: 0 // Optional: remove credits on cancel? Or keep until period end?
+                // Keeping credits might be better UX, but 'canceled' usually means immediate effect or end of period.
+                // If stripe event is 'deleted', it's usually final.
+            })
+            .eq('id', userId);
+
+        console.log("✅ User profile updated to 'canceled'");
+
+    } catch (err) {
+        console.error("❌ Error handling subscription cancellation:", err);
     }
 }

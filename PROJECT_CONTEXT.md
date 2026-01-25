@@ -146,6 +146,12 @@ Major stabilization of the "Create Your Own Story" feature and Premium UX upgrad
 - **Suspense Boundaries**: Added to pages using `useSearchParams`
 - **404 Page**: Custom `not-found.js` to prevent prerender errors
 
+### Subscription Renewal System (January 25, 2026)
+- **Automated Notifications**: Implemented emails for subscription renewal success and payment failure.
+- **Payment Failure Handling**: Automatically downgrades status to `past_due` and prompts user to update payment method.
+- **Cancellation Handling**: Updates status to `canceled` upon Stripe subscription deletion.
+
+
 ### Face Swap & Image Generation
 - **Face Swap Working**: Verified in both frontend preview and backend worker
 - **Database Schema**: Aligned `pages` → `story_content` (JSONB)
@@ -195,7 +201,9 @@ src/
     ├── emails/
     │   ├── OrderConfirmationEmail.js     # Immediate order confirmation
     │   ├── BookReadyEmail.js             # PDF download link (after worker)
-    │   └── WelcomeEmail.js               # Welcome email
+    │   ├── WelcomeEmail.js               # Welcome email
+    │   ├── SubscriptionSuccessEmail.js   # Monthly renewal success
+    │   └── SubscriptionFailedEmail.js    # Payment failure notification
     └── supabase.js                       # Supabase client
 ```
 
@@ -279,8 +287,15 @@ NEXT_PUBLIC_APP_URL=https://www.kusomakids.com
 ### Flow 4: Monthly Renewal
 1. Stripe charges monthly subscription
 2. Webhook `invoice.payment_succeeded` received
-3. System resets `monthly_credits = 1`
-4. Member can download 1 new PDF for free
+3. **Email**: "Votre abonnement est renouvelé" (+1 crédit)
+4. System resets `monthly_credits = 1`
+
+### Flow 5: Renewal Failure
+1. Stripe payment fails
+2. Webhook `invoice.payment_failed` received
+3. System updates `subscription_status = 'past_due'`
+4. **Email**: "Action requise" (Lien pour mettre à jour paiement)
+
 
 ## 🐛 Known Issues & Limitations
 

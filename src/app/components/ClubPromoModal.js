@@ -87,7 +87,7 @@ export default function ClubPromoModal() {
                                 </h2>
 
                                 <p className="text-gray-600 text-lg mb-6 leading-relaxed">
-                                    Avec <span className="font-bold text-indigo-600">Magic Story</span>, créez des histoires uniques (texte + illustrations) à partir d'une simple idée.
+                                    Avec <span className="font-bold text-indigo-600">Magic Story</span>, créez des histoires originales (texte + illustrations) à partir d'une simple idée.
                                     <br /><br />
                                     <span className="text-sm text-gray-500">Exemple : "Un petit garçon qui découvre qu'il a le pouvoir de parler aux animaux..."</span>
                                 </p>

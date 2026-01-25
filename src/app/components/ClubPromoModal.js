@@ -59,25 +59,18 @@ export default function ClubPromoModal() {
                             </button>
 
                             {/* Image Section (Left) */}
-                            <div className="md:w-5/12 bg-gradient-to-br from-indigo-900 to-purple-900 relative min-h-[250px] md:min-h-[450px] flex items-center justify-center overflow-hidden">
-                                {/* Decorative Circles */}
-                                <div className="absolute top-0 left-0 w-64 h-64 bg-white/10 rounded-full -translate-x-1/2 -translate-y-1/2 blur-2xl"></div>
-                                <div className="absolute bottom-0 right-0 w-64 h-64 bg-orange-500/20 rounded-full translate-x-1/2 translate-y-1/2 blur-2xl"></div>
-
-                                <div className="relative z-10 w-4/5">
-                                    <Image
-                                        src="/images/magic_book_3d.png"
-                                        alt="Livre Magique"
-                                        width={400}
-                                        height={400}
-                                        className="object-contain drop-shadow-[0_20px_50px_rgba(0,0,0,0.5)] transform hover:scale-105 transition-transform duration-700"
-                                    />
-                                </div>
+                            <div className="md:w-5/12 bg-gray-100 relative min-h-[250px] md:min-h-[450px]">
+                                <Image
+                                    src="/images/promo_kid_reading.jpg"
+                                    alt="Enfant lisant une histoire Kusoma Kids"
+                                    fill
+                                    className="object-cover"
+                                />
 
                                 {/* Badge */}
-                                <div className="absolute bottom-6 left-6 bg-white/10 backdrop-blur-md border border-white/20 px-4 py-2 rounded-xl">
+                                <div className="absolute bottom-6 left-6 bg-black/30 backdrop-blur-md border border-white/20 px-4 py-2 rounded-xl z-20">
                                     <p className="text-white text-xs font-bold text-center">
-                                        ✨ Déjà 500+ histoires créées
+                                        ✨ Déjà +50 histoires créées
                                     </p>
                                 </div>
                             </div>
@@ -88,29 +81,29 @@ export default function ClubPromoModal() {
                                     Nouveau
                                 </div>
 
-                                <h2 className="text-3xl md:text-4xl font-black text-gray-900 mb-4 leading-tight font-[family-name:var(--font-chewy)]">
-                                    Transformez ses rêves en histoires réelles !
+                                <h2 className="text-3xl md:text-4xl font-black text-gray-900 mb-4 leading-tight">
+                                    Créez des histoires uniques pour votre enfant !
                                 </h2>
 
                                 <p className="text-gray-600 text-lg mb-6 leading-relaxed">
-                                    Avec <span className="font-bold text-indigo-600">Magic Story</span>, créez des livres uniques (texte + illustrations) à partir d'une simple idée.
+                                    Avec <span className="font-bold text-indigo-600">Magic Story</span>, créez des histoires uniques (texte + illustrations) à partir d'une simple idée.
                                     <br /><br />
-                                    <span className="text-sm text-gray-500">Exemple : "Un petit garçon qui voyage sur le dos d'une girafe dans l'espace..."</span>
+                                    <span className="text-sm text-gray-500">Exemple : "Un petit garçon qui découvre qu'il a le pouvoir de parler aux animaux..."</span>
                                 </p>
 
                                 {/* Features List */}
                                 <ul className="space-y-3 mb-8">
                                     <li className="flex items-center gap-3 text-gray-700 font-medium">
                                         <span className="flex-shrink-0 w-6 h-6 rounded-full bg-green-100 text-green-600 flex items-center justify-center text-sm">✓</span>
-                                        Génération IA illimitée
+                                        Génération illimitée d'Histoires
                                     </li>
                                     <li className="flex items-center gap-3 text-gray-700 font-medium">
                                         <span className="flex-shrink-0 w-6 h-6 rounded-full bg-green-100 text-green-600 flex items-center justify-center text-sm">✓</span>
-                                        Illustrations style Ghibli
+                                        Illustrations en dessin 2D
                                     </li>
                                     <li className="flex items-center gap-3 text-gray-700 font-medium">
                                         <span className="flex-shrink-0 w-6 h-6 rounded-full bg-green-100 text-green-600 flex items-center justify-center text-sm">✓</span>
-                                        Téléchargement PDF inclus
+                                        Lecture en ligne + Audio inclus
                                     </li>
                                 </ul>
 

@@ -97,7 +97,7 @@ subscription_started_at timestamp
 - **Member Badge**: Displays subscription status and remaining credits
 - **Responsive Design**: Improved mobile experience across all pages
 
-### Magic Stories: Critical Fixes & Enhancements (January 21-24, 2026)
+### Magic Stories: Critical Fixes & Enhancements (January 21-25, 2026)
 Major stabilization of the "Create Your Own Story" feature and Premium UX upgrades:
 
 1.  **Consistent Art Style & Character Persistence (January 24)**:
@@ -113,11 +113,13 @@ Major stabilization of the "Create Your Own Story" feature and Premium UX upgrad
         *   **Client**: `BookReader.js` fetches from API and handles playback with loading states.
         *   **Storage**: Audio files are cached in Supabase Storage (`book-audio` bucket) and linked in the DB (`generated_books` table) to prevent re-generation costs.
 
-3.  **Growth & Conversion (January 24)**:
+3.  **Growth & Conversion (January 24-25)**:
     *   **Club Promo Modal**: Created `ClubPromoModal.js` to upsell the Magic Story feature.
         *   **Design**: Glassmorphism, 3D Magic Book asset, clear value proposition.
         *   **Logic**: Appears after 5 seconds, once per session (sessionStorage).
-        *   **Outcome**: Increases visibility of the 6.500 FCFA subscription.
+        *   **Mobile Optimization**: Image hidden on mobile for better fit/reduced height.
+        *   **Frictionless Flow**: Button redirects directly to Payment (if logged in) or Signup (if guest), removing intermediate landing page steps.
+        *   **Outcome**: Increases visibility of the 6.500 FCFA subscription with optimized conversion path.
 
 4.  **Image Persistence Architecture Refactor**:
     *   **Problem**: Race condition between client-side text save and worker-side image save caused images to be overwritten/lost.
@@ -187,6 +189,7 @@ src/
 │       ├── PaymentModal.js               # Dynamic pricing modal
 │       ├── BookReader.js                 # Story reader with showFullscreen prop
 │       ├── DashboardBottomNav.js         # Mobile navigation
+│       ├── ClubPromoModal.js             # Upsell modal (Optimized mobile/signup)
 │       └── Header.js                     # Main header with cart badge
 └── lib/
     ├── emails/
@@ -368,6 +371,6 @@ npm start      # Production server
 
 ---
 
-*Last Updated: January 20, 2026*
-*Version: 2.2 (Launch Readiness & UX Refinements)*
+*Last Updated: January 25, 2026*
+*Version: 3.0 (AI Polish & Conversion Optimization)*
 

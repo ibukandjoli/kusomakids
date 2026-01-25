@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import Image from 'next/image';
+import { supabase } from '@/lib/supabase';
 
 export default function ClubPromoModal() {
     const [isOpen, setIsOpen] = useState(false);
@@ -113,12 +114,19 @@ export default function ClubPromoModal() {
                                         <p className="text-sm text-gray-500 line-through">9.500 FCFA</p>
                                         <p className="text-2xl font-black text-gray-900">6.500 FCFA <span className="text-sm font-normal text-gray-500">/mois</span></p>
                                     </div>
-                                    <Link
-                                        href="/club"
+                                    <button
+                                        onClick={async () => {
+                                            const { data: { session } } = await supabase.auth.getSession();
+                                            if (session) {
+                                                window.location.href = '/dashboard?action=subscribe';
+                                            } else {
+                                                window.location.href = '/signup?plan=club';
+                                            }
+                                        }}
                                         className="w-full sm:w-auto flex-1 bg-gradient-to-r from-orange-500 to-red-600 text-white font-bold py-3 px-6 rounded-xl hover:shadow-lg hover:shadow-orange-500/30 transition-all text-center"
                                     >
                                         Je rejoins le Club →
-                                    </Link>
+                                    </button>
                                 </div>
                                 <p className="text-center sm:text-right mt-2 text-xs text-gray-400">
                                     Sans engagement. Annulable à tout moment.

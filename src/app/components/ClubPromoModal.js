@@ -59,7 +59,7 @@ export default function ClubPromoModal() {
                             </button>
 
                             {/* Image Section (Left) */}
-                            <div className="md:w-5/12 bg-gray-100 relative min-h-[250px] md:min-h-[450px]">
+                            <div className="hidden md:block md:w-5/12 bg-gray-100 relative min-h-[250px] md:min-h-[450px]">
                                 <Image
                                     src="/images/promo_kid_reading.jpg"
                                     alt="Enfant lisant une histoire Kusoma Kids"

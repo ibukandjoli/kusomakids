@@ -28,7 +28,7 @@ export default function ClubPage() {
                             if (session) {
                                 window.location.href = '/dashboard?action=subscribe';
                             } else {
-                                window.location.href = '/login?plan=club';
+                                window.location.href = '/signup';
                             }
                         }}
                         className="inline-block bg-orange-500 hover:bg-orange-600 text-white font-bold text-xl px-10 py-4 rounded-full shadow-xl shadow-orange-500/30 transform hover:-translate-y-1 transition-all"
@@ -88,7 +88,7 @@ export default function ClubPage() {
                                     window.location.href = '/dashboard?action=subscribe';
                                 } else {
                                     // User logged out -> Login then Dashboard
-                                    window.location.href = '/login?plan=club';
+                                    window.location.href = '/signup';
                                 }
                             }}
                             className="block w-full bg-orange-500 hover:bg-orange-600 py-4 rounded-xl font-bold text-center transition-colors shadow-lg shadow-orange-500/30 text-white"

@@ -49,6 +49,10 @@ const nextConfig: NextConfig = {
       {
         protocol: "https",
         hostname: "files.fal.ai",
+      },
+      {
+        protocol: "https",
+        hostname: "lh3.googleusercontent.com",
       }
     ],
   },

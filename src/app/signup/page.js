@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import AuthLayout from '../components/AuthLayout';
+import GoogleAuthButton from '../components/GoogleAuthButton';
 
 function SignupContent() {
     const [email, setEmail] = useState('');
@@ -104,6 +105,16 @@ function SignupContent() {
                         ⚠️ {error}
                     </div>
                 )}
+
+                <div className="space-y-4">
+                    <GoogleAuthButton text="Continuer avec Google" />
+
+                    <div className="relative flex items-center py-2">
+                        <div className="flex-grow border-t border-gray-200"></div>
+                        <span className="flex-shrink-0 mx-4 text-gray-400 text-xs uppercase font-bold tracking-wider">Ou avec email</span>
+                        <div className="flex-grow border-t border-gray-200"></div>
+                    </div>
+                </div>
                 <div className="space-y-4">
                     <div>
                         <label htmlFor="email-address" className="block text-sm font-medium text-gray-700 mb-1">Adresse Email</label>

@@ -212,6 +212,7 @@ src/
 
 ### Supabase Dashboard
 **CRITICAL - User Action Required**:
+- **Google OAuth**: Enable provider with Client ID/Secret.
 - **Redirect URLs**: `https://www.kusomakids.com/**`
 - **Site URL**: `https://www.kusomakids.com`
 
@@ -301,6 +302,7 @@ NEXT_PUBLIC_APP_URL=https://www.kusomakids.com
 ## 🐛 Known Issues & Limitations
 
 ### Minor Issues
+- **Google Auth**: Consent screen shows `supabase.co` URL (requires Custom Domain to fix).
 - **Face Swap Quality**: Could be improved with parameter tuning
 - **Browserslist Warning**: Data is 11 months old (cosmetic)
 - **Middleware Deprecation**: Next.js recommends using "proxy" instead
@@ -353,7 +355,7 @@ NEXT_PUBLIC_APP_URL=https://www.kusomakids.com
 - **Caching**: Vercel build cache enabled
 
 ### Security
-- **Authentication**: Supabase Auth with Magic Links
+- **Authentication**: Supabase Auth (Email + Google OAuth)
 - **RLS**: Row Level Security on Supabase tables
 - **Webhook Verification**: Stripe signature validation
 - **API Routes**: Server-side only, no client exposure

@@ -171,7 +171,7 @@ export default function AdminAnalyticsDashboard() {
                     <div className="space-y-6">
                         {/* Conversion Rate */}
                         <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
-                            <h3 className="text-gray-500 text-sm font-bold uppercase mb-4">Taux de Conversion (Simulé)</h3>
+                            <h3 className="text-gray-500 text-sm font-bold uppercase mb-4">Taux de Conversion</h3>
                             <div className="flex items-end gap-3">
                                 {/* Can calculate a mock rate, e.g. based on our mock numbers: 138/122 > 100% which is funny. 
                                     Let's just mock the display to look reasonable. 

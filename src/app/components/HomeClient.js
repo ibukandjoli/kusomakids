@@ -178,7 +178,7 @@ export default function HomeClient({ initialBooks }) {
                                 Donnez à votre enfant le pouvoir d'être le <span className="text-orange-600 relative inline-block">
                                     Héros
                                     <svg className="absolute w-full h-3 md:h-4 -bottom-1 md:-bottom-2 left-0 text-orange-200 -z-10" viewBox="0 0 100 10" preserveAspectRatio="none"><path d="M0 5 Q 50 10 100 5" stroke="currentColor" strokeWidth="12" fill="none" /></svg>
-                                </span>.
+                                </span> de l'histoire.
                             </h1>
                             <p className="text-lg md:text-xl text-gray-700 mb-8 leading-relaxed max-w-xl mx-auto lg:mx-0 font-medium">
                                 Créez et personnalisez des histoires sur-mesure où son <span className="font-bold">prénom</span> et son <span className="font-bold">visage</span> prennent vie. Fini les héros qui ne lui ressemblent pas. Offrez-lui le plus beau cadeau pour sa <span className="font-bold text-orange-600 bg-orange-100 px-1 rounded">confiance en lui.</span>
@@ -438,7 +438,7 @@ export default function HomeClient({ initialBooks }) {
                 <div className="container mx-auto px-4">
                     <div className="text-center max-w-2xl mx-auto mb-16">
                         <h2 className="text-3xl font-bold text-gray-900 mb-4">Une formule pour chaque besoin</h2>
-                        <p className="text-gray-600">Offrez une histoire unique (PDF)ou rejoignez le club pour lire toute l&apos;année.</p>
+                        <p className="text-gray-600">Offrez une histoire unique (PDF) ou rejoignez le club pour lire toute l&apos;année.</p>
                     </div>
 
                     <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto items-center">

@@ -103,6 +103,12 @@ function CheckoutContent() {
   const total = Math.max(0, subtotal - discount);
 
   const handlePayment = async () => {
+    // SECURITY: Require authentication before payment
+    if (!user) {
+      router.push(`/login?redirect=${encodeURIComponent('/checkout')}`);
+      return;
+    }
+
     setProcessing(true);
 
     const processedBookIds = [];

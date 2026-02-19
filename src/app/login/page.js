@@ -31,7 +31,11 @@ function LoginContent() {
             const storedContext = localStorage.getItem('signup_context');
             let nextUrl = '/dashboard';
 
-            if (storedContext) {
+            // PRIORITY 1: Explicit redirect param (from auth guard)
+            const redirectParam = searchParams.get('redirect');
+            if (redirectParam && redirectParam.startsWith('/')) {
+                nextUrl = redirectParam;
+            } else if (storedContext) {
                 const { plan, bookId } = JSON.parse(storedContext);
                 if (plan === 'club') {
                     nextUrl = `/checkout?plan=club${bookId ? `&book_id=${bookId}` : ''}`;
@@ -70,7 +74,7 @@ function LoginContent() {
                 <h2 className="text-3xl font-extrabold text-gray-900">Accéder à votre espace</h2>
                 <p className="mt-2 text-sm text-gray-600">
                     Heureux de vous revoir ! {' '}
-                    <Link href="/signup" className="font-medium text-orange-600 hover:text-orange-500 underline decoration-2 underline-offset-2">
+                    <Link href={`/signup${searchParams.get('redirect') ? `?redirect=${encodeURIComponent(searchParams.get('redirect'))}` : ''}`} className="font-medium text-orange-600 hover:text-orange-500 underline decoration-2 underline-offset-2">
                         Rejoindre le Club
                     </Link>
                 </p>

@@ -461,6 +461,14 @@ export default function PreviewPage() {
     };
 
     const handleConfirm = () => {
+        // SECURITY: Require authentication before proceeding to checkout
+        if (!user) {
+            // Save current cart state so user can resume after login
+            const currentPath = window.location.pathname;
+            router.push(`/login?redirect=${encodeURIComponent(currentPath)}`);
+            return;
+        }
+
         // FIX: Persist the Swapped Cover Image (coverImage state) instead of the initial orderData.coverUrl
         const updatedOrder = {
             ...orderData,

@@ -60,7 +60,7 @@ export async function POST(req) {
         }));
 
         // --- DYNAMIC CHARACTER DESCRIPTION ---
-        let CHARACTER_STYLE = "enfant africain, peau noire, cheveux crépus ou tressés"; // Default
+        let CHARACTER_STYLE = "a young african child, dark skin, natural hair"; // Base
         const referenceImage = rawContent.reference_image;
 
         if (referenceImage) {
@@ -96,9 +96,8 @@ export async function POST(req) {
             }
         }
 
-        // MODIFIED: Ghibli style but with REALISTIC PROPORTIONS (No Chibi/Big Head)
-        const STYLE_SUFFIX = `, ${CHARACTER_STYLE}, studio ghibli style, detailed 2D illustration, masterpiece, vibrant colors, hayao miyazaki style, correct human anatomy, proportional head, small eyes, natural face features, detailed background, no 3d render, no cgi, flat color`;
-
+        // MODIFIED: Ghibli style but with REALISTIC PROPORTIONS
+        const STYLE_SUFFIX = `, studio ghibli style, detailed 2D illustration, masterpiece, vibrant colors, hayao miyazaki style, correct human anatomy, proportional head, small eyes, natural face features, detailed background, no 3d render, no cgi, flat color`;
 
         if (mergedPages.length === 0) {
             return NextResponse.json({ error: "No pages to generate" }, { status: 400 });
@@ -115,22 +114,13 @@ export async function POST(req) {
 
         const processedPages = await Promise.all(mergedPages.map(async (page, index) => {
             try {
-                // If page already has image, preserve it? Or force regenerate?
-                // The user clicked "Generate", so usually implies force (or missing).
-                // Let's force generate for now.
-
-
                 // REORDERED PROMPT: Character Description FIRST
                 // Structure: [Character Desc] doing [Action] in [Setting], [Style Tags]
-                // We strip the "Story Text" if it's too long or rely on 'image_prompt' from LLM which we hope includes action.
-                // But the LLM 'image_prompt' often includes the character desc again. 
-                // We'll prefix our STRONG consistent description.
 
                 const basePrompt = page.image_prompt || page.text;
-                // Clean base prompt of generic terms if possible, but hard to do safely.
-                // We just prepend.
 
-                const prompt = `${CHARACTER_STYLE}, ${basePrompt}` + STYLE_SUFFIX;
+                // STRONG CONSISTENCY PROMPT STRUCTURE
+                const prompt = `${CHARACTER_STYLE} . ${basePrompt}. ${STYLE_SUFFIX}`;
 
                 // Using fal.subscribe for checking status
                 const result = await fal.subscribe("fal-ai/flux/dev", {

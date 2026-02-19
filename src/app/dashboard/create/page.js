@@ -36,6 +36,19 @@ export default function CreateMagicStoryPage() {
     });
     const [previewUrl, setPreviewUrl] = useState(null); // Image Preview State
 
+    // Progress State
+    const [progress, setProgress] = useState(0);
+    const [loadingQuote, setLoadingQuote] = useState("Lancement de la magie...");
+
+    const LOADING_QUOTES = [
+        "Invocation des muses créatives...",
+        "Affûtage des crayons magiques...",
+        "Mélange des couleurs de l'imagination...",
+        "Relecture par les lutins...",
+        "Séchage de l'encre virtuelle...",
+        "Préparation de la couverture..."
+    ];
+
     // New Child Form State
     const [newChildData, setNewChildData] = useState({
         first_name: '',
@@ -171,6 +184,21 @@ export default function CreateMagicStoryPage() {
         e.preventDefault();
         setLoading(true);
         setError(null);
+        setProgress(0);
+
+        // Start fancy loading simulation
+        let quoteIndex = 0;
+        const progressInterval = setInterval(() => {
+            setProgress(prev => {
+                if (prev >= 95) return 95;
+                return prev + (Math.random() * 5); // Random increment
+            });
+        }, 500);
+
+        const quoteInterval = setInterval(() => {
+            quoteIndex = (quoteIndex + 1) % LOADING_QUOTES.length;
+            setLoadingQuote(LOADING_QUOTES[quoteIndex]);
+        }, 2000);
 
         try {
             let photoUrl = null;
@@ -223,6 +251,9 @@ export default function CreateMagicStoryPage() {
             console.error(err);
             setError(err.message);
             setLoading(false);
+        } finally {
+            clearInterval(progressInterval);
+            clearInterval(quoteInterval);
         }
     };
 
@@ -391,15 +422,27 @@ export default function CreateMagicStoryPage() {
                         <button
                             type="submit"
                             disabled={loading}
-                            className="w-full bg-gradient-to-r from-[#FF5F6D] to-[#FFC371] hover:brightness-105 text-white font-black text-lg py-5 rounded-2xl shadow-xl shadow-orange-500/20 transform hover:-translate-y-1 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                            className="w-full bg-gradient-to-r from-[#FF5F6D] to-[#FFC371] hover:brightness-105 text-white font-black text-lg py-5 rounded-2xl shadow-xl shadow-orange-500/20 transform hover:-translate-y-1 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none overflow-hidden relative"
                         >
+                            {loading && (
+                                <div
+                                    className="absolute left-0 top-0 bottom-0 bg-white/20 transition-all duration-300"
+                                    style={{ width: `${progress}%` }}
+                                ></div>
+                            )}
+
                             {loading ? (
-                                <span className="flex items-center justify-center gap-3">
-                                    <svg className="animate-spin h-6 w-6 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                    </svg>
-                                    Écriture de l'histoire...
+                                <span className="flex flex-col items-center justify-center relative z-10">
+                                    <span className="flex items-center gap-3 mb-1">
+                                        <svg className="animate-spin h-6 w-6 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                        </svg>
+                                        {Math.round(progress)}%
+                                    </span>
+                                    <span className="text-xs font-medium opacity-90 animate-pulse">
+                                        {loadingQuote}
+                                    </span>
                                 </span>
                             ) : "✨ Générer l'Histoire"}
                         </button>

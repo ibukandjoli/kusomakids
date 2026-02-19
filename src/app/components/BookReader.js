@@ -42,7 +42,8 @@ export default function BookReader({ book, user, onUnlock, isEditable = false, o
     const isUnlocked = book?.is_unlocked || (user?.subscription_tier === 'club');
 
     const handleNext = () => {
-        if (currentPage < totalPages) {
+        // Allow going to totalPages + 1 for "The End" page
+        if (currentPage < totalPages + 1) {
             setCurrentPage(prev => prev + 1);
         }
     };
@@ -109,27 +110,17 @@ export default function BookReader({ book, user, onUnlock, isEditable = false, o
             // 1. Check local audio element override (if previously fetched in session)
             // Use a simple map or just fetch again (API caches url lookup).
 
-            const response = await fetch('/api/audio/generate-speech', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    text: personalize(textToRead),
-                    bookId: book.id,
-                    pageIndex: currentPage > 0 ? currentPage - 1 : 'cover', // special key for cover? Let's use 0 for now or string?
-                    // The API expects pageIndex to index into array. Cover is not in array usually.
-                    // If currentPage == 0 (Cover), let's just use text-based hash or skip saving to array for now?
-                    // The API tries to update `pages[pageIndex]`. 
-                    // To be safe, ONLY read story pages for now or handle cover gracefully.
-                })
-            });
-
-            // Special case: If cover (index 0 but logic maps to cover), API might fail to save to DB but still return audioUrl.
-            // Let's pass pageIndex: -1 for cover and check API? 
-            // The current API implementation (lines 89+) checks `if (pages[pageIndex])`. 
-            // So if we pass -1, it wont save to DB but will return audio. Perfect.
-
+            // 2. FETCH PROXY URL (Secure Audio)
+            // Instead of direct link, we ask our proxy to stream it
             const effectivePageIndex = currentPage === 0 ? -1 : (currentPage - 1);
 
+            /* 
+               NOTE: The generate-speech endpoint returns a public supbabase URL.
+               But access is blocked by RLS. 
+               We must use our new proxy to fetch it server-side.
+            */
+
+            // First, generate/get the storage URL (cached or new)
             const res = await fetch('/api/audio/generate-speech', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -147,12 +138,18 @@ export default function BookReader({ book, user, onUnlock, isEditable = false, o
                 throw new Error(data.error || "Erreur de génération audio");
             }
 
-            // Play Audio
+            // Now, construct the PROXY URL
+            // We pass the "secret" storage URL to the proxy
+            const proxyUrl = `/api/audio/proxy?url=${encodeURIComponent(data.audioUrl)}`;
+
+            console.log("🔗 Playing via proxy:", proxyUrl);
+
+            // Play Audio via Proxy
             if (audioRef.current) {
                 audioRef.current.pause();
             }
 
-            const audio = new Audio(data.audioUrl);
+            const audio = new Audio(proxyUrl);
             audioRef.current = audio;
 
             audio.onended = () => {
@@ -161,7 +158,7 @@ export default function BookReader({ book, user, onUnlock, isEditable = false, o
             };
 
             audio.onerror = (e) => {
-                console.error("Audio Playback Error", e);
+                console.error("Audio Playback Error (Check Proxy)", e);
                 setIsPlaying(false);
                 setAudioLoading(false);
                 alert("Erreur lors de la lecture audio.");
@@ -200,6 +197,20 @@ export default function BookReader({ book, user, onUnlock, isEditable = false, o
         document.addEventListener('fullscreenchange', handleFullscreenChange);
         return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
     }, []);
+
+    // Keyboard Navigation
+    useEffect(() => {
+        const handleKeyDown = (e) => {
+            if (e.key === 'ArrowRight') {
+                handleNext();
+            } else if (e.key === 'ArrowLeft') {
+                handlePrev();
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [currentPage, totalPages]); // Re-bind when page changes to ensure latest state
 
     return (
         <div ref={readerRef} className="w-full h-full bg-white overflow-hidden relative">
@@ -452,6 +463,23 @@ export default function BookReader({ book, user, onUnlock, isEditable = false, o
                         </motion.div>
                     )}
                 </AnimatePresence>
+
+                {/* END PAGE */}
+                {currentPage === totalPages + 1 && (
+                    <div className="absolute inset-0 z-20 bg-[#FFFDF7] flex flex-col items-center justify-center p-8 text-center animate-in zoom-in-95 duration-500">
+                        <div className="text-6xl mb-4 animate-bounce">🎉</div>
+                        <h2 className="text-5xl font-chewy text-orange-600 mb-6">Fin de l'histoire !</h2>
+                        <p className="text-xl text-gray-600 mb-8 max-w-lg">
+                            Bravo, tu as terminé cette aventure fantastique. Prêt pour la prochaine ?
+                        </p>
+                        <button
+                            onClick={() => window.location.href = '/dashboard/create'}
+                            className="bg-orange-500 text-white px-8 py-4 rounded-full font-bold text-xl shadow-lg hover:bg-orange-600 hover:scale-105 transition-all"
+                        >
+                            Créer une nouvelle histoire ✨
+                        </button>
+                    </div>
+                )}
             </div>
         </div>
     );

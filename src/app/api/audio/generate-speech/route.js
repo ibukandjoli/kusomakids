@@ -71,7 +71,8 @@ export async function POST(req) {
         const bucketExists = buckets?.some(b => b.name === bucketName);
 
         if (!bucketExists) {
-            const { error: createError } = await supabaseAdmin.storage.createBucket(bucketName, { public: true });
+            // Secure by default: public: false
+            const { error: createError } = await supabaseAdmin.storage.createBucket(bucketName, { public: false });
             if (createError) console.error("Could not create bucket:", createError);
         }
 

@@ -4,7 +4,8 @@ import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import DashboardBottomNav from '@/app/components/DashboardBottomNav';
-import { FaPen, FaMagic, FaSave } from 'react-icons/fa';
+import { FaPen, FaMagic, FaSave, FaBookOpen, FaList } from 'react-icons/fa';
+import confetti from 'canvas-confetti';
 
 export default function ReviewStoryPage({ params }) {
     // Unwrap params using React.use()
@@ -16,6 +17,7 @@ export default function ReviewStoryPage({ params }) {
     const [loading, setLoading] = useState(true);
     const [generating, setGenerating] = useState(false);
     const [progress, setProgress] = useState(0); // Fake progress for UX
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
 
     useEffect(() => {
         fetchBook();
@@ -96,10 +98,17 @@ export default function ReviewStoryPage({ params }) {
             clearInterval(interval);
             setProgress(100);
 
-            // Redirect to Purchased/My Books
-            setTimeout(() => {
-                router.push('/dashboard/purchased');
-            }, 1000);
+            // Trigger Confetti
+            confetti({
+                particleCount: 150,
+                spread: 70,
+                origin: { y: 0.6 },
+                colors: ['#FF5F6D', '#FFC371', '#ffffff', '#4ade80']
+            });
+
+            // Show Modal instead of redirect
+            setGenerating(false);
+            setShowSuccessModal(true);
 
         } catch (err) {
             console.error("❌ Generation error:", err);
@@ -223,6 +232,38 @@ export default function ReviewStoryPage({ params }) {
             </main>
 
             <DashboardBottomNav />
+
+            {/* SUCCESS MODAL */}
+            {showSuccessModal && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-in fade-in"></div>
+                    <div className="relative bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl animate-in zoom-in-95 text-center">
+                        <div className="text-6xl mb-4 animate-bounce">🎉</div>
+                        <h2 className="text-2xl font-black text-gray-900 mb-2">Histoire Prête !</h2>
+                        <p className="text-gray-500 mb-8">
+                            Votre livre magique a été créé avec succès. Que voulez-vous faire ?
+                        </p>
+
+                        <div className="space-y-3">
+                            <button
+                                onClick={() => router.push(`/read/${bookId}`)}
+                                className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-4 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 transform hover:scale-105"
+                            >
+                                <FaBookOpen />
+                                Lire maintenant
+                            </button>
+
+                            <button
+                                onClick={() => router.push('/dashboard/purchased')}
+                                className="w-full bg-white border-2 border-gray-200 hover:border-orange-200 text-gray-600 font-bold py-4 rounded-xl transition-all flex items-center justify-center gap-2"
+                            >
+                                <FaList />
+                                Voir ma bibliothèque
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

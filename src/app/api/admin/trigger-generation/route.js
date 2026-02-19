@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { createServerClient } from '@supabase/ssr';
 import * as fal from '@fal-ai/serverless-client';
 
 // Configure Fal
@@ -18,12 +19,37 @@ export const maxDuration = 300;
 
 /**
  * Admin endpoint to manually trigger book generation
- * Includes inline worker logic to avoid import/fetch issues
+ * SECURED: Requires admin authentication
  */
 export async function POST(req) {
     let bookId;
 
     try {
+        // 0. SECURITY: Verify Admin Identity
+        const cookies = req.cookies;
+        const authSupabase = createServerClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL,
+            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+            {
+                cookies: {
+                    getAll() { return cookies.getAll() },
+                    setAll() { }
+                }
+            }
+        );
+
+        const { data: { session }, error: authError } = await authSupabase.auth.getSession();
+        if (authError || !session) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
+        const isOwner = session.user.email === 'ibuka.ndjoli@gmail.com';
+        const { data: profile } = await authSupabase.from('profiles').select('role').eq('id', session.user.id).single();
+
+        if (!isOwner && profile?.role !== 'admin') {
+            return NextResponse.json({ error: 'Forbidden: Admins only' }, { status: 403 });
+        }
+
         // 1. Get and validate bookId
         const body = await req.json();
         bookId = body.bookId;

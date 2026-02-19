@@ -36,8 +36,28 @@ export async function POST(req) {
     console.log("🪄 WORKER START: Generate Magic Book (2D)");
 
     try {
+        // 0. SECURITY: Verify authenticated user owns this book
+        const { createClient: createServerClientFn } = await import('@/lib/supabase-server');
+        const authSupabase = await createServerClientFn();
+        const { data: { user }, error: authError } = await authSupabase.auth.getUser();
+
+        if (authError || !user) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
         const { bookId, pages: submittedPages } = await req.json();
-        // ... (validation checks) ...
+
+        // Verify book ownership before expensive AI calls
+        const { data: ownerCheck, error: ownerError } = await supabaseAdmin
+            .from('generated_books')
+            .select('user_id')
+            .eq('id', bookId)
+            .single();
+
+        if (ownerError || !ownerCheck || ownerCheck.user_id !== user.id) {
+            console.error(`🚨 IDOR: User ${user.id} tried to generate for book ${bookId}`);
+            return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+        }
 
         // 1. Fetch Book Data
         const { data: book, error: fetchError } = await supabaseAdmin
@@ -199,8 +219,8 @@ export async function POST(req) {
         // Let's reuse BookReadyEmail if we have email.
 
         // Get user email
-        const { data: user } = await supabaseAdmin.auth.admin.getUserById(book.user_id);
-        const userEmail = user?.user?.email;
+        const { data: userData } = await supabaseAdmin.auth.admin.getUserById(book.user_id);
+        const userEmail = userData?.user?.email;
 
         if (userEmail) {
             const downloadUrl = `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/purchased`; // Direct link to dashboard

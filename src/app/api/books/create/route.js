@@ -10,54 +10,10 @@ export async function POST(req) {
         let userId = session?.user?.id;
         const body = await req.json();
 
-        // GUEST CHECKOUT LOGIC
+        // GUEST CHECKOUT DISABLED for security
+        // Previously allowed creating accounts for ANY email without verification
         if (!userId) {
-            if (!body.email) {
-                return NextResponse.json({ error: 'Unauthorized: Please login or provide email' }, { status: 401 });
-            }
-
-            // Create/Find User via Admin Client (Service Role)
-            const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-            const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-
-            if (!serviceRoleKey) {
-                console.error("❌ Missing SUPABASE_SERVICE_ROLE_KEY for guest checkout");
-                return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
-            }
-
-            const adminSupabase = createAdminClient(supabaseUrl, serviceRoleKey, {
-                auth: {
-                    autoRefreshToken: false,
-                    persistSession: false
-                }
-            });
-
-            const email = body.email;
-
-            // Generate a random password for shadow account
-            const randomPassword = Math.random().toString(36).slice(-8) + "Kusoma1!";
-
-            const { data: newUser, error: createError } = await adminSupabase.auth.admin.createUser({
-                email: email,
-                password: randomPassword,
-                email_confirm: true
-            });
-
-            if (createError) {
-                console.log("⚠️ User creation failed (likely exists), looking up...", createError.message);
-                const { data: usersData, error: listError } = await adminSupabase.auth.admin.listUsers();
-                if (listError) throw listError;
-
-                const foundUser = usersData.users.find(u => u.email === email);
-                if (foundUser) {
-                    userId = foundUser.id;
-                } else {
-                    throw new Error("Could not create or find user for guest checkout");
-                }
-            } else {
-                userId = newUser.user.id;
-                console.log("✅ Created Guest User:", userId);
-            }
+            return NextResponse.json({ error: 'Unauthorized: Please login first' }, { status: 401 });
         }
 
         const {

@@ -33,7 +33,7 @@ KusomaKids is a **Next.js 16** application deployed on **Vercel**. It uses **Sup
 2.  **Webhook** (`invoice.payment_succeeded` / `checkout.session.completed`):
     *   **Logic**: `src/app/api/webhooks/stripe/route.js`.
     *   **Action**: Unlocks book (`is_unlocked = true`).
-    *   **Ghost Account**: If user doesn't exist, creates one using email.
+    *   **Auth Required**: User must be logged in before checkout (guest checkout disabled).
     *   **Notification**: Sends confirmation Email.
 
 ### C. Audio System
@@ -62,10 +62,16 @@ KusomaKids is a **Next.js 16** application deployed on **Vercel**. It uses **Sup
 *   `token`: Secure hash for download links.
 *   `expires_at`: Validity period (30 days).
 
-## 5. Security Model
+## 5. Security Model (Audited Feb 2026)
 *   **Row Level Security (RLS)**:
-    *   Users can only SELECT/UPDATE their own books.
-    *   Public access allowed for "Preview" mode (strict columns).
+    *   `generated_books`: Owner-only access (`user_id = auth.uid()`).
+    *   `profiles`: Users can read/update their own profile only.
 *   **Storage Policies**:
-    *   `book-audio`: Public read, Authenticated write (via Admin API).
+    *   `book-audio`: **Private**. Served via authenticated proxy (`/api/audio/proxy`).
     *   `generated-images`: Public read.
+*   **API Auth**:
+    *   Admin endpoints: Session + admin role required.
+    *   Worker endpoints: Auth + book ownership verification.
+    *   `books/create`: Auth required (guest checkout disabled).
+*   **Deleted** (security audit):
+    *   `set-password`, `debug/tokens`, `debug/probe-schema`, `debug-book`, `seed-templates`.

@@ -24,9 +24,11 @@
     *   **Admin/Service-side queries** (via `supabaseAdmin` / Service Role Key) are ONLY for:
         *   Webhooks (Stripe).
         *   Privileged background jobs (Asset generation).
-        *   Ghost account management.
+        *   Admin role management (`update-role`).
     *   **NEVER** bypass RLS in client-facing API routes unless absolutely necessary and documented.
-*   **Ghost Accounts**: We allow guest checkouts. These create "ghost" accounts in Supabase. **DO NOT** break this flow.
+*   **Authentication Required**: All mutating API routes (`books/create`, `workers/*`, `admin/*`) require authentication. Guest checkout is **DISABLED**.
+*   **No Debug Endpoints**: Debug/probe endpoints are forbidden in production. Any endpoint using `service_role` without auth is a critical vulnerability.
+*   **Worker Security**: Worker endpoints (`generate-magic-book`, `generate-book`) must verify the authenticated user owns the resource being processed.
 
 ## 4. Workflow & Knowledge
 *   **Context First**: Before WRITING code, **ALWAYS** read `PROJECT_CONTEXT.md` to understand the current state.

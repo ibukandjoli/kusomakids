@@ -1,10 +1,32 @@
 # KusomaKids - Project Context
 
-## Current Status (January 20, 2026)
+## Current Status (February 19, 2026)
 
-**Latest Update**: Site is Launch-Ready. Implemented Meta Pixel, SEO infrastructure (Sitemap/Robots/JSON-LD), Vercel Analytics, and resolved critical UX friction points (Signup flow, One-time payment, UI polish).
+**Latest Update**: Comprehensive security audit completed. Deleted 5 dangerous endpoints (debug, set-password, seed-templates), secured admin/worker routes with authentication, disabled guest checkout, applied RLS hardening on `generated_books`, and made `book-audio` bucket private.
 
 ## ✅ Recent Major Accomplishments
+
+### Security Audit & Hardening (February 19, 2026)
+10 vulnerabilities identified and remediated:
+
+**Files Deleted** (unauthenticated endpoints exposing service_role):
+- `src/app/api/auth/set-password/route.js` — Account takeover (any email)
+- `src/app/api/debug/tokens/route.js` — Download token leak
+- `src/app/api/debug/probe-schema/route.js` — DB data injection
+- `src/app/api/debug-book/route.js` — Book data leak
+- `src/app/api/admin/seed-templates/route.js` — Unauthenticated template seeding
+
+**Endpoints Secured**:
+- `admin/trigger-generation` — Added admin session + role check
+- `workers/generate-magic-book` — Added auth + book ownership verification
+- `admin/users/update-role` — Uses `service_role` client for RLS compatibility
+- `books/create` — Guest checkout disabled (was creating verified accounts for arbitrary emails)
+- `audio/proxy` — Auth + ownership check (IDOR protection)
+
+**Database Hardening**:
+- RLS enabled on `generated_books` (owner-only access)
+- `book-audio` bucket set to private (via Supabase console)
+- `generate-speech` API creates private buckets by default
 
 ### Launch Readiness & UX Refinements (January 20, 2026)
 Final polish before public traffic:
@@ -29,7 +51,6 @@ Complete overhaul of PDF delivery flow with quality guarantees:
 - **Two-Email System**: Immediate order confirmation + PDF ready notification after worker completes
 - **Secure Download Tokens**: Cryptographically secure tokens with expiry (30 days) and download limits (3)
 - **Worker-Based Generation**: All 10 story illustrations generated with face swap before PDF email sent
-- **Ghost Account Password Setup**: Dedicated `/set-password` page with admin API for passwordless accounts
 - **Landscape PDF Layout**: Side-by-side image/text layout optimized for printing
 - **Cart Auto-Clear**: Shopping cart empties automatically after successful purchase
 - **Preview UI Cleanup**: Fullscreen button removed from preview mode (only in streaming)
@@ -37,7 +58,6 @@ Complete overhaul of PDF delivery flow with quality guarantees:
 **Technical Implementation**:
 - `src/lib/emails/OrderConfirmationEmail.js`: Immediate post-purchase confirmation
 - `src/lib/emails/BookReadyEmail.js`: PDF download link sent after worker completion
-- `src/app/api/auth/set-password/route.js`: Admin API to set password for ghost accounts
 - `src/app/api/download-secure/[bookId]/route.js`: Token-based secure PDF downloads
 - `src/app/api/workers/generate-book/route.js`: Generates all images, creates token, sends PDF email
 - `src/app/components/BookReader.js`: Added `showFullscreen` prop for conditional display
@@ -174,38 +194,50 @@ Major stabilization of the "Create Your Own Story" feature and Premium UX upgrad
 src/
 ├── app/
 │   ├── api/
-│   │   ├── webhooks/stripe/route.js      # Stripe webhooks (checkout + renewal)
-│   │   ├── auth/set-password/route.js     # Ghost account password setup
-│   │   ├── download/[bookId]/route.js    # PDF download with credit logic
-│   │   ├── download-secure/[bookId]/route.js # Secure token-based PDF download
-│   │   ├── workers/generate-book/route.js # Background image generation + email
+│   │   ├── webhooks/stripe/route.js        # Stripe webhooks (checkout + renewal)
+│   │   ├── admin/
+│   │   │   ├── stats/route.js              # Admin stats (auth + role check)
+│   │   │   ├── trigger-generation/route.js # Manual generation (auth + admin)
+│   │   │   └── users/
+│   │   │       ├── list/route.js            # User listing (auth + role check)
+│   │   │       └── update-role/route.js     # Role update (auth + service_role)
+│   │   ├── audio/
+│   │   │   ├── generate-speech/route.js     # TTS generation (OpenAI)
+│   │   │   └── proxy/route.js              # Audio streaming (auth + ownership)
+│   │   ├── books/
+│   │   │   ├── create/route.js             # Book creation (auth required)
+│   │   │   └── process-purchased/route.js  # Post-purchase processing
 │   │   ├── checkout/
-│   │   │   ├── payment/route.js          # One-time payment
-│   │   │   ├── subscription/route.js     # Club subscription
-│   │   │   └── one-time/route.js         # Single book purchase
-│   │   └── books/
-│   │       └── process-purchased/route.js # Post-purchase processing
+│   │   │   ├── payment/route.js            # One-time payment
+│   │   │   ├── subscription/route.js       # Club subscription
+│   │   │   └── one-time/route.js           # Single book purchase
+│   │   ├── download/[bookId]/route.js      # PDF download with credit logic
+│   │   ├── download-secure/[bookId]/route.js # Secure token-based PDF download
+│   │   └── workers/
+│   │       ├── generate-book/route.js      # Background image gen + email
+│   │       └── generate-magic-book/route.js # Magic story gen (auth + ownership)
 │   ├── dashboard/
-│   │   ├── page.js                       # Main dashboard with member badge
-│   │   ├── purchased/page.js             # PDFs page
-│   │   └── profile/page.js               # User profile
-│   ├── set-password/page.js           # Password setup for ghost accounts
-│   ├── onboarding/success/page.js     # Club welcome page
-│   ├── checkout/success/page.js       # Purchase success page (auto-clears cart)
+│   │   ├── page.js                         # Main dashboard with member badge
+│   │   ├── purchased/page.js               # PDFs page
+│   │   └── profile/page.js                 # User profile
+│   ├── onboarding/success/page.js          # Club welcome page
+│   ├── checkout/success/page.js            # Purchase success page
 │   └── components/
-│       ├── PaymentModal.js               # Dynamic pricing modal
-│       ├── BookReader.js                 # Story reader with showFullscreen prop
-│       ├── DashboardBottomNav.js         # Mobile navigation
-│       ├── ClubPromoModal.js             # Upsell modal (Optimized mobile/signup)
-│       └── Header.js                     # Main header with cart badge
+│       ├── PaymentModal.js                 # Dynamic pricing modal
+│       ├── BookReader.js                   # Story reader with audio
+│       ├── DashboardBottomNav.js           # Mobile navigation
+│       ├── ClubPromoModal.js               # Upsell modal
+│       └── Header.js                       # Main header with cart badge
+├── middleware.js                            # Auth guard (dashboard/read/onboarding)
 └── lib/
     ├── emails/
-    │   ├── OrderConfirmationEmail.js     # Immediate order confirmation
-    │   ├── BookReadyEmail.js             # PDF download link (after worker)
-    │   ├── WelcomeEmail.js               # Welcome email
-    │   ├── SubscriptionSuccessEmail.js   # Monthly renewal success
-    │   └── SubscriptionFailedEmail.js    # Payment failure notification
-    └── supabase.js                       # Supabase client
+    │   ├── OrderConfirmationEmail.js       # Immediate order confirmation
+    │   ├── BookReadyEmail.js               # PDF download link (after worker)
+    │   ├── WelcomeEmail.js                 # Welcome email
+    │   ├── SubscriptionSuccessEmail.js     # Monthly renewal success
+    │   └── SubscriptionFailedEmail.js      # Payment failure notification
+    ├── supabase.js                         # Client-side Supabase client
+    └── supabase-server.js                  # Server-side Supabase client
 ```
 
 ## 🔧 Configuration Required
@@ -249,19 +281,19 @@ NEXT_PUBLIC_APP_URL=https://www.kusomakids.com
 
 ## 📋 User Flows
 
-### Flow 1: Guest PDF Purchase (New System)
-1. User adds book to cart and checks out (3,000 FCFA)
-2. Stripe payment success → Webhook creates ghost account
-3. **Email 1 (Immediate)**: Order confirmation
-   - "Your illustrations are being finalized..."
-   - "PDF will arrive in 2-3 minutes"
-   - Link to set password and create account
-4. Worker generates all 10 illustrations with face swap (~2-3 min)
-5. Worker creates secure download token (30 days, 3 downloads)
-6. **Email 2 (After worker)**: PDF ready with download link
-7. User clicks link → Downloads PDF with all 10 personalized pages
-8. User sets password → Onboarding → Dashboard
-9. PDF accessible in "Mes PDFs" page
+### Flow 1: Authenticated Book Creation
+1. User browses stories on `/books` (public, no auth required)
+2. User clicks to personalize → `/personalize/[id]` (public, no auth required)
+3. User fills in child name, age, uploads photo → preview
+4. User clicks "Create" → `books/create` API **requires authentication**
+5. If not logged in → Redirected to `/login` or `/signup`
+6. After auth → Book creation proceeds
+7. **Email 1 (Immediate)**: Order confirmation
+8. Worker generates all 10 illustrations (~2-3 min)
+9. Worker creates secure download token (30 days, 3 downloads)
+10. **Email 2 (After worker)**: PDF ready with download link
+
+> **Note**: Guest checkout (auto-account creation via email) was disabled in the Feb 2026 security audit due to account takeover risks. Users must now sign up/login before creating a book.
 
 ### Flow 2: Club Subscription
 1. User clicks "Devenir Membre" (6,500 FCFA/month)
@@ -354,11 +386,15 @@ NEXT_PUBLIC_APP_URL=https://www.kusomakids.com
 - **Face Swap**: Background worker to avoid blocking UI
 - **Caching**: Vercel build cache enabled
 
-### Security
+### Security (Audited February 19, 2026)
 - **Authentication**: Supabase Auth (Email + Google OAuth)
-- **RLS**: Row Level Security on Supabase tables
-- **Webhook Verification**: Stripe signature validation
-- **API Routes**: Server-side only, no client exposure
+- **RLS**: Row Level Security on `generated_books` (owner-only) and `profiles`
+- **Webhook Verification**: Stripe signature validation (`constructEvent`)
+- **Admin Routes**: Session + role check on all admin endpoints
+- **Worker Routes**: Auth + book ownership verification
+- **Storage**: `book-audio` bucket is private, audio served via authenticated proxy
+- **Middleware**: Protects `/dashboard`, `/read`, `/onboarding` routes
+- **Deleted**: All debug endpoints, set-password API, seed-templates
 
 ## 🚀 Deployment
 
@@ -389,6 +425,5 @@ npm start      # Production server
 
 ---
 
-*Last Updated: January 25, 2026*
-*Version: 3.0 (AI Polish & Conversion Optimization)*
-
+*Last Updated: February 19, 2026*
+*Version: 4.0 (Security Audit & Hardening)*

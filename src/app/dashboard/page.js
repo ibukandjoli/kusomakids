@@ -366,6 +366,7 @@ function DashboardContent() {
                                             </button>
 
                                             {/* Download Button: Handles Unlock via Credit or Pay */}
+                                            {/* Download Button: Handles Unlock via Credit or Pay */}
                                             <button
                                                 onClick={() => handleAction(book, 'download')}
                                                 className={`w-12 h-12 flex items-center justify-center rounded-xl font-bold border-2 transition-colors ${canDownloadBook(book)
@@ -375,6 +376,25 @@ function DashboardContent() {
                                                 title={canDownloadBook(book) ? "Télécharger PDF" : "Débloquer le PDF (1 crédit ou Achat)"}
                                             >
                                                 {canDownloadBook(book) ? '📥' : '🔒'}
+                                            </button>
+
+                                            {/* Share Button (Public Link) */}
+                                            <button
+                                                onClick={() => {
+                                                    // Copy to clipboard logic
+                                                    const shareUrl = `${window.location.origin}/share/${book.id}`;
+                                                    navigator.clipboard.writeText(shareUrl).then(() => {
+                                                        const notification = document.createElement('div');
+                                                        notification.className = 'fixed top-24 left-1/2 -translate-x-1/2 z-50 bg-green-500 text-white px-6 py-4 rounded-2xl shadow-xl flex items-center gap-3 animate-in fade-in slide-in-from-top-4';
+                                                        notification.innerHTML = '<span class="text-2xl">🔗</span><div class="font-bold">Lien de partage copié !</div>';
+                                                        document.body.appendChild(notification);
+                                                        setTimeout(() => notification.remove(), 3000);
+                                                    });
+                                                }}
+                                                className="w-12 h-12 flex items-center justify-center rounded-xl font-bold border-2 transition-colors border-purple-100 text-purple-400 hover:text-purple-600 hover:border-purple-300 hover:bg-purple-50"
+                                                title="Partager un extrait (Gratuit)"
+                                            >
+                                                <span>🔗</span>
                                             </button>
                                         </div>
 

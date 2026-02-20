@@ -103,6 +103,24 @@ export default function ReadPage() {
                         Débloquer l'histoire
                     </button>
                 )}
+
+                {/* Share Button */}
+                <button
+                    onClick={() => {
+                        const shareUrl = `${window.location.origin}/share/${book.id}`;
+                        navigator.clipboard.writeText(shareUrl).then(() => {
+                            const notification = document.createElement('div');
+                            notification.className = 'fixed top-24 left-1/2 -translate-x-1/2 z-50 bg-green-500 text-white px-6 py-4 rounded-2xl shadow-xl flex items-center gap-3 animate-in fade-in slide-in-from-top-4';
+                            notification.innerHTML = '<span class="text-2xl">🔗</span><div class="font-bold">Lien partagé ! (Copié)</div>';
+                            document.body.appendChild(notification);
+                            setTimeout(() => notification.remove(), 3000);
+                        });
+                    }}
+                    className="p-2 bg-purple-50 text-purple-600 rounded-full hover:bg-purple-100 transition-colors shadow-sm ml-2"
+                    title="Partager un extrait public"
+                >
+                    <span className="text-xl">🔗</span>
+                </button>
             </div>
 
             <BookReader

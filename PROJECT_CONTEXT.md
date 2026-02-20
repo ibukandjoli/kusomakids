@@ -161,6 +161,10 @@ Major stabilization of the "Create Your Own Story" feature and Premium UX upgrad
     *   **Gamification**:
         *   Added "Passeport de Lecture" to the Dashboard (progress bar, 4 dynamic badges based on generated books).
         *   Implemented "Séries & Univers" in `dashboard/create`: Extracts past generated characters (where a reference image was used) and allows reusing that same image as a seed for a new story, ensuring character continuity.
+    *   **Viral Loop (Growth)**:
+        *   Created new `/share/[id]` public route acting as a "Teaser". It displays the book Cover + the first 2 pages, and ends with a cliffhanger + CTA to create a free account to read the rest.
+        *   Added SEO metadata (`generateMetadata`) to the share page for beautiful link previews (WhatsApp, Twitter, OpenGraph) using the book's cover image and personalized title.
+        *   Added a "Share" icon (🔗) button on Dashboard book cards and in the Reader UI (top right) that dynamically copies the share URL to the user's clipboard. 
     *   **Reader Experience**: 
         *   Increased desktop container height (`min-h-[850px]`) in `BookReader.js` to reduce letterboxing.
         *   Fixed text centering alignment.

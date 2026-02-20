@@ -158,6 +158,9 @@ Major stabilization of the "Create Your Own Story" feature and Premium UX upgrad
         *   Added "Karaoke" style word highlighting using proportional audio-timestamp heuristic.
         *   Added Ambient Background Music toggle (🎵) with loop and volume control.
         *   Added slow CSS parallax (`framer-motion` scale animation) to desktop images for micro-interaction.
+    *   **Gamification**:
+        *   Added "Passeport de Lecture" to the Dashboard (progress bar, 4 dynamic badges based on generated books).
+        *   Implemented "Séries & Univers" in `dashboard/create`: Extracts past generated characters (where a reference image was used) and allows reusing that same image as a seed for a new story, ensuring character continuity.
     *   **Reader Experience**: 
         *   Increased desktop container height (`min-h-[850px]`) in `BookReader.js` to reduce letterboxing.
         *   Fixed text centering alignment.

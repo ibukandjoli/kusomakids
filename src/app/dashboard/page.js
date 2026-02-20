@@ -160,6 +160,22 @@ function DashboardContent() {
 
     if (loading) return <div className="min-h-screen bg-gray-50 pt-32 flex justify-center"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div></div>;
 
+    // Gamification Logic - Dynamic Badges
+    const totalBooks = books.length;
+    const badges = [
+        { id: 'first_book', name: 'Explorateur', icon: '🌍', threshold: 1, unlocked: totalBooks >= 1, description: 'Créer sa 1ère histoire' },
+        { id: 'three_books', name: 'Aventurier', icon: '⛺', threshold: 3, unlocked: totalBooks >= 3, description: 'Créer 3 histoires' },
+        { id: 'five_books', name: 'Rat de Bibliothèque', icon: '📚', threshold: 5, unlocked: totalBooks >= 5, description: 'Créer 5 histoires' },
+        { id: 'ten_books', name: 'Maître des Mondes', icon: '🧙‍♂️', threshold: 10, unlocked: totalBooks >= 10, description: 'Créer 10 histoires' },
+    ];
+    const unlockedBadges = badges.filter(b => b.unlocked);
+
+    // Progress to next badge
+    const nextBadge = badges.find(b => !b.unlocked);
+    const progressPercent = nextBadge
+        ? Math.min(100, Math.round((totalBooks / nextBadge.threshold) * 100))
+        : 100;
+
     return (
         <div className="min-h-screen bg-[#FDFBF7] pt-32 pb-20 relative">
             {/* Background Pattern */}
@@ -169,7 +185,7 @@ function DashboardContent() {
 
                 {/* Title & Context */}
                 {books.length > 0 && (
-                    <div className="mb-10 mt-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                    <div className="mb-8 mt-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                         <h1 className="text-3xl font-black text-gray-900 border-l-8 border-orange-500 pl-4 py-1">
                             La Bibliothèque de {profile?.full_name?.split(' ')[0] || user?.email?.split('@')[0]}
                         </h1>
@@ -182,6 +198,51 @@ function DashboardContent() {
                                 </div>
                             </div>
                         )}
+                    </div>
+                )}
+
+                {/* PASSPORT WIDGET (Gamification) */}
+                {books.length > 0 && (
+                    <div className="mb-10 bg-white rounded-[2rem] p-6 md:p-8 shadow-xl border border-gray-100 relative overflow-hidden flex flex-col md:flex-row gap-8 items-center justify-between">
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-orange-100 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none"></div>
+
+                        <div className="flex-1">
+                            <div className="flex items-center gap-3 mb-2">
+                                <span className="text-3xl">🎫</span>
+                                <h2 className="text-2xl font-black font-chewy text-gray-800">Passeport de Lecture</h2>
+                            </div>
+                            <p className="text-gray-500 text-sm mb-4">
+                                {childName} a découvert <strong>{totalBooks} livre{totalBooks > 1 ? 's' : ''}</strong> !
+                                {nextBadge ? ` Encore ${nextBadge.threshold - totalBooks} pour devenir ${nextBadge.name}.` : ' Niveau maximum atteint !'}
+                            </p>
+
+                            {/* Progress Bar */}
+                            <div className="w-full bg-orange-50 rounded-full h-3 mb-2 relative overflow-hidden">
+                                <div
+                                    className="bg-gradient-to-r from-orange-400 to-orange-500 h-3 rounded-full transition-all duration-1000 ease-out"
+                                    style={{ width: `${progressPercent}%` }}
+                                ></div>
+                            </div>
+                        </div>
+
+                        {/* Badges Container */}
+                        <div className="flex gap-4 md:gap-6 flex-wrap justify-center bg-gray-50/50 p-4 rounded-3xl border border-gray-100">
+                            {badges.map((badge) => (
+                                <div key={badge.id} className="flex flex-col items-center group relative cursor-help">
+                                    <div className={`w-14 h-14 md:w-16 md:h-16 rounded-full flex items-center justify-center text-3xl shadow-sm transition-all duration-300 ${badge.unlocked ? 'bg-orange-100 border-2 border-orange-400 transform hover:scale-110 hover:rotate-12 hover:shadow-orange-200 shadow-md' : 'bg-gray-100 grayscale opacity-40'}`}>
+                                        {badge.icon}
+                                    </div>
+                                    <span className={`text-[10px] md:text-xs font-bold mt-2 text-center max-w-[64px] leading-tight ${badge.unlocked ? 'text-orange-700' : 'text-gray-400'}`}>
+                                        {badge.name}
+                                    </span>
+
+                                    {/* Tooltip */}
+                                    <div className="absolute opacity-0 group-hover:opacity-100 transition-opacity bottom-full mb-2 bg-gray-900 text-white text-xs p-2 rounded-lg whitespace-nowrap z-50 pointer-events-none">
+                                        {badge.unlocked ? '🔓 Débloqué !' : `🔒 ${badge.description}`}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
                     </div>
                 )}
 

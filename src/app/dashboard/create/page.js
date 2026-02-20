@@ -18,6 +18,7 @@ export default function CreateMagicStoryPage() {
     const [user, setUser] = useState(null);
     const [profile, setProfile] = useState(null);
     const [children, setChildren] = useState([]);
+    const [pastCharacters, setPastCharacters] = useState([]);
     const [loadingData, setLoadingData] = useState(true);
 
     // Flow State
@@ -32,7 +33,8 @@ export default function CreateMagicStoryPage() {
         childName: '',
         childAge: 5,
         childGender: 'Fille',
-        file: null
+        file: null,
+        existingImageUrl: null
     });
     const [previewUrl, setPreviewUrl] = useState(null); // Image Preview State
 
@@ -89,9 +91,32 @@ export default function CreateMagicStoryPage() {
                     .eq('user_id', session.user.id)
                     .order('created_at', { ascending: true });
 
-                setChildren(childrenData || []);
+                // Recent Books to extract past characters
+                const { data: booksData } = await supabase
+                    .from('generated_books')
+                    .select('id, child_name, story_content, cover_image_url, cover_url')
+                    .eq('user_id', session.user.id)
+                    .order('created_at', { ascending: false });
 
-                // Logic: Pre-fill if 1 child
+                if (booksData && booksData.length > 0) {
+                    // Extract unique characters that have a reference image
+                    const charactersMap = new Map();
+                    booksData.forEach(book => {
+                        const refImage = book.story_content?.reference_image;
+                        const coverImage = book.cover_image_url || book.cover_url || book.story_content?.pages?.[0]?.image;
+
+                        if (book.child_name && refImage && !charactersMap.has(book.child_name.toLowerCase())) {
+                            charactersMap.set(book.child_name.toLowerCase(), {
+                                name: book.child_name,
+                                referenceImage: refImage,
+                                coverImage: coverImage
+                            });
+                        }
+                    });
+                    setPastCharacters(Array.from(charactersMap.values()).slice(0, 4)); // Max 4 recent characters
+                }
+
+                // Logic: Pre-fill if 1 child and no past characters selected yet
                 if (childrenData && childrenData.length === 1) {
                     const child = childrenData[0];
                     setFormData(prev => ({
@@ -131,6 +156,21 @@ export default function CreateMagicStoryPage() {
             childGender: mapGenderToDisplay(child.gender)
         }));
         setShowChildSelector(false); // Move to form
+    };
+
+    const handlePastCharacterSelect = (character) => {
+        // Also pre-select the child if it matches by name
+        const matchedChild = children.find(c => c.first_name.toLowerCase() === character.name.toLowerCase());
+        setFormData(prev => ({
+            ...prev,
+            childName: character.name,
+            childAge: matchedChild ? safeParseInt(matchedChild.age) : 5,
+            childGender: matchedChild ? mapGenderToDisplay(matchedChild.gender) : 'Fille',
+            file: null,
+            existingImageUrl: character.referenceImage
+        }));
+        setPreviewUrl(character.referenceImage);
+        window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
     };
 
     // --- New Child Logic ---
@@ -175,7 +215,7 @@ export default function CreateMagicStoryPage() {
     const handleFileChange = (e) => {
         if (e.target.files && e.target.files[0]) {
             const file = e.target.files[0];
-            setFormData(prev => ({ ...prev, file }));
+            setFormData(prev => ({ ...prev, file, existingImageUrl: null }));
             setPreviewUrl(URL.createObjectURL(file));
         }
     };
@@ -201,9 +241,9 @@ export default function CreateMagicStoryPage() {
         }, 2000);
 
         try {
-            let photoUrl = null;
+            let photoUrl = formData.existingImageUrl || null;
 
-            // 1. Upload Photo if present
+            // 1. Upload Photo if present (overrides existingImageUrl)
             if (formData.file) {
                 try {
                     const uploadResult = await fal.storage.upload(formData.file);
@@ -297,18 +337,35 @@ export default function CreateMagicStoryPage() {
                 )}
 
                 {/* Empty State (No children yet) */}
-                {children.length === 0 && (
-                    <div className="mb-8 p-6 bg-orange-50 rounded-2xl border border-orange-100 flex items-center justify-between">
-                        <div>
-                            <h3 className="font-bold text-orange-900">Premier enfant ?</h3>
-                            <p className="text-sm text-orange-700">Ajoutez son profil pour gagner du temps la prochaine fois !</p>
+                {/* Series/Univers - Past Characters */}
+                {pastCharacters.length > 0 && (
+                    <div className="mb-10 p-6 bg-gradient-to-r from-purple-50 to-indigo-50 rounded-3xl border border-purple-100 shadow-sm">
+                        <div className="flex items-center gap-2 mb-4">
+                            <span className="text-2xl">🌟</span>
+                            <h3 className="font-bold text-indigo-900 font-chewy text-xl">Séries & Univers</h3>
                         </div>
-                        <button
-                            onClick={() => setIsAddingChild(true)}
-                            className="bg-orange-500 text-white px-4 py-2 rounded-xl font-bold hover:bg-orange-600 transition-colors shadow-sm"
-                        >
-                            Ajouter un enfant
-                        </button>
+                        <p className="text-sm text-indigo-700 mb-6">Faites vivre une nouvelle aventure à l'un de vos héros existants !</p>
+
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                            {pastCharacters.map((char, idx) => (
+                                <button
+                                    key={idx}
+                                    type="button"
+                                    onClick={() => handlePastCharacterSelect(char)}
+                                    className={`group flex flex-col items-center bg-white p-3 rounded-2xl border-2 transition-all ${formData.childName === char.name && formData.existingImageUrl === char.referenceImage ? 'border-indigo-500 shadow-md ring-2 ring-indigo-200' : 'border-transparent hover:border-indigo-200 hover:shadow-lg'}`}
+                                >
+                                    <div className="w-16 h-16 rounded-full overflow-hidden mb-2 shadow-sm relative">
+                                        {char.coverImage ? (
+                                            <img src={char.coverImage} alt={char.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform" />
+                                        ) : (
+                                            <div className="w-full h-full bg-indigo-100 flex items-center justify-center text-2xl">👦🏽</div>
+                                        )}
+                                    </div>
+                                    <span className="font-bold text-sm text-gray-800">{char.name}</span>
+                                    <span className="text-[10px] text-indigo-500 font-medium uppercase mt-1 px-2 bg-indigo-50 rounded-full">Reprendre</span>
+                                </button>
+                            ))}
+                        </div>
                     </div>
                 )}
 

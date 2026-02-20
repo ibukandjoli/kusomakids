@@ -69,19 +69,19 @@ export default function ClubModal({ isOpen, onClose, user, childName }) {
                         <ul className="space-y-3 mb-6">
                             <li className="flex items-start gap-3">
                                 <span className="text-green-500 text-lg mt-0.5">✓</span>
-                                <span className="text-gray-700 text-sm"><strong>Histoires IA illimitées</strong> — Créez autant d'histoires que vous voulez</span>
+                                <span className="text-gray-700 text-sm"><strong>Création d'Histoires Originales</strong></span>
                             </li>
                             <li className="flex items-start gap-3">
                                 <span className="text-green-500 text-lg mt-0.5">✓</span>
-                                <span className="text-gray-700 text-sm"><strong>1 PDF offert/mois</strong> — Téléchargez et imprimez</span>
+                                <span className="text-gray-700 text-sm"><strong>Lecture illimitée</strong> (Audio inclus)</span>
                             </li>
                             <li className="flex items-start gap-3">
                                 <span className="text-green-500 text-lg mt-0.5">✓</span>
-                                <span className="text-gray-700 text-sm"><strong>Lecture en ligne illimitée</strong> — Toute la bibliothèque</span>
+                                <span className="text-gray-700 text-sm"><strong>1 PDF Haute Qualité offert / mois</strong></span>
                             </li>
                             <li className="flex items-start gap-3">
                                 <span className="text-green-500 text-lg mt-0.5">✓</span>
-                                <span className="text-gray-700 text-sm"><strong>Audio narration</strong> — Voix professionnelle pour chaque histoire</span>
+                                <span className="text-gray-700 text-sm"><strong>-50% sur les PDF suivants</strong></span>
                             </li>
                         </ul>
 

@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import PaymentModal from '../components/PaymentModal';
+import ClubModal from '../components/ClubModal';
 import DashboardBottomNav from '../components/DashboardBottomNav';
 
 function DashboardContent() {
@@ -19,6 +20,7 @@ function DashboardContent() {
     const [childName, setChildName] = useState('Votre enfant');
 
     const [creditModalOpen, setCreditModalOpen] = useState(false);
+    const [clubModalOpen, setClubModalOpen] = useState(false);
 
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -256,15 +258,14 @@ function DashboardContent() {
                                 ✨ Nouveauté
                             </div>
                             <h2 className="text-3xl font-black mb-2 font-chewy">Créez votre propre histoire !</h2>
-                            <p className="text-purple-100 max-w-md">Vous avez une idée d'histoire unique pour {childName}? Soumettez-la et notre IA l'écrira et créera les illustrations en quelques secondes.</p>
+                            <p className="text-purple-100 max-w-md">Vous avez une idée d'histoire unique pour {childName}? Soumettez-la-nous et notre IA l'écrira et créera les illustrations en quelques secondes.</p>
                         </div>
                         <button
                             onClick={() => {
                                 if (profile?.subscription_status === 'active') {
                                     router.push('/dashboard/create');
                                 } else {
-                                    setSelectedBookId(null); // Ensure no specific book is selected for club-only prompt
-                                    setModalOpen(true);
+                                    setClubModalOpen(true);
                                 }
                             }}
                             className="bg-white text-purple-600 px-8 py-4 rounded-full font-bold text-lg shadow-lg hover:shadow-xl hover:bg-gray-50 transform hover:-translate-y-1 transition-all flex items-center gap-2"
@@ -434,6 +435,14 @@ function DashboardContent() {
                 bookId={selectedBookId}
                 book={books.find(b => b.id === selectedBookId)}
                 profile={profile}
+            />
+
+            {/* Club-Only Modal (for Magic Story access) */}
+            <ClubModal
+                isOpen={clubModalOpen}
+                onClose={() => setClubModalOpen(false)}
+                user={user}
+                childName={childName}
             />
 
             {/* Credit Confirmation Modal */}

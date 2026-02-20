@@ -33,7 +33,7 @@ export default function AuthCallback() {
 
                 // If we have tokens, set the session
                 if (accessToken && type === 'magiclink') {
-                    const { data, error: sessionError } = await supabase.auth.setSession({
+                    const { error: sessionError } = await supabase.auth.setSession({
                         access_token: accessToken,
                         refresh_token: refreshToken
                     });
@@ -44,40 +44,50 @@ export default function AuthCallback() {
                         setTimeout(() => router.push('/login'), 3000);
                         return;
                     }
-
-                    if (data.session) {
-                        console.log('✅ Magic Link authentication successful');
-                        setStatus('success');
-
-                        // Check if user needs onboarding (incomplete profile)
-                        const { data: profile } = await supabase
-                            .from('profiles')
-                            .select('full_name, onboarding_completed')
-                            .eq('id', data.session.user.id)
-                            .single();
-
-                        // Redirect to onboarding if profile is incomplete
-                        // (no full_name or onboarding_completed flag is false)
-                        const needsOnboarding = !profile?.full_name || profile?.onboarding_completed === false;
-
-                        setTimeout(() => {
-                            if (needsOnboarding) {
-                                console.log('📝 Redirecting to onboarding (incomplete profile)');
-                                router.push('/onboarding?from=purchase');
-                            } else {
-                                router.push('/dashboard/purchased');
-                            }
-                        }, 1500);
-                        return;
-                    }
                 }
 
-                // If no tokens in hash, check if user is already authenticated
+                // Wait a moment for Supabase to auto-handle OAuth PKCE if needed
+                if (!accessToken) {
+                    await new Promise(resolve => setTimeout(resolve, 1500));
+                }
+
+                // Check final session state (Works for both Magic Link & OAuth)
                 const { data: { session } } = await supabase.auth.getSession();
+
                 if (session) {
-                    router.push('/dashboard/purchased');
+                    console.log('✅ Authentication successful');
+                    setStatus('success');
+
+                    // Check if user needs onboarding (incomplete profile)
+                    // Added retry logic in case trigger hasn't finished creating profile
+                    let profile = null;
+                    for (let i = 0; i < 3; i++) {
+                        const { data: p } = await supabase
+                            .from('profiles')
+                            .select('full_name, onboarding_completed')
+                            .eq('id', session.user.id)
+                            .single();
+                        if (p) {
+                            profile = p;
+                            break;
+                        }
+                        await new Promise(r => setTimeout(r, 500));
+                    }
+
+                    // Redirect to onboarding if profile is incomplete
+                    const needsOnboarding = !profile?.full_name || profile?.onboarding_completed === false;
+
+                    setTimeout(() => {
+                        if (needsOnboarding) {
+                            console.log('📝 Redirecting to onboarding');
+                            router.push('/onboarding?from=auth');
+                        } else {
+                            router.push('/dashboard/purchased');
+                        }
+                    }, 1000);
                 } else {
-                    // No tokens and not authenticated - redirect to login
+                    // No session found - redirect to login
+                    console.warn('No active session found.');
                     router.push('/login');
                 }
             } catch (err) {

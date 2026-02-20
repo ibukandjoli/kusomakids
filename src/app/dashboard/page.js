@@ -253,14 +253,19 @@ function DashboardContent() {
                     <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
                         <div className="text-center md:text-left">
                             <div className="inline-flex items-center gap-2 bg-white/20 px-3 py-1 rounded-full text-xs font-bold mb-3 uppercase tracking-wider">
-                                ✨ Nouveauté Club
+                                ✨ Nouveauté
                             </div>
                             <h2 className="text-3xl font-black mb-2 font-chewy">Créez votre propre histoire !</h2>
-                            <p className="text-purple-100 max-w-md">Une idée ? Une photo ? L'IA écrit et dessine une aventure unique pour {childName}.</p>
+                            <p className="text-purple-100 max-w-md">Vous avez une idée d'histoire? Vous souhaitez transmettre une valeur particulière à {childName}? Soumettez votre idée et notre IA écrira et illustrera une histoire unique pour {childName}.</p>
                         </div>
                         <button
                             onClick={() => {
-                                router.push('/dashboard/create');
+                                if (profile?.subscription_status === 'active') {
+                                    router.push('/dashboard/create');
+                                } else {
+                                    setSelectedBookId(null); // Ensure no specific book is selected for club-only prompt
+                                    setModalOpen(true);
+                                }
                             }}
                             className="bg-white text-purple-600 px-8 py-4 rounded-full font-bold text-lg shadow-lg hover:shadow-xl hover:bg-gray-50 transform hover:-translate-y-1 transition-all flex items-center gap-2"
                         >

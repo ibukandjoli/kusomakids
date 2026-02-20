@@ -4,6 +4,9 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 import PaymentModal from '@/app/components/PaymentModal';
+import { loadStripe } from '@stripe/stripe-js';
+
+const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY);
 
 export default function BillingPage() {
     const [loading, setLoading] = useState(true);
@@ -35,11 +38,38 @@ export default function BillingPage() {
         }
         fetchSubscription();
     }, [router]);
-
     const handlePortalRedirect = async () => {
         // In a real app, this calls an API to ge the Stripe Portal URL
         alert("Redirection vers le portail de facturation Stripe...");
         // window.location.href = '/api/billing/portal'; 
+    };
+
+    const handleSubscribe = async () => {
+        setLoading(true);
+        try {
+            const response = await fetch('/api/checkout/subscription', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    userId: profile.id,
+                    email: profile.email || profile.email_address || 'user@example.com', // fallback handled by backend or supabase
+                    priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_ID
+                }),
+            });
+
+            const session = await response.json();
+            if (session.error) throw new Error(session.error);
+
+            if (session.url) {
+                window.location.href = session.url;
+            } else {
+                throw new Error("Impossible de rediriger vers le paiement.");
+            }
+        } catch (error) {
+            console.error("Subscription Error:", error);
+            alert("Erreur: " + error.message);
+            setLoading(false);
+        }
     };
 
     if (loading) return <div className="min-h-screen pt-40 text-center">Chargement...</div>;
@@ -89,10 +119,11 @@ export default function BillingPage() {
                                 Rejoignez le Club Kusoma pour débloquer des histoires illimitées en ligne et 1 PDF offert chaque mois !
                             </p>
                             <button
-                                onClick={() => setShowPaymentModal(true)}
+                                disabled={loading}
+                                onClick={handleSubscribe}
                                 className="inline-block bg-gradient-to-r from-orange-500 to-pink-500 text-white px-8 py-4 rounded-full font-bold text-lg hover:shadow-lg hover:scale-105 transition-all shadow-orange-500/30"
                             >
-                                Rejoindre le Club pour 6500 FCFA/mois
+                                {loading ? "Redirection..." : "Rejoindre le Club pour 6500 FCFA/mois"}
                             </button>
                         </div>
                     )}

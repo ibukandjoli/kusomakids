@@ -84,6 +84,12 @@ export default function CreateMagicStoryPage() {
                     .single();
                 setProfile(profileData);
 
+                if (profileData?.subscription_status !== 'active') {
+                    console.log("Not a subscriber, redirecting back to dashboard");
+                    router.push('/dashboard');
+                    return;
+                }
+
                 // Children
                 const { data: childrenData } = await supabase
                     .from('children')

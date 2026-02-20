@@ -78,7 +78,7 @@ function MyPdfsContent() {
                         Mes PDFs (Achetés / Débloqués)
                     </h1>
                     <Link href="/dashboard" className="text-orange-600 font-bold hover:underline">
-                        ← Retour à la bibliothèque
+                        ← Retourner à Mes Histoires
                     </Link>
                 </div>
 
@@ -91,7 +91,7 @@ function MyPdfsContent() {
                             Les histoires simplement lues en streaming n'apparaissent pas ici.
                         </p>
                         <Link href="/books" className="inline-block bg-orange-600 text-white px-8 py-3 rounded-full font-bold hover:bg-orange-700 transition-all shadow-lg">
-                            Créer une nouvelle histoire
+                            Choisir une histoire à personnaliser
                         </Link>
                     </div>
                 ) : (

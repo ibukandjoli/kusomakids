@@ -223,30 +223,19 @@ export default function OnboardingPage() {
     const saveProfileData = async () => {
         setLoading(true);
         try {
-            // 1. Update Profile - Mark onboarding as completed
-            const { error: profileError } = await supabase
-                .from('profiles')
-                .update({
-                    role: role,
-                    onboarding_completed: true // Mark onboarding as done
-                })
-                .eq('id', user.id);
-            if (profileError) throw profileError;
+            // Use server-side API to bypass RLS
+            const res = await fetch('/api/onboarding/save', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    role,
+                    children,
+                    interests,
+                }),
+            });
 
-            // 2. Insert Children
-            const childrenData = children.map(child => ({
-                user_id: user.id,
-                first_name: child.firstName,
-                birth_date: child.birthDate,
-                gender: child.gender,
-                interests: interests
-            }));
-
-            const { error: childrenError } = await supabase
-                .from('children')
-                .insert(childrenData);
-
-            if (childrenError) throw childrenError;
+            const result = await res.json();
+            if (!res.ok) throw new Error(result.error || 'Erreur serveur');
 
             // Success - Check if from purchase flow
             const urlParams = new URLSearchParams(window.location.search);

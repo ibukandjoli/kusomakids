@@ -24,7 +24,6 @@ export default function ReadPage() {
 
         if (hasPendingImages) {
             const interval = setInterval(async () => {
-                console.log("🔄 Checking for new illustrations...");
                 const { data: updatedBook } = await supabase
                     .from('generated_books')
                     .select('*')
@@ -43,7 +42,6 @@ export default function ReadPage() {
     // Initial Load
     useEffect(() => {
         async function init() {
-            // 1. Get User
             const { data: { user: authUser } } = await supabase.auth.getUser();
 
             let profile = null;
@@ -53,13 +51,12 @@ export default function ReadPage() {
                 setUser(profile);
             }
 
-            // 2. Get Book
             if (id) {
                 const { data: bookData, error } = await supabase
                     .from('generated_books')
                     .select('*')
                     .eq('id', id)
-                    .single(); // Ensure we get fresh data
+                    .single();
 
                 if (!error && bookData) {
                     setBook(bookData);
@@ -74,13 +71,16 @@ export default function ReadPage() {
     }, [id]);
 
     if (loading) return (
-        <div className="min-h-screen bg-gray-900 flex items-center justify-center text-white">
-            <div className="animate-pulse">Chargement de votre histoire...</div>
+        <div className="min-h-screen bg-[#1a1a2e] flex items-center justify-center text-white">
+            <div className="flex flex-col items-center gap-4">
+                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-orange-500"></div>
+                <p className="text-white/60 text-sm">Chargement de votre histoire...</p>
+            </div>
         </div>
     );
 
     if (!book) return (
-        <div className="min-h-screen bg-gray-900 flex items-center justify-center text-white">
+        <div className="min-h-screen bg-[#1a1a2e] flex items-center justify-center text-white">
             <div className="text-center">
                 <h1 className="text-2xl font-bold mb-4">Histoire introuvable 😢</h1>
                 <button onClick={() => router.push('/dashboard')} className="text-orange-400 hover:underline">Retour au tableau de bord</button>
@@ -89,38 +89,48 @@ export default function ReadPage() {
     );
 
     return (
-        <div className="min-h-screen bg-gray-900 flex flex-col items-center justify-center p-0 relative">
-            {/* Top Bar */}
-            <div className="absolute top-0 left-0 w-full p-6 flex justify-between items-center z-10">
-                <button onClick={() => router.push('/dashboard')} className="text-white/60 hover:text-white flex items-center gap-2 transition-colors">
-                    ← Retour
-                </button>
-                {!book.is_unlocked && user?.subscription_status !== 'active' && (
-                    <button
-                        onClick={() => setIsPaymentOpen(true)}
-                        className="bg-orange-600 text-white px-4 py-2 rounded-full text-sm font-bold hover:bg-orange-500 transition-colors shadow-lg shadow-orange-500/20"
-                    >
-                        Débloquer l'histoire
-                    </button>
-                )}
-
-                {/* Share Button */}
+        <div className="min-h-screen bg-[#1a1a2e] flex flex-col items-center justify-center p-0 relative">
+            {/* Top Bar — Clean & Minimal */}
+            <div className="absolute top-0 left-0 w-full p-5 flex justify-between items-center z-10">
                 <button
-                    onClick={() => {
-                        const shareUrl = `${window.location.origin}/share/${book.id}`;
-                        navigator.clipboard.writeText(shareUrl).then(() => {
-                            const notification = document.createElement('div');
-                            notification.className = 'fixed top-24 left-1/2 -translate-x-1/2 z-50 bg-green-500 text-white px-6 py-4 rounded-2xl shadow-xl flex items-center gap-3 animate-in fade-in slide-in-from-top-4';
-                            notification.innerHTML = '<span class="text-2xl">🔗</span><div class="font-bold">Lien partagé ! (Copié)</div>';
-                            document.body.appendChild(notification);
-                            setTimeout(() => notification.remove(), 3000);
-                        });
-                    }}
-                    className="p-2 bg-purple-50 text-purple-600 rounded-full hover:bg-purple-100 transition-colors shadow-sm ml-2"
-                    title="Partager un extrait public"
+                    onClick={() => router.push('/dashboard')}
+                    className="text-white/50 hover:text-white flex items-center gap-2 transition-colors text-sm"
                 >
-                    <span className="text-xl">🔗</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
+                    </svg>
+                    Retour
                 </button>
+
+                <div className="flex items-center gap-2">
+                    {/* Unlock Button */}
+                    {!book.is_unlocked && user?.subscription_status !== 'active' && (
+                        <button
+                            onClick={() => setIsPaymentOpen(true)}
+                            className="bg-orange-600 text-white px-4 py-2 rounded-full text-xs font-bold hover:bg-orange-500 transition-colors shadow-lg shadow-orange-500/20"
+                        >
+                            🔓 Débloquer
+                        </button>
+                    )}
+
+                    {/* Share Button */}
+                    <button
+                        onClick={() => {
+                            const shareUrl = `${window.location.origin}/share/${book.id}`;
+                            navigator.clipboard.writeText(shareUrl).then(() => {
+                                const notification = document.createElement('div');
+                                notification.className = 'fixed top-20 left-1/2 -translate-x-1/2 z-50 bg-green-500 text-white px-5 py-3 rounded-xl shadow-xl flex items-center gap-2 text-sm font-bold';
+                                notification.innerHTML = '🔗 Lien copié !';
+                                document.body.appendChild(notification);
+                                setTimeout(() => notification.remove(), 2500);
+                            });
+                        }}
+                        className="w-9 h-9 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 flex items-center justify-center text-white/60 hover:bg-white/20 hover:text-white transition-all"
+                        title="Partager"
+                    >
+                        <span className="text-sm">🔗</span>
+                    </button>
+                </div>
             </div>
 
             <BookReader
@@ -134,28 +144,9 @@ export default function ReadPage() {
                 onClose={() => setIsPaymentOpen(false)}
                 user={user || {}}
                 bookId={book.id}
-                bookCover={book.cover_image_url || book.cover_url}
+                book={book}
+                profile={user}
             />
-
-            {/* Manual Refresh Button - Debugging Aid */}
-            <button
-                onClick={async () => {
-                    console.log("🔄 Manual refresh...");
-                    const { data: updatedBook } = await supabase
-                        .from('generated_books')
-                        .select('*')
-                        .eq('id', id)
-                        .single();
-                    if (updatedBook) {
-                        setBook(updatedBook);
-                        alert("Images rafraîchies !");
-                    }
-                }}
-                className="fixed bottom-4 right-4 bg-white shadow-lg p-3 rounded-full z-50 hover:bg-gray-50 transition-colors border-2 border-orange-100"
-                title="Rafraîchir les images"
-            >
-                <span className="text-2xl">🔄</span>
-            </button>
         </div>
     );
 }

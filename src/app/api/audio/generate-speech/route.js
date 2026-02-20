@@ -89,25 +89,27 @@ export async function POST(req) {
             return NextResponse.json({ error: "Storage upload failed" }, { status: 500 });
         }
 
-        // 5. Get Public URL
-        const { data: { publicUrl } } = supabaseAdmin
+        // 5. Get Signed URL (bucket is private, so getPublicUrl won't work)
+        const { data: signedData, error: signedError } = await supabaseAdmin
             .storage
             .from(bucketName)
-            .getPublicUrl(fileName);
+            .createSignedUrl(fileName, 3600); // 1 hour expiry
 
-        // 6. Update Book Data (Cache the URL)
-        // Check for story_content (standard) or content_json (legacy)
+        const audioUrl = signedData?.signedUrl;
+
+        if (signedError || !audioUrl) {
+            console.error("❌ Failed to create signed URL:", signedError);
+            return NextResponse.json({ error: "Failed to get audio URL" }, { status: 500 });
+        }
+
+        // 6. Update Book Data (Cache the file path for future use)
         let content = book.story_content || book.content_json || {};
-        let pages = Array.isArray(content) ? content : (content.pages || []);
+        let contentPages = Array.isArray(content) ? content : (content.pages || []);
 
-        // Ensure pageIndex is valid (If -1 or out of bounds, we skip saving)
-        if (pages[pageIndex]) {
-            pages[pageIndex].audio_url = publicUrl;
+        if (contentPages[pageIndex]) {
+            contentPages[pageIndex].audio_url = fileName; // Store path, not full URL
 
-            // Reconstruct content to save back
-            let newContent = Array.isArray(content) ? pages : { ...content, pages: pages };
-
-            // Update column dynamically (prefer story_content)
+            let newContent = Array.isArray(content) ? contentPages : { ...content, pages: contentPages };
             const updatePayload = book.story_content ? { story_content: newContent } : { content_json: newContent };
 
             const { error: updateError } = await supabaseAdmin
@@ -115,14 +117,15 @@ export async function POST(req) {
                 .update(updatePayload)
                 .eq('id', bookId);
 
-            if (updateError) console.error("⚠️ Failed to cache audio URL:", updateError);
+            if (updateError) console.error("⚠️ Failed to cache audio path:", updateError);
         }
 
-        console.log("✅ Audio Generated & Cached:", publicUrl);
+        console.log("✅ Audio Generated:", fileName);
 
         return NextResponse.json({
             success: true,
-            audioUrl: publicUrl
+            audioUrl: audioUrl,
+            filePath: fileName
         });
 
     } catch (error) {

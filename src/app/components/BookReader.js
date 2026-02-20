@@ -65,10 +65,41 @@ export default function BookReader({ book, user, onUnlock, isEditable = false, o
             .replace(/\{childName\}/gi, name);
     };
 
+    const renderKaraokeText = (text) => {
+        if (!text) return null;
+        const words = text.split(' ');
+
+        let activeIndex = -1;
+        if (isPlaying && audioDuration > 0) {
+            activeIndex = Math.floor((audioCurrentTime / audioDuration) * words.length);
+            if (activeIndex >= words.length) activeIndex = words.length - 1;
+        }
+
+        return words.map((word, index) => {
+            const isActive = index === activeIndex;
+            const isPast = index < activeIndex;
+            return (
+                <span
+                    key={index}
+                    className={`transition-all duration-150 inline-block mr-[0.25rem] ${isActive ? 'text-orange-500 font-extrabold scale-110 drop-shadow-md' : (isPast ? 'text-gray-900 font-medium' : 'text-gray-700')}`}
+                >
+                    {word}
+                </span>
+            );
+        });
+    };
+
     // Audio Logic - OpenAI TTS
     const [isPlaying, setIsPlaying] = useState(false);
     const [audioLoading, setAudioLoading] = useState(false);
+    const [audioCurrentTime, setAudioCurrentTime] = useState(0);
+    const [audioDuration, setAudioDuration] = useState(0);
     const audioRef = useRef(null);
+
+    // Ambient Logic
+    const [isAmbientPlaying, setIsAmbientPlaying] = useState(false);
+    const ambientRef = useRef(null);
+    const ambientUrl = '/audio/ambient-loop.mp3';
 
     // Stop audio when changing pages
     useEffect(() => {
@@ -77,8 +108,25 @@ export default function BookReader({ book, user, onUnlock, isEditable = false, o
             audioRef.current.currentTime = 0;
             setIsPlaying(false);
             setAudioLoading(false);
+            setAudioCurrentTime(0);
         }
     }, [currentPage]);
+
+    const handleAmbientToggle = () => {
+        if (!ambientRef.current) {
+            ambientRef.current = new Audio(ambientUrl);
+            ambientRef.current.loop = true;
+            ambientRef.current.volume = 0.15;
+        }
+
+        if (isAmbientPlaying) {
+            ambientRef.current.pause();
+            setIsAmbientPlaying(false);
+        } else {
+            ambientRef.current.play().catch(e => console.log("Ambient play pending user interaction:", e));
+            setIsAmbientPlaying(true);
+        }
+    };
 
     const handlePlayAudio = async () => {
         // Toggle Stop if playing
@@ -152,15 +200,24 @@ export default function BookReader({ book, user, onUnlock, isEditable = false, o
             const audio = new Audio(proxyUrl);
             audioRef.current = audio;
 
+            audio.addEventListener('loadedmetadata', () => {
+                setAudioDuration(audio.duration);
+            });
+            audio.addEventListener('timeupdate', () => {
+                setAudioCurrentTime(audio.currentTime);
+            });
+
             audio.onended = () => {
                 setIsPlaying(false);
                 setAudioLoading(false);
+                setAudioCurrentTime(0);
             };
 
             audio.onerror = (e) => {
                 console.error("Audio Playback Error (Check Proxy)", e);
                 setIsPlaying(false);
                 setAudioLoading(false);
+                setAudioCurrentTime(0);
                 alert("Erreur lors de la lecture audio.");
             };
 
@@ -231,6 +288,15 @@ export default function BookReader({ book, user, onUnlock, isEditable = false, o
                     )}
                 </button>
             )}
+
+            {/* Ambient Audio Toggle */}
+            <button
+                onClick={handleAmbientToggle}
+                className={`absolute top-20 right-6 z-50 bg-white shadow-xl p-3 rounded-full transition-all hover:scale-110 ${isAmbientPlaying ? 'text-blue-500 ring-2 ring-blue-500' : 'text-gray-400'}`}
+                title={isAmbientPlaying ? "Couper l'ambiance sonore" : "Activer l'ambiance sonore"}
+            >
+                {isAmbientPlaying ? '🎵' : '🔇'}
+            </button>
 
             {/* Fullscreen Button */}
             {showFullscreen && (
@@ -320,8 +386,8 @@ export default function BookReader({ book, user, onUnlock, isEditable = false, o
                                         className="w-full h-32 p-3 bg-orange-50/30 rounded-lg border border-orange-100 text-gray-800 text-base leading-relaxed focus:ring-2 focus:ring-orange-500 outline-none resize-none"
                                     />
                                 ) : (
-                                    <p className="text-base text-gray-800 leading-relaxed">
-                                        {page.text}
+                                    <p className="text-base leading-relaxed">
+                                        {renderKaraokeText(page.text)}
                                     </p>
                                 )}
                             </div>
@@ -360,14 +426,21 @@ export default function BookReader({ book, user, onUnlock, isEditable = false, o
                         >
                             {/* Cover Image - Centered & Responsive (Reduced to 65vh to avoid clipping) */}
                             <div className="relative w-[65vh] h-[65vh] max-w-[800px] max-h-[800px] shadow-2xl rounded-3xl overflow-hidden shadow-orange-500/20">
-                                {coverUrl ? (
-                                    <Image src={coverUrl} alt="Cover" fill className="object-cover" />
-                                ) : (
-                                    <div className="absolute inset-0 flex items-center justify-center flex-col text-orange-300 animate-pulse">
-                                        <span className="text-6xl mb-4">✨</span>
-                                        <span className="text-lg font-bold">Création...</span>
-                                    </div>
-                                )}
+                                <motion.div
+                                    initial={{ scale: 1.05 }}
+                                    animate={{ scale: 1 }}
+                                    transition={{ duration: 15, ease: "easeOut" }}
+                                    className="absolute inset-0 w-full h-full"
+                                >
+                                    {coverUrl ? (
+                                        <Image src={coverUrl} alt="Cover" fill className="object-cover" />
+                                    ) : (
+                                        <div className="absolute inset-0 flex items-center justify-center flex-col text-orange-300 animate-pulse">
+                                            <span className="text-6xl mb-4">✨</span>
+                                            <span className="text-lg font-bold">Création...</span>
+                                        </div>
+                                    )}
+                                </motion.div>
 
                                 {/* Title Overlay */}
                                 <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-transparent p-8 flex items-start justify-center">
@@ -393,7 +466,7 @@ export default function BookReader({ book, user, onUnlock, isEditable = false, o
                             className="w-full h-full flex"
                         >
                             {/* LEFT: Image (50%) */}
-                            <div className="w-1/2 h-full relative bg-gray-100 min-h-[600px] lg:min-h-[750px] xl:min-h-[850px]">
+                            <div className="w-1/2 h-full relative bg-gray-100 min-h-[600px] lg:min-h-[750px] xl:min-h-[850px] overflow-hidden">
                                 {(() => {
                                     const pageData = pages[currentPage - 1];
                                     const imageUrl = pageData?.image || pageData?.image_url || pageData?.imageUrl || coverUrl;
@@ -401,12 +474,19 @@ export default function BookReader({ book, user, onUnlock, isEditable = false, o
 
                                     if (hasImage || (!isUnlocked && currentPage >= 3)) {
                                         return (
-                                            <Image
-                                                src={imageUrl}
-                                                alt={`Page ${currentPage}`}
-                                                fill
-                                                className={`object-cover ${(!isUnlocked && currentPage >= 3) ? 'blur-md opacity-50' : ''}`}
-                                            />
+                                            <motion.div
+                                                initial={{ scale: 1.05 }}
+                                                animate={{ scale: 1 }}
+                                                transition={{ duration: 15, ease: "easeOut" }}
+                                                className="absolute inset-0 w-full h-full"
+                                            >
+                                                <Image
+                                                    src={imageUrl}
+                                                    alt={`Page ${currentPage}`}
+                                                    fill
+                                                    className={`object-cover ${(!isUnlocked && currentPage >= 3) ? 'blur-md opacity-50' : ''}`}
+                                                />
+                                            </motion.div>
                                         );
                                     } else {
                                         return (
@@ -453,8 +533,8 @@ export default function BookReader({ book, user, onUnlock, isEditable = false, o
                                 ) : (
                                     <div className="flex-1 w-full relative overflow-y-auto">
                                         <div className="min-h-full flex items-center justify-center p-4">
-                                            <p className="text-xl md:text-2xl lg:text-3xl text-gray-800 leading-loose font-serif text-center max-w-2xl mx-auto drop-shadow-sm">
-                                                {pages[currentPage - 1]?.text}
+                                            <p className="text-xl md:text-2xl lg:text-3xl leading-loose font-serif text-center max-w-2xl mx-auto drop-shadow-sm">
+                                                {renderKaraokeText(pages[currentPage - 1]?.text)}
                                             </p>
                                         </div>
                                     </div>

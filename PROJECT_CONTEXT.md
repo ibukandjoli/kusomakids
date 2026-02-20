@@ -154,6 +154,10 @@ Major stabilization of the "Create Your Own Story" feature and Premium UX upgrad
     *   **PDF Revert**: Restored **Portrait** layout for PDF covers with centered title and image (user preference).
     *   **Client Fixes**: Resolved `alt` tag warnings and Facebook Pixel `fbq` reference errors.
     *   **Dashboard Titles**: Fixed logic in `src/app/dashboard/page.js` and `purchased/page.js` to prioritize the generated story title (`story_content.title`) over the fallback template title.
+    *   **Immersive Reader**: 
+        *   Added "Karaoke" style word highlighting using proportional audio-timestamp heuristic.
+        *   Added Ambient Background Music toggle (🎵) with loop and volume control.
+        *   Added slow CSS parallax (`framer-motion` scale animation) to desktop images for micro-interaction.
     *   **Reader Experience**: 
         *   Increased desktop container height (`min-h-[850px]`) in `BookReader.js` to reduce letterboxing.
         *   Fixed text centering alignment.

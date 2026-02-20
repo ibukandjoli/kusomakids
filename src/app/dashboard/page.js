@@ -256,7 +256,7 @@ function DashboardContent() {
                                 ✨ Nouveauté
                             </div>
                             <h2 className="text-3xl font-black mb-2 font-chewy">Créez votre propre histoire !</h2>
-                            <p className="text-purple-100 max-w-md">Vous avez une idée d'histoire? Vous souhaitez transmettre une valeur particulière à {childName}? Soumettez votre idée et notre IA écrira et illustrera une histoire unique pour {childName}.</p>
+                            <p className="text-purple-100 max-w-md">Vous avez une idée d'histoire unique pour {childName}? Soumettez-la et notre IA l'écrira et créera les illustrations en quelques secondes.</p>
                         </div>
                         <button
                             onClick={() => {

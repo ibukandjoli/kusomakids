@@ -13,7 +13,7 @@ export default function GoogleAuthButton({ text = "Continuer avec Google" }) {
             const { error } = await supabase.auth.signInWithOAuth({
                 provider: 'google',
                 options: {
-                    redirectTo: `${window.location.origin}/auth/callback`,
+                    redirectTo: `${window.location.origin}/auth/google-callback`,
                 },
             });
 

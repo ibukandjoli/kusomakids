@@ -165,9 +165,12 @@ function DashboardContent() {
                 if ((profile?.monthly_credits || 0) > 0) {
                     // Has credits -> Confirm Use
                     setCreditModalOpen(true);
-                } else {
-                    // No credits -> Show options (buy credit or buy PDF)
+                } else if (profile?.subscription_status === 'active') {
+                    // Club member with 0 credits -> Show buy credit options
                     setNoCreditModalOpen(true);
+                } else {
+                    // Non-member -> Single PDF purchase (3000 FCFA)
+                    setModalOpen(true);
                 }
             }
         }
@@ -182,6 +185,8 @@ function DashboardContent() {
         { id: 'three_books', name: 'Aventurier', icon: '⛺', threshold: 3, unlocked: totalBooks >= 3, description: 'Créer 3 histoires' },
         { id: 'five_books', name: 'Rat de Bibliothèque', icon: '📚', threshold: 5, unlocked: totalBooks >= 5, description: 'Créer 5 histoires' },
         { id: 'ten_books', name: 'Maître des Mondes', icon: '🧙‍♂️', threshold: 10, unlocked: totalBooks >= 10, description: 'Créer 10 histoires' },
+        { id: 'fifteen_books', name: 'Gardien des Légendes', icon: '🏰', threshold: 15, unlocked: totalBooks >= 15, description: 'Créer 15 histoires' },
+        { id: 'twentyfive_books', name: 'Étoile de Kusoma', icon: '⭐', threshold: 25, unlocked: totalBooks >= 25, description: 'Créer 25 histoires' },
     ];
     const unlockedBadges = badges.filter(b => b.unlocked);
 

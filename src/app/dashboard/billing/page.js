@@ -216,68 +216,70 @@ function BillingContent() {
                     )}
                 </div>
 
-                {/* ===== CREDITS SECTION ===== */}
-                <div className="bg-white rounded-3xl p-8 shadow-md border border-gray-100 mb-6">
-                    <h3 className="text-lg font-bold text-gray-900 mb-2 flex items-center gap-2">
-                        <span className="w-8 h-8 bg-orange-100 text-orange-600 rounded-lg flex items-center justify-center text-sm">🎫</span>
-                        Mes Crédits PDF
-                    </h3>
-                    <p className="text-sm text-gray-500 mb-6">
-                        1 crédit = 1 PDF à télécharger et imprimer. {isMember ? 'Vous recevez 1 crédit gratuit chaque mois avec votre abonnement.' : ''}
-                    </p>
-
-                    {/* Credit Balance */}
-                    <div className="bg-gradient-to-r from-orange-50 to-amber-50 rounded-2xl p-6 mb-6 flex items-center justify-between">
-                        <div>
-                            <p className="text-sm text-gray-500 font-medium">Solde actuel</p>
-                            <p className="text-4xl font-black text-orange-600">{credits}</p>
-                            <p className="text-xs text-gray-400 mt-1">crédit{credits !== 1 ? 's' : ''} disponible{credits !== 1 ? 's' : ''}</p>
-                        </div>
-                        <div className="text-6xl opacity-30">🎫</div>
-                    </div>
-
-                    {/* Buy Credits */}
-                    <div className="border border-gray-100 rounded-2xl p-6">
-                        <h4 className="font-bold text-gray-900 mb-4 text-sm">Acheter des crédits</h4>
-
-                        <div className="grid grid-cols-3 gap-3 mb-6">
-                            {creditOptions.map(opt => (
-                                <button
-                                    key={opt.qty}
-                                    onClick={() => setCreditQty(opt.qty)}
-                                    className={`p-4 rounded-xl border-2 text-center transition-all ${creditQty === opt.qty
-                                        ? 'border-orange-500 bg-orange-50 shadow-md'
-                                        : 'border-gray-100 hover:border-orange-200 hover:bg-orange-50/50'
-                                        }`}
-                                >
-                                    <span className="block text-2xl font-black text-gray-900">{opt.qty}</span>
-                                    <span className="block text-xs text-gray-500 mt-1">crédit{opt.qty > 1 ? 's' : ''}</span>
-                                    <span className="block text-sm font-bold text-orange-600 mt-2">
-                                        {opt.price.toLocaleString()} F
-                                    </span>
-                                </button>
-                            ))}
-                        </div>
-
-                        <button
-                            onClick={handleBuyCredits}
-                            disabled={buyingCredits}
-                            className="w-full bg-gradient-to-r from-orange-500 to-orange-600 text-white py-4 rounded-xl font-bold text-lg hover:shadow-lg hover:from-orange-600 hover:to-orange-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                        >
-                            {buyingCredits ? (
-                                'Redirection vers le paiement...'
-                            ) : (
-                                <>
-                                    🎫 Acheter {creditQty} crédit{creditQty > 1 ? 's' : ''} — {(creditQty * CREDIT_PRICE).toLocaleString()} FCFA
-                                </>
-                            )}
-                        </button>
-
-                        <p className="text-xs text-gray-400 text-center mt-3">
-                            Paiement sécurisé par Stripe. 1 crédit = 1 500 FCFA.
+                {/* ===== CREDITS SECTION (Club Members Only) ===== */}
+                {isMember && (
+                    <div className="bg-white rounded-3xl p-8 shadow-md border border-gray-100 mb-6">
+                        <h3 className="text-lg font-bold text-gray-900 mb-2 flex items-center gap-2">
+                            <span className="w-8 h-8 bg-orange-100 text-orange-600 rounded-lg flex items-center justify-center text-sm">🎫</span>
+                            Mes Crédits PDF
+                        </h3>
+                        <p className="text-sm text-gray-500 mb-6">
+                            1 crédit = 1 PDF à télécharger et imprimer. Vous recevez 1 crédit gratuit chaque mois avec votre abonnement.
                         </p>
+
+                        {/* Credit Balance */}
+                        <div className="bg-gradient-to-r from-orange-50 to-amber-50 rounded-2xl p-6 mb-6 flex items-center justify-between">
+                            <div>
+                                <p className="text-sm text-gray-500 font-medium">Solde actuel</p>
+                                <p className="text-4xl font-black text-orange-600">{credits}</p>
+                                <p className="text-xs text-gray-400 mt-1">crédit{credits !== 1 ? 's' : ''} disponible{credits !== 1 ? 's' : ''}</p>
+                            </div>
+                            <div className="text-6xl opacity-30">🎫</div>
+                        </div>
+
+                        {/* Buy Credits */}
+                        <div className="border border-gray-100 rounded-2xl p-6">
+                            <h4 className="font-bold text-gray-900 mb-4 text-sm">Acheter des crédits</h4>
+
+                            <div className="grid grid-cols-3 gap-3 mb-6">
+                                {creditOptions.map(opt => (
+                                    <button
+                                        key={opt.qty}
+                                        onClick={() => setCreditQty(opt.qty)}
+                                        className={`p-4 rounded-xl border-2 text-center transition-all ${creditQty === opt.qty
+                                            ? 'border-orange-500 bg-orange-50 shadow-md'
+                                            : 'border-gray-100 hover:border-orange-200 hover:bg-orange-50/50'
+                                            }`}
+                                    >
+                                        <span className="block text-2xl font-black text-gray-900">{opt.qty}</span>
+                                        <span className="block text-xs text-gray-500 mt-1">crédit{opt.qty > 1 ? 's' : ''}</span>
+                                        <span className="block text-sm font-bold text-orange-600 mt-2">
+                                            {opt.price.toLocaleString()} F
+                                        </span>
+                                    </button>
+                                ))}
+                            </div>
+
+                            <button
+                                onClick={handleBuyCredits}
+                                disabled={buyingCredits}
+                                className="w-full bg-gradient-to-r from-orange-500 to-orange-600 text-white py-4 rounded-xl font-bold text-lg hover:shadow-lg hover:from-orange-600 hover:to-orange-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                            >
+                                {buyingCredits ? (
+                                    'Redirection vers le paiement...'
+                                ) : (
+                                    <>
+                                        🎫 Acheter {creditQty} crédit{creditQty > 1 ? 's' : ''} — {(creditQty * CREDIT_PRICE).toLocaleString()} FCFA
+                                    </>
+                                )}
+                            </button>
+
+                            <p className="text-xs text-gray-400 text-center mt-3">
+                                Paiement sécurisé par Stripe. 1 crédit = 1 500 FCFA.
+                            </p>
+                        </div>
                     </div>
-                </div>
+                )}
 
                 {/* Info Card */}
                 <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100">

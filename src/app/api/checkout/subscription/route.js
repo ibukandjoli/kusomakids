@@ -14,7 +14,7 @@ export async function POST(req) {
 
         const successUrl = target_book_id
             ? `${req.headers.get('origin')}/dashboard?action=club_welcome&unlock_book=${target_book_id}&session_id={CHECKOUT_SESSION_ID}`
-            : `${req.headers.get('origin')}/onboarding/success?session_id={CHECKOUT_SESSION_ID}`;
+            : `${req.headers.get('origin')}/dashboard?action=club_welcome&session_id={CHECKOUT_SESSION_ID}`;
 
         const session = await stripe.checkout.sessions.create({
             mode: 'subscription',
@@ -26,7 +26,7 @@ export async function POST(req) {
                 },
             ],
             success_url: successUrl,
-            cancel_url: `${req.headers.get('origin')}/onboarding`,
+            cancel_url: `${req.headers.get('origin')}/dashboard`,
             customer_email: email,
             metadata: {
                 userId: userId,

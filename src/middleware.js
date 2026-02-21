@@ -51,6 +51,19 @@ export async function middleware(request) {
         return NextResponse.redirect(new URL('/dashboard', request.url))
     }
 
+    // 3. Prevent completed-onboarding users from seeing onboarding again
+    if (user && path.startsWith('/onboarding') && !path.startsWith('/onboarding/success')) {
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('onboarding_completed')
+            .eq('id', user.id)
+            .single();
+
+        if (profile?.onboarding_completed === true) {
+            return NextResponse.redirect(new URL('/dashboard', request.url))
+        }
+    }
+
     return response
 }
 

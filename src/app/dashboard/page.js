@@ -21,6 +21,8 @@ function DashboardContent() {
 
     const [creditModalOpen, setCreditModalOpen] = useState(false);
     const [clubModalOpen, setClubModalOpen] = useState(false);
+    const [noCreditModalOpen, setNoCreditModalOpen] = useState(false);
+    const [buyingCredit, setBuyingCredit] = useState(false);
 
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -164,8 +166,8 @@ function DashboardContent() {
                     // Has credits -> Confirm Use
                     setCreditModalOpen(true);
                 } else {
-                    // No credits -> Pay
-                    setModalOpen(true);
+                    // No credits -> Show options (buy credit or buy PDF)
+                    setNoCreditModalOpen(true);
                 }
             }
         }
@@ -456,7 +458,7 @@ function DashboardContent() {
                 childName={childName}
             />
 
-            {/* Credit Confirmation Modal */}
+            {/* Credit Confirmation Modal (has credits) */}
             {creditModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
                     <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setCreditModalOpen(false)}></div>
@@ -472,7 +474,6 @@ function DashboardContent() {
                                 onClick={() => {
                                     setCreditModalOpen(false);
                                     downloadBook(selectedBookId);
-                                    // Update local credit count optimistically
                                     if (profile) {
                                         setProfile({ ...profile, monthly_credits: (profile.monthly_credits || 0) - 1 });
                                     }
@@ -488,6 +489,75 @@ function DashboardContent() {
                                 Annuler
                             </button>
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {/* No Credits Modal (0 credits — offer buy options) */}
+            {noCreditModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setNoCreditModalOpen(false)}></div>
+                    <div className="relative bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl animate-in zoom-in-95">
+                        <div className="text-center mb-6">
+                            <div className="text-5xl mb-3">😕</div>
+                            <h2 className="text-2xl font-black text-gray-900 mb-2">Plus de crédits !</h2>
+                            <p className="text-gray-500 text-sm">Choisissez comment débloquer ce PDF :</p>
+                        </div>
+
+                        <div className="space-y-3">
+                            {/* Option 1: Buy 1 credit (recommended) */}
+                            <button
+                                onClick={async () => {
+                                    setBuyingCredit(true);
+                                    try {
+                                        const { data: { session: authSession } } = await supabase.auth.getSession();
+                                        const res = await fetch('/api/checkout/credits', {
+                                            method: 'POST',
+                                            headers: { 'Content-Type': 'application/json' },
+                                            body: JSON.stringify({
+                                                userId: user.id,
+                                                email: authSession?.user?.email || '',
+                                                quantity: 1,
+                                            }),
+                                        });
+                                        const data = await res.json();
+                                        if (data.url) window.location.href = data.url;
+                                    } catch (err) {
+                                        console.error(err);
+                                        alert('Erreur: ' + err.message);
+                                    } finally {
+                                        setBuyingCredit(false);
+                                    }
+                                }}
+                                disabled={buyingCredit}
+                                className="w-full bg-gradient-to-r from-orange-500 to-orange-600 text-white py-4 rounded-xl font-bold hover:shadow-lg transition-all disabled:opacity-50 relative overflow-hidden"
+                            >
+                                <div className="absolute top-1 right-2 bg-white/20 text-xs px-2 py-0.5 rounded-full font-bold">RECOMMANDÉ</div>
+                                <span className="text-lg">🎫</span> Acheter 1 crédit — 1 500 FCFA
+                            </button>
+
+                            {/* Option 2: Buy PDF directly */}
+                            <button
+                                onClick={() => {
+                                    setNoCreditModalOpen(false);
+                                    setModalOpen(true);
+                                }}
+                                className="w-full border-2 border-gray-200 text-gray-700 py-4 rounded-xl font-bold hover:border-orange-200 hover:bg-orange-50/50 transition-all"
+                            >
+                                <span className="text-lg">📄</span> Acheter ce PDF — 3 000 FCFA
+                            </button>
+
+                            <button
+                                onClick={() => setNoCreditModalOpen(false)}
+                                className="w-full py-3 text-gray-400 text-sm hover:text-gray-600 transition-colors"
+                            >
+                                Annuler
+                            </button>
+                        </div>
+
+                        <p className="text-xs text-gray-400 text-center mt-4">
+                            💡 Le crédit est 50% moins cher que l'achat direct !
+                        </p>
                     </div>
                 </div>
             )}

@@ -5,12 +5,12 @@ import Link from 'next/link';
 
 export default function AdminAnalyticsDashboard() {
     const [stats, setStats] = useState({
-        users: 357,
-        booksCreated: 122,
-        booksPurchased: 138, // Derived approx for consistency or just mocked
-        revenue: '414 000 FCFA',
-        clubMembers: 19,
-        visitors: 1240, // Mocked extra
+        users: 1483,
+        booksCreated: 914,
+        booksPurchased: 415, // Derived approx for consistency or just mocked
+        revenue: '1 654 500 FCFA',
+        clubMembers: 63,
+        visitors: 12240, // Mocked extra
         visitsByDay: {},
         recentBooks: [
             {
@@ -60,9 +60,9 @@ export default function AdminAnalyticsDashboard() {
             }
         ],
         topTemplates: [
-            { id: 'Sport & Patriotisme', count: 95 },
-            { id: 'Fête & Joie', count: 2 },
-            { id: 'Ambition & Rêve', count: 8 }
+            { id: 'Sport & Patriotisme', count: 395 },
+            { id: 'Fête & Joie', count: 32 },
+            { id: 'Ambition & Rêve', count: 18 }
         ]
     });
     const [loading, setLoading] = useState(true);

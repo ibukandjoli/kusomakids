@@ -106,8 +106,40 @@ async function handleCheckoutSessionCompleted(session) {
     }
 
     const isSubscription = session.mode === 'subscription';
+    const isCreditPurchase = metadata?.type === 'credit_purchase';
 
-    console.log(`📦 Processing Order for User: ${userId}, Book: ${bookId}, Email: ${targetEmail}, Type: ${session.mode}`);
+    console.log(`📦 Processing Order for User: ${userId}, Book: ${bookId}, Email: ${targetEmail}, Type: ${session.mode}${isCreditPurchase ? ' (CREDIT PURCHASE)' : ''}`);
+
+    // HANDLE CREDIT PURCHASE (early return — no book/subscription logic needed)
+    if (isCreditPurchase && userId) {
+        const quantity = parseInt(metadata.quantity || '1', 10);
+        console.log(`🎫 Credit purchase: ${quantity} credit(s) for user ${userId}`);
+
+        try {
+            // Get current credits
+            const { data: profile } = await supabaseAdmin
+                .from('profiles')
+                .select('monthly_credits')
+                .eq('id', userId)
+                .single();
+
+            const currentCredits = profile?.monthly_credits || 0;
+
+            const { error } = await supabaseAdmin
+                .from('profiles')
+                .update({ monthly_credits: currentCredits + quantity })
+                .eq('id', userId);
+
+            if (error) {
+                console.error('❌ Failed to add credits:', error);
+            } else {
+                console.log(`✅ Added ${quantity} credit(s). New total: ${currentCredits + quantity}`);
+            }
+        } catch (err) {
+            console.error('❌ Credit purchase error:', err);
+        }
+        return; // Done — no further processing needed
+    }
 
     if (!targetEmail) {
         console.error("❌ CRITICAL: No email found in Stripe Session. Cannot fulfill order.");

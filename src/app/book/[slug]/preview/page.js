@@ -461,24 +461,16 @@ export default function PreviewPage() {
     };
 
     const handleConfirm = () => {
-        // SECURITY: Require authentication before proceeding to checkout
-        if (!user) {
-            // Save current cart state so user can resume after login
-            const currentPath = window.location.pathname;
-            router.push(`/login?redirect=${encodeURIComponent(currentPath)}`);
-            return;
-        }
-
-        // FIX: Persist the Swapped Cover Image (coverImage state) instead of the initial orderData.coverUrl
+        // Build the cart item first (always needed whether logged in or not)
         const updatedOrder = {
             ...orderData,
-            coverUrl: coverImage || orderData.coverUrl, // Use state first 
+            coverUrl: coverImage || orderData.coverUrl,
             finalizedPages: pages,
             cartId: Date.now(),
-            generatedBookId: savedBookId // PASS THE SAVED ID
+            generatedBookId: savedBookId
         };
 
-        // Retrieve existing cart
+        // Save cart to localStorage (persists through login/signup flow)
         let currentCart = [];
         try {
             currentCart = JSON.parse(localStorage.getItem('cart_items') || '[]');
@@ -486,15 +478,16 @@ export default function PreviewPage() {
         } catch (e) {
             currentCart = [];
         }
-
-        // Check if item validation/deduplication needed?
-        // For now, simply append.
         currentCart.push(updatedOrder);
-
         localStorage.setItem('cart_items', JSON.stringify(currentCart));
-
-        // Force update for Header
         window.dispatchEvent(new Event('cart_updated'));
+
+        // If not logged in, save redirect intent and send to login
+        if (!user) {
+            localStorage.setItem('redirect_after_auth', '/checkout');
+            router.push(`/login?redirect=${encodeURIComponent('/checkout')}`);
+            return;
+        }
 
         router.push('/checkout');
     };

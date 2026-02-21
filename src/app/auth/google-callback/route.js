@@ -55,10 +55,10 @@ export async function GET(request) {
             const needsOnboarding = !profile || !profile.full_name || profile.onboarding_completed === false;
 
             if (needsOnboarding) {
-                // Determine source for analytics or internal tracking
                 return NextResponse.redirect(`${origin}/onboarding?from=google_auth`)
             } else {
-                return NextResponse.redirect(`${origin}/dashboard`)
+                // check_redirect=1 tells dashboard to check localStorage for pending redirect (e.g. /checkout)
+                return NextResponse.redirect(`${origin}/dashboard?check_redirect=1`)
             }
         }
     }

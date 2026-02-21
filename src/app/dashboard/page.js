@@ -77,6 +77,17 @@ function DashboardContent() {
     useEffect(() => {
         const action = searchParams.get('action');
         const unlockBookId = searchParams.get('unlock_book');
+        const checkRedirect = searchParams.get('check_redirect');
+
+        // Handle pending redirect from purchase flow (set before auth)
+        if (checkRedirect === '1') {
+            const pendingRedirect = localStorage.getItem('redirect_after_auth');
+            if (pendingRedirect && pendingRedirect.startsWith('/')) {
+                localStorage.removeItem('redirect_after_auth');
+                router.push(pendingRedirect);
+                return;
+            }
+        }
 
         if (action === 'club_welcome' && unlockBookId) {
             setSelectedBookId(unlockBookId);
@@ -84,7 +95,7 @@ function DashboardContent() {
         } else if (action === 'subscribe') {
             setModalOpen(true);
         }
-    }, [searchParams]);
+    }, [searchParams, router]);
 
     // Access Logic
     const canAccessBook = (book) => {

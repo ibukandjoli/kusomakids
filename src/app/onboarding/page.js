@@ -237,13 +237,11 @@ export default function OnboardingPage() {
             const result = await res.json();
             if (!res.ok) throw new Error(result.error || 'Erreur serveur');
 
-            // Success - Check if from purchase flow
-            const urlParams = new URLSearchParams(window.location.search);
-            const fromPurchase = urlParams.get('from') === 'purchase';
-
-            if (fromPurchase) {
-                // Redirect to purchased PDFs after onboarding
-                router.push('/dashboard/purchased');
+            // Check for pending redirect (e.g. user was buying a book before signup)
+            const pendingRedirect = localStorage.getItem('redirect_after_auth');
+            if (pendingRedirect && pendingRedirect.startsWith('/')) {
+                localStorage.removeItem('redirect_after_auth');
+                router.push(pendingRedirect);
             } else {
                 // Normal flow - go to dashboard
                 router.push('/dashboard');

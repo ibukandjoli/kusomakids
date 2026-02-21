@@ -3,15 +3,11 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
-import PaymentModal from '@/app/components/PaymentModal';
-import { loadStripe } from '@stripe/stripe-js';
-
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY);
 
 export default function BillingPage() {
     const [loading, setLoading] = useState(true);
     const [profile, setProfile] = useState(null);
-    const [showPaymentModal, setShowPaymentModal] = useState(false);
+    const [portalLoading, setPortalLoading] = useState(false);
     const router = useRouter();
 
     useEffect(() => {
@@ -38,10 +34,31 @@ export default function BillingPage() {
         }
         fetchSubscription();
     }, [router]);
+
     const handlePortalRedirect = async () => {
-        // In a real app, this calls an API to ge the Stripe Portal URL
-        alert("Redirection vers le portail de facturation Stripe...");
-        // window.location.href = '/api/billing/portal'; 
+        setPortalLoading(true);
+        try {
+            const res = await fetch('/api/billing/portal', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId: profile.id }),
+            });
+
+            const data = await res.json();
+
+            if (!res.ok) {
+                throw new Error(data.error || 'Erreur lors de la redirection');
+            }
+
+            if (data.url) {
+                window.location.href = data.url;
+            }
+        } catch (error) {
+            console.error('Portal Error:', error);
+            alert('Erreur: ' + error.message);
+        } finally {
+            setPortalLoading(false);
+        }
     };
 
     const handleSubscribe = async () => {
@@ -52,7 +69,7 @@ export default function BillingPage() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     userId: profile.id,
-                    email: profile.email || profile.email_address || 'user@example.com', // fallback handled by backend or supabase
+                    email: profile.email || profile.email_address || '',
                     priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_ID
                 }),
             });
@@ -72,9 +89,29 @@ export default function BillingPage() {
         }
     };
 
+    // Calculate next renewal date from subscription_started_at
+    const getNextRenewalDate = () => {
+        if (!profile?.subscription_started_at) return null;
+        const startDate = new Date(profile.subscription_started_at);
+        const now = new Date();
+
+        // Find the next renewal by adding months from start date
+        let nextRenewal = new Date(startDate);
+        while (nextRenewal <= now) {
+            nextRenewal.setMonth(nextRenewal.getMonth() + 1);
+        }
+
+        return nextRenewal.toLocaleDateString('fr-FR', {
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric'
+        });
+    };
+
     if (loading) return <div className="min-h-screen pt-40 text-center">Chargement...</div>;
 
     const isMember = profile?.subscription_status === 'active';
+    const renewalDate = getNextRenewalDate();
 
     return (
         <div className="min-h-screen bg-[#FDFBF7] pt-32 pb-20">
@@ -96,16 +133,22 @@ export default function BillingPage() {
                                 </span>
                                 <h2 className="text-2xl font-bold text-gray-900 mb-2">Club Kusoma VIP 🌟</h2>
                                 <p className="text-gray-600 mb-6">
-                                    Vous bénéficiez de tous les avantages du club. Prochain renouvellement le 15 du mois.
+                                    Vous bénéficiez de tous les avantages du club.
+                                    {renewalDate && <> Prochain renouvellement le <strong>{renewalDate}</strong>.</>}
                                 </p>
                                 <div className="flex flex-wrap gap-4">
                                     <button
                                         onClick={handlePortalRedirect}
-                                        className="bg-gray-900 text-white px-6 py-3 rounded-xl font-bold hover:bg-gray-800 transition-colors shadow-lg"
+                                        disabled={portalLoading}
+                                        className="bg-gray-900 text-white px-6 py-3 rounded-xl font-bold hover:bg-gray-800 transition-colors shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
-                                        Gérer mon abonnement
+                                        {portalLoading ? 'Redirection...' : 'Gérer mon abonnement'}
                                     </button>
-                                    <button className="text-gray-500 hover:text-red-500 px-4 py-3 font-medium transition-colors text-sm underline">
+                                    <button
+                                        onClick={handlePortalRedirect}
+                                        disabled={portalLoading}
+                                        className="text-gray-500 hover:text-red-500 px-4 py-3 font-medium transition-colors text-sm underline disabled:opacity-50"
+                                    >
                                         Résilier
                                     </button>
                                 </div>
@@ -129,35 +172,19 @@ export default function BillingPage() {
                     )}
                 </div>
 
-                {/* Billing History (Placeholder) */}
+                {/* Info Card */}
                 <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100">
-                    <h3 className="font-bold text-xl text-gray-900 mb-6">Historique de facturation</h3>
-
-                    {isMember ? (
-                        <div className="space-y-4">
-                            {/* Fake Invoice Item */}
-                            <div className="flex justify-between items-center p-4 bg-gray-50 rounded-xl border border-gray-100">
-                                <div>
-                                    <p className="font-bold text-gray-900">Abonnement Mensuel</p>
-                                    <p className="text-xs text-gray-500">14 Jan 2026</p>
-                                </div>
-                                <div className="flex items-center gap-4">
-                                    <span className="font-bold text-gray-900">6 500 FCFA</span>
-                                    <button className="text-orange-600 text-sm font-bold hover:underline">PDF</button>
-                                </div>
-                            </div>
-                        </div>
-                    ) : (
-                        <p className="text-gray-400 text-center italic py-4">Aucune facture disponible.</p>
-                    )}
+                    <h3 className="font-bold text-xl text-gray-900 mb-4">Gestion de votre abonnement</h3>
+                    <p className="text-gray-600 text-sm leading-relaxed">
+                        Cliquez sur <strong>"Gérer mon abonnement"</strong> pour accéder au portail sécurisé Stripe où vous pourrez :
+                    </p>
+                    <ul className="mt-3 space-y-2 text-sm text-gray-600">
+                        <li className="flex items-center gap-2"><span className="text-green-500">✓</span> Modifier votre carte de paiement</li>
+                        <li className="flex items-center gap-2"><span className="text-green-500">✓</span> Consulter vos factures et reçus</li>
+                        <li className="flex items-center gap-2"><span className="text-green-500">✓</span> Annuler votre abonnement à tout moment</li>
+                    </ul>
                 </div>
             </div>
-
-            <PaymentModal
-                isOpen={showPaymentModal}
-                onClose={() => setShowPaymentModal(false)}
-                user={profile}
-            />
         </div>
     );
 }

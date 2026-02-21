@@ -27,27 +27,35 @@ function LoginContent() {
             });
 
             if (error) throw error;
-            // Contextual Redirect (Signup Flow)
-            const storedContext = localStorage.getItem('signup_context');
+
+            // Determine redirect destination
             let nextUrl = '/dashboard';
 
+            // PRIORITY 0: redirect_after_auth (from purchase flow — cart saved in localStorage)
+            const pendingRedirect = localStorage.getItem('redirect_after_auth');
+            if (pendingRedirect && pendingRedirect.startsWith('/')) {
+                nextUrl = pendingRedirect;
+                localStorage.removeItem('redirect_after_auth');
+            }
             // PRIORITY 1: Explicit redirect param (from auth guard)
-            const redirectParam = searchParams.get('redirect');
-            if (redirectParam && redirectParam.startsWith('/')) {
-                nextUrl = redirectParam;
-            } else if (storedContext) {
-                const { plan, bookId } = JSON.parse(storedContext);
-                if (plan === 'club') {
-                    nextUrl = `/checkout?plan=club${bookId ? `&book_id=${bookId}` : ''}`;
+            else {
+                const storedContext = localStorage.getItem('signup_context');
+                const redirectParam = searchParams.get('redirect');
+                if (redirectParam && redirectParam.startsWith('/')) {
+                    nextUrl = redirectParam;
+                } else if (storedContext) {
+                    const { plan, bookId } = JSON.parse(storedContext);
+                    if (plan === 'club') {
+                        nextUrl = `/checkout?plan=club${bookId ? `&book_id=${bookId}` : ''}`;
+                    }
+                    localStorage.removeItem('signup_context');
+                } else if (searchParams.get('plan') === 'club') {
+                    nextUrl = '/dashboard?action=subscribe';
                 }
-                localStorage.removeItem('signup_context'); // Clean up
-            } else if (searchParams.get('plan') === 'club') {
-                // Redirect to dashboard with action to open subscription modal
-                nextUrl = '/dashboard?action=subscribe';
             }
 
             console.log("Login success, redirecting to:", nextUrl);
-            router.refresh(); // Force refresh to update server-side session state
+            router.refresh();
             router.push(nextUrl);
         } catch (err) {
             console.error("Login Error:", err);

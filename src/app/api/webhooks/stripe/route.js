@@ -259,8 +259,9 @@ async function handleCheckoutSessionCompleted(session) {
                 .from('profiles')
                 .update({
                     subscription_status: 'active',
-                    monthly_credits: 1, // 1 free PDF download per month
-                    subscription_started_at: new Date().toISOString()
+                    monthly_credits: 1,
+                    subscription_started_at: new Date().toISOString(),
+                    stripe_customer_id: session.customer // Store for billing portal
                 })
                 .eq('id', userId);
 

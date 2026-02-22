@@ -165,6 +165,19 @@ export default function HomeClient({ initialBooks }) {
             .replace(/\{childName\}/gi, name);
     };
 
+    // Age matching logic
+    const matchAge = (book, fMin, fMax) => {
+        const matches = book.age_range ? String(book.age_range).match(/(\d+)/g) : null;
+        if (!matches) return true;
+        const bMin = parseInt(matches[0], 10);
+        const bMax = matches[1] ? parseInt(matches[1], 10) : bMin;
+        return Math.max(fMin, bMin) <= Math.min(fMax, bMax);
+    };
+
+    const littleKidsBooks = books.filter(b => matchAge(b, 0, 5)); // "2-5 ans" roughly
+    const bigKidsBooks = books.filter(b => matchAge(b, 6, 100));  // "6+ ans"
+
+
     return (
         <div className="w-full bg-noise">
 
@@ -282,50 +295,100 @@ export default function HomeClient({ initialBooks }) {
             <MotionSection className="pt-6 pb-48 bg-white relative z-20">
 
                 <div className="container mx-auto px-4 mt-12">
-                    <div className="flex justify-between items-end mb-12">
-                        <div>
-                            <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-2">Nos Dernières Histoires</h2>
-                            <p className="text-gray-600 text-lg">Découvrez les futures aventures de votre enfant</p>
+                    {/* SECTION 1: Éveil et Découvertes (2-5 ans) */}
+                    <div className="mb-24">
+                        <div className="flex justify-between items-end mb-12">
+                            <div>
+                                <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-2">Éveil & Découvertes <span className="text-orange-500">(2-5 ans)</span></h2>
+                                <p className="text-gray-600 text-lg">Des histoires douces pour apprendre et rêver.</p>
+                            </div>
+                            <Link href="/books" className="text-orange-600 font-bold hover:text-orange-700 hidden md:block">
+                                Voir tout →
+                            </Link>
                         </div>
-                        <Link href="/books" className="text-orange-600 font-bold hover:text-orange-700 hidden md:block">
-                            Voir tout →
-                        </Link>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                            {littleKidsBooks.slice(0, 6).map((book, i) => (
+                                <motion.div
+                                    key={book.id}
+                                    initial={{ opacity: 0, y: 20 }}
+                                    whileInView={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: (i % 3) * 0.1 }}
+                                    whileHover={{ y: -10 }}
+                                    whileTap={{ scale: 0.98 }}
+                                    className="group cursor-pointer"
+                                >
+                                    <Link href={`/book/${book.id}`}>
+                                        <div className="relative aspect-square mb-4 rounded-[2rem] overflow-hidden shadow-md group-hover:shadow-2xl transition-all duration-300 border border-gray-100">
+                                            <div className="absolute inset-0 bg-noise opacity-50 pointer-events-none z-10 mix-blend-multiply"></div>
+                                            <div className="absolute left-0 top-0 bottom-0 w-[4px] bg-white/20 z-20"></div>
+
+                                            <Image
+                                                src={book.cover_image_url || book.coverUrl || `/images/books/${book.folder}/main.png`}
+                                                alt={book.title}
+                                                fill
+                                                className="object-cover transform group-hover:scale-105 transition-transform duration-700"
+                                            />
+                                        </div>
+                                        <h3 className="font-bold text-gray-900 group-hover:text-orange-600 transition-colors text-xl leading-tight mb-2">{personalize(book.title, book.genre)}</h3>
+                                        <p className="text-sm text-gray-500 italic">{book.tagline || book.ageRange}</p>
+                                    </Link>
+                                </motion.div>
+                            ))}
+                        </div>
+                        <div className="mt-12 text-center md:hidden">
+                            <Link href="/books" className="inline-block border-2 border-orange-500 text-orange-600 px-6 py-3 rounded-full font-bold hover:bg-orange-50 transition-colors">
+                                Voir tout (2-5 ans)
+                            </Link>
+                        </div>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                        {books.slice(0, 6).map((book, i) => (
-                            <motion.div
-                                key={book.id}
-                                initial={{ opacity: 0, y: 20 }}
-                                whileInView={{ opacity: 1, y: 0 }}
-                                transition={{ delay: (i % 3) * 0.1 }}
-                                whileHover={{ y: -10 }}
-                                whileTap={{ scale: 0.98 }}
-                                className="group cursor-pointer"
-                            >
-                                <Link href={`/book/${book.id}`}>
-                                    <div className="relative aspect-square mb-4 rounded-[2rem] overflow-hidden shadow-md group-hover:shadow-2xl transition-all duration-300 border border-gray-100">
-                                        {/* Realistic Texture Overlay */}
-                                        <div className="absolute inset-0 bg-noise opacity-50 pointer-events-none z-10 mix-blend-multiply"></div>
-                                        <div className="absolute left-0 top-0 bottom-0 w-[4px] bg-white/20 z-20"></div> {/* Spine Highlight */}
+                    {/* SECTION 2: Pour les Grands Aventuriers (6+ ans) */}
+                    <div>
+                        <div className="flex justify-between items-end mb-12">
+                            <div>
+                                <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-2">Grands Aventuriers <span className="text-purple-600">(6+ ans)</span></h2>
+                                <p className="text-gray-600 text-lg">Mystères, courage et leçons de vie pour les plus grands.</p>
+                            </div>
+                            <Link href="/books" className="text-purple-600 font-bold hover:text-purple-700 hidden md:block">
+                                Voir tout →
+                            </Link>
+                        </div>
 
-                                        <Image
-                                            src={book.cover_image_url || book.coverUrl || `/images/books/${book.folder}/main.png`}
-                                            alt={book.title}
-                                            fill
-                                            className="object-cover transform group-hover:scale-105 transition-transform duration-700"
-                                        />
-                                    </div>
-                                    <h3 className="font-bold text-gray-900 group-hover:text-orange-600 transition-colors text-xl leading-tight mb-2">{personalize(book.title, book.genre)}</h3>
-                                    <p className="text-sm text-gray-500 italic">{book.tagline || book.ageRange}</p>
-                                </Link>
-                            </motion.div>
-                        ))}
-                    </div>
-                    <div className="mt-12 text-center md:hidden">
-                        <Link href="/books" className="inline-block border-2 border-orange-500 text-orange-600 px-6 py-3 rounded-full font-bold hover:bg-orange-50 transition-colors">
-                            Voir toutes les histoires
-                        </Link>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                            {bigKidsBooks.slice(0, 6).map((book, i) => (
+                                <motion.div
+                                    key={book.id}
+                                    initial={{ opacity: 0, y: 20 }}
+                                    whileInView={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: (i % 3) * 0.1 }}
+                                    whileHover={{ y: -10 }}
+                                    whileTap={{ scale: 0.98 }}
+                                    className="group cursor-pointer"
+                                >
+                                    <Link href={`/book/${book.id}`}>
+                                        <div className="relative aspect-square mb-4 rounded-[2rem] overflow-hidden shadow-md group-hover:shadow-2xl transition-all duration-300 border border-gray-100">
+                                            <div className="absolute inset-0 bg-noise opacity-50 pointer-events-none z-10 mix-blend-multiply"></div>
+                                            <div className="absolute left-0 top-0 bottom-0 w-[4px] bg-white/20 z-20"></div>
+
+                                            <Image
+                                                src={book.cover_image_url || book.coverUrl || `/images/books/${book.folder}/main.png`}
+                                                alt={book.title}
+                                                fill
+                                                className="object-cover transform group-hover:scale-105 transition-transform duration-700"
+                                            />
+                                        </div>
+                                        <h3 className="font-bold text-gray-900 group-hover:text-purple-600 transition-colors text-xl leading-tight mb-2">{personalize(book.title, book.genre)}</h3>
+                                        <p className="text-sm text-gray-500 italic">{book.tagline || book.ageRange}</p>
+                                    </Link>
+                                </motion.div>
+                            ))}
+                        </div>
+                        <div className="mt-12 text-center md:hidden">
+                            <Link href="/books" className="inline-block border-2 border-purple-500 text-purple-600 px-6 py-3 rounded-full font-bold hover:bg-purple-50 transition-colors">
+                                Voir tout (6+ ans)
+                            </Link>
+                        </div>
                     </div>
                 </div>
 

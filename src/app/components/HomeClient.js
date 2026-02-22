@@ -102,6 +102,7 @@ function HeroVisual(props) {
 export default function HomeClient({ initialBooks }) {
     const [books, setBooks] = useState(initialBooks || []);
     const [childName, setChildName] = useState(null);
+    const [childGender, setChildGender] = useState(null);
     const { scrollY } = useScroll();
     const y1 = useTransform(scrollY, [0, 500], [0, 200]);
     const y2 = useTransform(scrollY, [0, 500], [0, -150]);
@@ -116,18 +117,21 @@ export default function HomeClient({ initialBooks }) {
             fetchBooks();
         }
 
-        // 2. Fetch User Child Name (for personalization)
+        // 2. Fetch User Child Name & Gender (for personalization)
         const fetchUserChild = async () => {
             const { data: { session } } = await supabase.auth.getSession();
             if (session) {
                 const { data: children } = await supabase
                     .from('children')
-                    .select('first_name')
+                    .select('first_name, gender')
                     .eq('user_id', session.user.id)
                     .limit(1);
 
                 if (children && children.length > 0) {
                     setChildName(children[0].first_name);
+                    const g = children[0].gender?.toLowerCase();
+                    if (g === 'girl' || g === 'fille' || g === 'f') setChildGender('girl');
+                    else if (g === 'boy' || g === 'garçon' || g === 'garcon' || g === 'm') setChildGender('boy');
                 }
             }
         };
@@ -135,13 +139,27 @@ export default function HomeClient({ initialBooks }) {
 
     }, [initialBooks]);
 
-    // Helper to personalize text
-    const personalize = (text) => {
-        // Only replace if we have a child name, otherwise leave generic or original
-        // If the text contains [Son prénom], we ideally want to show "votre enfant" if not logged in, 
-        // or the specific name if logged in.
-        const name = childName || 'Votre Enfant';
+    // Helper to personalize text (gender-aware)
+    const personalize = (text, bookGender) => {
         if (!text) return '';
+        let name;
+        if (childName && childGender) {
+            // Logged in: use child name only if gender matches or book is unisex
+            if (!bookGender || bookGender === 'unisex' || childGender === bookGender) {
+                name = childName;
+            } else {
+                // Gender mismatch: generic fallback so parent knows it's the other gender's book
+                name = bookGender === 'girl' ? 'Votre fille' : 'Votre garçon';
+            }
+        } else if (childName && !bookGender) {
+            name = childName;
+        } else {
+            // Not logged in: fallback based on book gender
+            if (bookGender === 'girl') name = 'Votre fille';
+            else if (bookGender === 'boy') name = 'Votre garçon';
+            else name = 'Votre enfant';
+        }
+
         return formatTitle(text)
             .replace(/\[Son prénom\]/gi, name)
             .replace(/\{childName\}/gi, name);
@@ -275,12 +293,12 @@ export default function HomeClient({ initialBooks }) {
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                        {books.slice(0, 3).map((book, i) => (
+                        {books.slice(0, 6).map((book, i) => (
                             <motion.div
                                 key={book.id}
                                 initial={{ opacity: 0, y: 20 }}
                                 whileInView={{ opacity: 1, y: 0 }}
-                                transition={{ delay: i * 0.1 }}
+                                transition={{ delay: (i % 3) * 0.1 }}
                                 whileHover={{ y: -10 }}
                                 whileTap={{ scale: 0.98 }}
                                 className="group cursor-pointer"
@@ -298,7 +316,7 @@ export default function HomeClient({ initialBooks }) {
                                             className="object-cover transform group-hover:scale-105 transition-transform duration-700"
                                         />
                                     </div>
-                                    <h3 className="font-bold text-gray-900 group-hover:text-orange-600 transition-colors text-xl leading-tight mb-2">{personalize(book.title)}</h3>
+                                    <h3 className="font-bold text-gray-900 group-hover:text-orange-600 transition-colors text-xl leading-tight mb-2">{personalize(book.title, book.genre)}</h3>
                                     <p className="text-sm text-gray-500 italic">{book.tagline || book.ageRange}</p>
                                 </Link>
                             </motion.div>

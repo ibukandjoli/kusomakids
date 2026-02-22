@@ -1,10 +1,39 @@
 # KusomaKids - Project Context
 
-## Current Status (February 19, 2026)
+## Current Status (February 22, 2026)
 
-**Latest Update**: Comprehensive security audit completed. Deleted 5 dangerous endpoints (debug, set-password, seed-templates), secured admin/worker routes with authentication, disabled guest checkout, applied RLS hardening on `generated_books`, and made `book-audio` bucket private.
+**Latest Update**: Credit purchase system, reward milestone system, enhanced profile page, billing page with Stripe Customer Portal, and purchase flow cart persistence implemented.
 
 ## ✅ Recent Major Accomplishments
+
+### Credit Purchase & Reward System (February 22, 2026)
+
+**Credit Purchase** (Club Members Only):
+- `/api/checkout/credits`: Stripe checkout for buying 1-10 credits at 1,500 FCFA each
+- Webhook handles `credit_purchase` type: adds credits to `monthly_credits`
+- Billing page: "Mes Crédits PDF" section with balance display, qty picker (1/3/5), buy button
+- Dashboard: When member has 0 credits → smart modal: "Buy 1 credit (1500F)" vs "Buy PDF (3000F)"
+- Non-members only see PaymentModal for single purchase (3000F)
+
+**Passport Reward System**:
+- Extended from 4 to 6 badge levels (1→3→5→10→15→25 books)
+- Milestones with credit rewards: 10 books (2cr), 15 books (1cr), 25 books (5cr)
+- `/api/rewards/claim`: Verifies eligibility, prevents double-claim via `rewards_claimed` array
+- Celebration modal with confetti animation, spinning badge, and "Claim credits" button
+- Certificate generator: Downloadable HTML with child's name, badge, and date
+- Auto-detects unclaimed rewards on dashboard load
+
+**Enhanced Profile Page**:
+- Role badge header (Super Papa/Maman/Tonton with gradient)
+- Children section: avatar, name, age (auto-calculated), birthday, interests tags
+- Inline edit for each child + "Add new child" form
+- Club CTA for non-members personalized with child's name
+
+**Billing & Purchase Flow**:
+- Stripe Customer Portal integration (`/api/billing/portal`)
+- Retention modal for cancellation (anti-churn)
+- Dynamic renewal date from `subscription_started_at`
+- Cart state preserved through authentication flow (`redirect_after_auth`)
 
 ### Security Audit & Hardening (February 19, 2026)
 10 vulnerabilities identified and remediated:
@@ -98,9 +127,11 @@ Complete subscription system with monthly credits and member benefits:
 
 **Database Schema** (Supabase `profiles` table):
 ```sql
-subscription_status text default 'free'  -- 'free' | 'active'
+subscription_status text default 'free'  -- 'free' | 'active' | 'past_due' | 'canceled'
 monthly_credits integer default 0
 subscription_started_at timestamp
+stripe_customer_id text              -- For Billing Portal
+rewards_claimed text[] default '{}'   -- Prevents double-claiming badge rewards
 ```
 
 ### Payment & Email Flow Fixes (January 2026)
@@ -220,17 +251,21 @@ src/
 │   │   │   └── process-purchased/route.js  # Post-purchase processing
 │   │   ├── checkout/
 │   │   │   ├── payment/route.js            # One-time payment
+│   │   │   ├── credits/route.js            # Credit purchase (1500F each)
 │   │   │   ├── subscription/route.js       # Club subscription
 │   │   │   └── one-time/route.js           # Single book purchase
+│   │   ├── billing/portal/route.js         # Stripe Customer Portal
+│   │   ├── rewards/claim/route.js          # Badge reward claim (credits)
 │   │   ├── download/[bookId]/route.js      # PDF download with credit logic
 │   │   ├── download-secure/[bookId]/route.js # Secure token-based PDF download
 │   │   └── workers/
 │   │       ├── generate-book/route.js      # Background image gen + email
 │   │       └── generate-magic-book/route.js # Magic story gen (auth + ownership)
 │   ├── dashboard/
-│   │   ├── page.js                         # Main dashboard with member badge
+│   │   ├── page.js                         # Main dashboard with gamification & rewards
+│   │   ├── billing/page.js                 # Billing + Stripe Portal + Credits
 │   │   ├── purchased/page.js               # PDFs page
-│   │   └── profile/page.js                 # User profile
+│   │   └── profile/page.js                 # Enhanced profile (role, children, interests)
 │   ├── onboarding/success/page.js          # Club welcome page
 │   ├── checkout/success/page.js            # Purchase success page
 │   └── components/
@@ -324,18 +359,27 @@ NEXT_PUBLIC_APP_URL=https://www.kusomakids.com
 5. Generate and download PDF
 6. Badge updates: "0 crédit restant"
 
-### Flow 3: Additional PDF Purchase (Member)
-1. Member without credits clicks "📥"
-2. `PaymentModal` shows discounted price: **1,500 FCFA** (50% off)
-3. After payment → Book unlocked → PDF downloaded
+### Flow 3: Credit Purchase (Club Member)
+1. Member without credits opens Billing or clicks "Buy credit" in dashboard modal
+2. Selects quantity (1/3/5 credits) at 1,500 FCFA each
+3. Stripe checkout → Payment success
+4. Webhook detects `type: 'credit_purchase'` → Adds credits to `monthly_credits`
+5. Redirect with success notification
 
-### Flow 4: Monthly Renewal
+### Flow 4: Badge Reward
+1. User generates enough books to reach a milestone (10/15/25)
+2. Dashboard detects unclaimed reward → Shows celebration modal with confetti
+3. User clicks "Réclamer X crédits" → API verifies + grants credits
+4. After claiming → Option to download personalized certificate
+5. Reward marked in `rewards_claimed` array (prevents double-claim)
+
+### Flow 5: Monthly Renewal
 1. Stripe charges monthly subscription
 2. Webhook `invoice.payment_succeeded` received
 3. **Email**: "Votre abonnement est renouvelé" (+1 crédit)
 4. System resets `monthly_credits = 1`
 
-### Flow 5: Renewal Failure
+### Flow 6: Renewal Failure
 1. Stripe payment fails
 2. Webhook `invoice.payment_failed` received
 3. System updates `subscription_status = 'past_due'`
@@ -351,12 +395,10 @@ NEXT_PUBLIC_APP_URL=https://www.kusomakids.com
 - **Middleware Deprecation**: Next.js recommends using "proxy" instead
 
 ### Future Enhancements
-1. **Subscription Management**: Allow users to cancel/update subscription from dashboard
-2. **Credit History**: Track credit usage and renewal dates
-3. **Physical Book Orders**: "Commander en papier" feature (currently placeholder)
-4. **Admin Panel**: Manage subscriptions and view analytics
-5. **Email Preferences**: Allow users to opt-out of specific email types
-6. **Multi-language Support**: Currently French only
+1. **Physical Book Orders**: "Commander en papier" feature (currently placeholder)
+2. **Email Preferences**: Allow users to opt-out of specific email types
+3. **Multi-language Support**: Currently French only
+4. **Pack Pricing**: Discounts for bulk credit purchases (e.g., 3 credits = 4000F)
 
 ## 🧪 Testing Checklist
 
@@ -436,5 +478,5 @@ npm start      # Production server
 
 ---
 
-*Last Updated: February 19, 2026*
-*Version: 4.0 (Security Audit & Hardening)*
+*Last Updated: February 22, 2026*
+*Version: 5.0 (Credits, Rewards & Profile Enhancement)*

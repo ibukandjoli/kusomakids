@@ -33,10 +33,16 @@ KusomaKids is a **Next.js 16** application deployed on **Vercel**. It uses **Sup
 2.  **Webhook** (`invoice.payment_succeeded` / `checkout.session.completed`):
     *   **Logic**: `src/app/api/webhooks/stripe/route.js`.
     *   **Action**: Unlocks book (`is_unlocked = true`).
+    *   **Credit Purchase**: Detects `metadata.type === 'credit_purchase'` → Adds credits to profile.
     *   **Auth Required**: User must be logged in before checkout (guest checkout disabled).
     *   **Notification**: Sends confirmation Email.
 
-### C. Audio System
+### C. Credit & Reward System
+1.  **Credit Purchase** (`/api/checkout/credits`): Stripe checkout at 1,500 FCFA/credit (Club members only).
+2.  **Reward Milestones** (`/api/rewards/claim`): Grants free credits at 10/15/25 books.
+3.  **Billing Portal** (`/api/billing/portal`): Stripe Customer Portal for subscription management.
+
+### D. Audio System
 1.  **Client**: Request audio play.
 2.  **API** (`/api/audio/generate-speech`):
     *   Checks if `audio_url` exists in DB.
@@ -55,8 +61,11 @@ KusomaKids is a **Next.js 16** application deployed on **Vercel**. It uses **Sup
 
 ### `profiles` (extends `auth.users`)
 *   `id`: References `auth.users`.
+*   `role`: User role from onboarding (parent, grandparent, uncle_aunt, other).
 *   `subscription_status`: 'active', 'free', 'past_due', 'canceled'.
-*   `monthly_credits`: Integer (Balance for downloads).
+*   `monthly_credits`: Integer (Balance for PDF downloads).
+*   `stripe_customer_id`: Text (for Billing Portal).
+*   `rewards_claimed`: Text[] (badge IDs already claimed, prevents double-claiming).
 
 ### `download_tokens`
 *   `token`: Secure hash for download links.

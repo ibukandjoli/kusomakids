@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, Suspense } from 'react';
+import { useEffect, useState, Suspense, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
@@ -8,6 +8,13 @@ import Link from 'next/link';
 import PaymentModal from '../components/PaymentModal';
 import ClubModal from '../components/ClubModal';
 import DashboardBottomNav from '../components/DashboardBottomNav';
+
+// Reward milestones: credits granted at each threshold
+const REWARD_MILESTONES = {
+    ten_books: { threshold: 10, credits: 2, label: 'Maître des Mondes', icon: '🧙‍♂️', message: 'Tu as exploré 10 mondes magiques !' },
+    fifteen_books: { threshold: 15, credits: 1, label: 'Gardien des Légendes', icon: '🏰', message: 'Tu protèges les légendes de Kusoma !' },
+    twentyfive_books: { threshold: 25, credits: 5, label: 'Étoile de Kusoma', icon: '⭐', message: 'Tu brilles comme une étoile ! La plus haute distinction !' },
+};
 
 function DashboardContent() {
     const [user, setUser] = useState(null);
@@ -23,6 +30,12 @@ function DashboardContent() {
     const [clubModalOpen, setClubModalOpen] = useState(false);
     const [noCreditModalOpen, setNoCreditModalOpen] = useState(false);
     const [buyingCredit, setBuyingCredit] = useState(false);
+
+    // Reward system
+    const [rewardModalOpen, setRewardModalOpen] = useState(false);
+    const [currentReward, setCurrentReward] = useState(null);
+    const [claimingReward, setClaimingReward] = useState(false);
+    const [rewardClaimed, setRewardClaimed] = useState(false);
 
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -66,9 +79,21 @@ function DashboardContent() {
 
                 setBooks(booksData || []);
 
+                // 4. Check for unclaimed rewards
+                const totalBooks = (booksData || []).length;
+                const claimed = profileData?.rewards_claimed || [];
+
+                for (const [rewardId, reward] of Object.entries(REWARD_MILESTONES)) {
+                    if (totalBooks >= reward.threshold && !claimed.includes(rewardId)) {
+                        // Found unclaimed reward — show celebration!
+                        setCurrentReward({ id: rewardId, ...reward });
+                        setRewardModalOpen(true);
+                        break; // Show one at a time
+                    }
+                }
+
             } catch (err) {
                 console.error(err);
-                // router.push('/login');
             } finally {
                 setLoading(false);
             }
@@ -174,6 +199,100 @@ function DashboardContent() {
                 }
             }
         }
+    };
+
+    // === REWARD SYSTEM ===
+    const claimReward = async () => {
+        if (!currentReward || claimingReward) return;
+        setClaimingReward(true);
+        try {
+            const res = await fetch('/api/rewards/claim', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ rewardId: currentReward.id }),
+            });
+            const data = await res.json();
+
+            if (res.ok && data.success) {
+                setRewardClaimed(true);
+                // Update profile credits locally
+                if (profile) {
+                    setProfile({
+                        ...profile,
+                        monthly_credits: data.newCreditTotal,
+                        rewards_claimed: [...(profile.rewards_claimed || []), currentReward.id],
+                    });
+                }
+            } else if (data.alreadyClaimed) {
+                setRewardClaimed(true);
+            }
+        } catch (err) {
+            console.error('Reward claim error:', err);
+        } finally {
+            setClaimingReward(false);
+        }
+    };
+
+    const generateCertificate = () => {
+        if (!currentReward) return;
+        const certHtml = `
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Certificat - ${childName}</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Chewy&family=Inter:wght@400;700;900&display=swap');
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { display: flex; justify-content: center; align-items: center; min-height: 100vh; background: #f5f0e8; font-family: 'Inter', sans-serif; }
+        .cert {
+            width: 800px; padding: 60px; background: white;
+            border: 8px solid #f97316; border-radius: 40px;
+            text-align: center; position: relative; overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.1);
+        }
+        .cert::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 12px;
+            background: linear-gradient(90deg, #f97316, #ec4899, #f97316);
+        }
+        .stars { font-size: 40px; margin-bottom: 20px; letter-spacing: 10px; }
+        .title { font-family: 'Chewy', cursive; font-size: 48px; color: #1f2937; margin-bottom: 10px; }
+        .subtitle { color: #6b7280; font-size: 18px; margin-bottom: 40px; }
+        .badge { font-size: 100px; margin-bottom: 20px; display: block; }
+        .badge-name { font-family: 'Chewy', cursive; font-size: 36px; color: #f97316; margin-bottom: 10px; }
+        .child-name { font-size: 52px; font-weight: 900; color: #1f2937; margin-bottom: 10px; font-family: 'Chewy', cursive; }
+        .message { color: #6b7280; font-size: 16px; margin-bottom: 40px; max-width: 500px; margin-left: auto; margin-right: auto; line-height: 1.6; }
+        .books-count { display: inline-block; background: linear-gradient(135deg, #f97316, #ec4899); color: white; padding: 10px 30px; border-radius: 50px; font-weight: 900; font-size: 18px; margin-bottom: 40px; }
+        .footer { color: #9ca3af; font-size: 12px; border-top: 1px solid #e5e7eb; padding-top: 20px; }
+        .footer img { height: 24px; margin-bottom: 8px; }
+        .kusoma { font-weight: 900; color: #f97316; }
+        @media print { body { background: white; } .cert { box-shadow: none; border: 4px solid #f97316; } }
+    </style>
+</head>
+<body>
+    <div class="cert">
+        <div class="stars">\u2b50\u2b50\u2b50</div>
+        <div class="title">Certificat de Lecture</div>
+        <div class="subtitle">d\u00e9cern\u00e9 par KusomaKids</div>
+        <div class="badge">${currentReward.icon}</div>
+        <div class="badge-name">${currentReward.label}</div>
+        <div class="child-name">${childName}</div>
+        <div class="message">${currentReward.message}</div>
+        <div class="books-count">${currentReward.threshold} histoires d\u00e9couvertes !</div>
+        <div class="footer">
+            <p class="kusoma">KusomaKids.com</p>
+            <p>D\u00e9livr\u00e9 le ${new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+        </div>
+    </div>
+</body>
+</html>`;
+        const blob = new Blob([certHtml], { type: 'text/html' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Certificat_${childName}_${currentReward.label.replace(/\s/g, '_')}.html`;
+        a.click();
+        URL.revokeObjectURL(url);
     };
 
     if (loading) return <div className="min-h-screen bg-gray-50 pt-32 flex justify-center"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div></div>;
@@ -618,6 +737,115 @@ function DashboardContent() {
                             Non, plus tard
                         </button>
                     </div>
+                </div>
+            )}
+
+            {/* ===== REWARD CELEBRATION MODAL ===== */}
+            {rewardModalOpen && currentReward && (
+                <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-black/80 backdrop-blur-sm"></div>
+
+                    {/* Confetti */}
+                    <div className="confetti-container">
+                        {Array.from({ length: 50 }).map((_, i) => (
+                            <div
+                                key={i}
+                                className="confetti-piece"
+                                style={{
+                                    left: `${Math.random() * 100}%`,
+                                    animationDelay: `${Math.random() * 3}s`,
+                                    animationDuration: `${2 + Math.random() * 3}s`,
+                                    backgroundColor: ['#f97316', '#ec4899', '#eab308', '#22c55e', '#3b82f6', '#a855f7'][Math.floor(Math.random() * 6)],
+                                    width: `${6 + Math.random() * 8}px`,
+                                    height: `${6 + Math.random() * 8}px`,
+                                }}
+                            />
+                        ))}
+                    </div>
+
+                    <div className="relative bg-white rounded-3xl max-w-md w-full shadow-2xl overflow-hidden" style={{ animation: 'rewardPop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)' }}>
+                        {/* Gold Header */}
+                        <div className="bg-gradient-to-br from-amber-400 via-orange-400 to-pink-500 p-8 text-center text-white relative">
+                            <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_40%,rgba(255,255,255,0.2),transparent)]" />
+                            <div className="relative z-10">
+                                <div className="text-7xl mb-3" style={{ animation: 'badgeSpin 1s ease-out' }}>{currentReward.icon}</div>
+                                <h2 className="text-3xl font-black mb-1" style={{ fontFamily: 'Chewy, cursive' }}>Nouveau Badge !</h2>
+                                <p className="text-white/80 text-sm">Félicitations !</p>
+                            </div>
+                        </div>
+
+                        <div className="p-8 text-center">
+                            <div className="inline-block bg-orange-50 border-2 border-orange-200 rounded-2xl px-6 py-3 mb-4">
+                                <span className="text-2xl font-black text-orange-600" style={{ fontFamily: 'Chewy, cursive' }}>
+                                    {currentReward.label}
+                                </span>
+                            </div>
+
+                            <p className="text-gray-900 font-bold text-xl mb-1">{childName}</p>
+                            <p className="text-gray-500 mb-6">{currentReward.message}</p>
+
+                            {!rewardClaimed ? (
+                                <div className="space-y-3">
+                                    <button
+                                        onClick={claimReward}
+                                        disabled={claimingReward}
+                                        className="w-full bg-gradient-to-r from-amber-500 to-orange-500 text-white py-4 rounded-xl font-bold text-lg hover:shadow-lg transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                                    >
+                                        {claimingReward ? 'Réclamation...' : (
+                                            <>
+                                                🎫 Réclamer {currentReward.credits} crédit{currentReward.credits > 1 ? 's' : ''} gratuit{currentReward.credits > 1 ? 's' : ''} !
+                                            </>
+                                        )}
+                                    </button>
+                                    <p className="text-xs text-gray-400">
+                                        Valeur : {(currentReward.credits * 1500).toLocaleString()} FCFA
+                                    </p>
+                                </div>
+                            ) : (
+                                <div className="space-y-4">
+                                    <div className="bg-green-50 border border-green-200 rounded-xl p-4 text-green-700 font-bold flex items-center justify-center gap-2">
+                                        ✅ {currentReward.credits} crédit{currentReward.credits > 1 ? 's' : ''} ajouté{currentReward.credits > 1 ? 's' : ''} !
+                                    </div>
+                                    <button
+                                        onClick={generateCertificate}
+                                        className="w-full border-2 border-orange-200 text-orange-600 py-3 rounded-xl font-bold hover:bg-orange-50 transition-colors flex items-center justify-center gap-2"
+                                    >
+                                        📜 Télécharger le certificat
+                                    </button>
+                                    <button
+                                        onClick={() => { setRewardModalOpen(false); setRewardClaimed(false); }}
+                                        className="w-full py-3 text-gray-400 text-sm hover:text-gray-600"
+                                    >
+                                        Fermer
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    <style jsx>{`
+                        .confetti-container {
+                            position: fixed; inset: 0; pointer-events: none; z-index: 100;
+                        }
+                        .confetti-piece {
+                            position: absolute; top: -20px;
+                            border-radius: 2px;
+                            animation: confettiFall linear forwards;
+                            transform: rotate(0deg);
+                        }
+                        @keyframes confettiFall {
+                            0% { top: -10%; transform: rotate(0deg) scale(1); opacity: 1; }
+                            100% { top: 110%; transform: rotate(720deg) scale(0.3); opacity: 0; }
+                        }
+                        @keyframes rewardPop {
+                            0% { transform: scale(0.3); opacity: 0; }
+                            100% { transform: scale(1); opacity: 1; }
+                        }
+                        @keyframes badgeSpin {
+                            0% { transform: rotateY(180deg) scale(0.5); }
+                            100% { transform: rotateY(0deg) scale(1); }
+                        }
+                    `}</style>
                 </div>
             )}
 

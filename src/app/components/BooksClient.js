@@ -9,23 +9,32 @@ import { formatTitle } from '@/utils/format';
 export default function BooksClient() {
     const [books, setBooks] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [filterAge, setFilterAge] = useState('all');
+    const [filterGender, setFilterGender] = useState('all');
     const [childName, setChildName] = useState(null);
+    const [childGender, setChildGender] = useState(null); // 'boy' | 'girl' | null
 
     useEffect(() => {
         async function fetchData() {
             try {
-                // 1. Fetch User & Children (for personalization)
+                // 1. Fetch User & Children (for personalization + gender)
                 const { data: { session } } = await supabase.auth.getSession();
                 if (session) {
                     const { data: children } = await supabase
                         .from('children')
-                        .select('first_name')
+                        .select('first_name, gender')
                         .eq('user_id', session.user.id)
                         .limit(1);
 
                     if (children && children.length > 0) {
                         setChildName(children[0].first_name);
+                        const g = children[0].gender?.toLowerCase();
+                        if (g === 'girl' || g === 'fille' || g === 'f') {
+                            setChildGender('girl');
+                            setFilterGender('girl'); // Auto-select
+                        } else if (g === 'boy' || g === 'garçon' || g === 'garcon' || g === 'm') {
+                            setChildGender('boy');
+                            setFilterGender('boy'); // Auto-select
+                        }
                     }
                 }
 
@@ -46,47 +55,59 @@ export default function BooksClient() {
         }
 
         fetchData();
-    }, []); // Empty dependency array: Fetch only once on mount
+    }, []);
 
-    // Helper to personalize text
-    const personalize = (text) => {
+    // Helper to personalize text based on gender context
+    const personalize = (text, bookGender) => {
         if (!text) return '';
-        const name = childName || 'Votre Enfant'; // Fallback if not logged in
+
+        let name;
+        if (childName && childGender && bookGender) {
+            // Logged in: use child name only if gender matches
+            if (childGender === bookGender || bookGender === 'unisex') {
+                name = childName;
+            } else {
+                // Gender mismatch: use generic gendered label
+                name = bookGender === 'girl' ? 'Votre fille' : 'Votre garçon';
+            }
+        } else if (childName && !bookGender) {
+            // No genre set on book: use child name
+            name = childName;
+        } else {
+            // Not logged in: use gendered fallback based on filter or book genre
+            const g = bookGender || filterGender;
+            if (g === 'girl') name = 'Votre fille';
+            else if (g === 'boy') name = 'Votre garçon';
+            else name = 'Votre Enfant';
+        }
+
         return formatTitle(text)
             .replace(/\[Son prénom\]/gi, name)
             .replace(/\{childName\}/gi, name);
     };
 
-    // Clientside filtering with Range Overlap
+    // Clientside filtering by gender
     const filteredBooks = books.filter(book => {
-        if (filterAge === 'all') return true;
-
-        // Explicit mapping to avoid parsing errors
-        let fMin = 0, fMax = 100;
-        switch (filterAge) {
-            case '2-4': fMin = 2; fMax = 4; break;
-            case '4-6': fMin = 4; fMax = 6; break;
-            case '6+': fMin = 6; fMax = 100; break;
-            default: return true;
-        }
-
-        // Parse Book Range (e.g. "3-6 ans", "4-8")
-        // If string format is loose, we extract first and second numbers.
-        const matches = book.age_range ? String(book.age_range).match(/(\d+)/g) : null;
-        if (!matches) return true; // Show if no age defined
-
-        const bMin = parseInt(matches[0], 10);
-        const bMax = matches[1] ? parseInt(matches[1], 10) : bMin; // Handle single age "4 ans"
-
-        // Check if ranges overlap
-        // Overlap condition: max(start1, start2) <= min(end1, end2)
-        const isMatch = Math.max(fMin, bMin) <= Math.min(fMax, bMax);
-
-        // Debug log (optional, remove in production if too noisy)
-        // console.log(`Filter ${filterAge} [${fMin}-${fMax}] vs Book ${book.age_range} [${bMin}-${bMax}] => ${isMatch}`);
-
-        return isMatch;
+        if (filterGender === 'all') return true;
+        const bookGender = book.genre?.toLowerCase();
+        if (!bookGender || bookGender === 'unisex') return true; // unisex shows in all
+        return bookGender === filterGender;
     });
+
+    // Dynamic subtitle
+    const getSubtitle = () => {
+        if (childName && childGender) {
+            if (filterGender === 'all' || filterGender === childGender) {
+                return <>Des histoires uniques où <span className="text-orange-600 font-bold">{childName}</span> devient {childGender === 'girl' ? "l'héroïne" : 'le héros'}.</>;
+            } else {
+                const label = filterGender === 'girl' ? 'votre fille' : 'votre garçon';
+                return <>Des histoires uniques où <span className="text-orange-600 font-bold">{label}</span> devient {filterGender === 'girl' ? "l'héroïne" : 'le héros'}.</>;
+            }
+        }
+        if (filterGender === 'girl') return <>Des histoires uniques où <span className="text-orange-600 font-bold">votre fille</span> devient l&apos;héroïne.</>;
+        if (filterGender === 'boy') return <>Des histoires uniques où <span className="text-orange-600 font-bold">votre garçon</span> devient le héros.</>;
+        return <>Des histoires uniques où <span className="text-orange-600 font-bold">{childName || 'votre enfant'}</span> devient le héros.</>;
+    };
 
     return (
         <div className="min-h-screen pt-32 pb-20 relative bg-[#FAFAF8]">
@@ -99,22 +120,26 @@ export default function BooksClient() {
                 <div className="text-center mb-16">
                     <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">Notre Bibliothèque Magique</h1>
                     <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-                        Des histoires uniques où <span className="text-orange-600 font-bold">{childName || 'votre enfant'}</span> devient le héros.
+                        {getSubtitle()}
                     </p>
                 </div>
 
-                {/* Filters */}
+                {/* Gender Filters */}
                 <div className="flex justify-center gap-4 mb-12 flex-wrap">
-                    {['all', '2-4', '4-6', '6+'].map((age) => (
+                    {[
+                        { key: 'all', label: 'Toutes les histoires' },
+                        { key: 'girl', label: 'Pour les filles 👧🏾' },
+                        { key: 'boy', label: 'Pour les garçons 👦🏾' },
+                    ].map(({ key, label }) => (
                         <button
-                            key={age}
-                            onClick={() => setFilterAge(age)}
-                            className={`px-6 py-2 rounded-full font-bold transition-all ${filterAge === age
+                            key={key}
+                            onClick={() => setFilterGender(key)}
+                            className={`px-6 py-2 rounded-full font-bold transition-all ${filterGender === key
                                 ? 'bg-orange-500 text-white shadow-lg scale-105'
                                 : 'bg-white text-gray-600 hover:bg-orange-50'
                                 }`}
                         >
-                            {age === 'all' ? 'Tous les âges' : `${age} ans`}
+                            {label}
                         </button>
                     ))}
                 </div>
@@ -141,22 +166,24 @@ export default function BooksClient() {
                                                 />
                                             ) : (
                                                 <div className="absolute inset-0 flex items-center justify-center text-gray-300 font-bold text-lg">
-                                                    Pas d'image
+                                                    Pas d&apos;image
                                                 </div>
                                             )}
 
-                                            {/* Badge */}
-                                            {book.age_range && (
-                                                <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-orange-600 shadow-sm">
-                                                    {book.age_range.replace(/\s*ans$/i, '')} ans
-                                                </div>
-                                            )}
+                                            {/* Gender + Age Badge */}
+                                            <div className="absolute top-4 right-4 flex flex-col gap-2">
+                                                {book.age_range && (
+                                                    <div className="bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-orange-600 shadow-sm">
+                                                        {book.age_range.replace(/\s*ans$/i, '')} ans
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
 
                                         {/* Content */}
                                         <div className="p-6 flex flex-col flex-grow">
                                             <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-orange-600 transition-colors">
-                                                {personalize(book.title)}
+                                                {personalize(book.title, book.genre)}
                                             </h3>
                                             <p className="text-gray-500 text-sm italic mb-4 flex-grow">
                                                 {book.tagline || book.description}
@@ -172,9 +199,9 @@ export default function BooksClient() {
                             ))
                         ) : (
                             <div className="col-span-full text-center py-20">
-                                <p className="text-xl text-gray-500">Aucune histoire trouvée pour cette tranche d'âge.</p>
+                                <p className="text-xl text-gray-500">Aucune histoire trouvée pour ce filtre.</p>
                                 <button
-                                    onClick={() => setFilterAge('all')}
+                                    onClick={() => setFilterGender('all')}
                                     className="mt-4 text-orange-600 font-bold hover:underline"
                                 >
                                     Voir toutes les histoires

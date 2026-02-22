@@ -13,6 +13,7 @@ export default function BookDetailClient({ initialBook, initialRelatedBooks }) {
     const [relatedBooks, setRelatedBooks] = useState(initialRelatedBooks || []);
     const [loading, setLoading] = useState(!initialBook);
     const [childName, setChildName] = useState(null);
+    const [childGender, setChildGender] = useState(null);
 
     useEffect(() => {
         async function init() {
@@ -21,12 +22,15 @@ export default function BookDetailClient({ initialBook, initialRelatedBooks }) {
             if (session) {
                 const { data: children } = await supabase
                     .from('children')
-                    .select('first_name')
+                    .select('first_name, gender')
                     .eq('user_id', session.user.id)
                     .limit(1);
 
                 if (children && children.length > 0) {
                     setChildName(children[0].first_name);
+                    const g = children[0].gender?.toLowerCase();
+                    if (g === 'girl' || g === 'fille' || g === 'f') setChildGender('girl');
+                    else if (g === 'boy' || g === 'garçon' || g === 'garcon' || g === 'm') setChildGender('boy');
                 }
             }
 
@@ -40,13 +44,24 @@ export default function BookDetailClient({ initialBook, initialRelatedBooks }) {
         init();
     }, [initialBook]);
 
-    // Helper to personalize text
-    const personalize = (text) => {
+    // Helper to personalize text (gender-aware)
+    const personalize = (text, bookGender) => {
         if (!text) return '';
-        // If not logged in, we still want to show a generic placeholder or keep it cleaner
-        // Current formatTitle keeps placeholders? formatTitle handles formatting but regex replacement handles content.
-        const name = childName || 'Votre Enfant';
-        // Note: Replace both brackets style
+        let name;
+        const bg = bookGender || book?.genre;
+        if (childName && childGender) {
+            // Use child name if gender matches or story is unisex
+            if (!bg || bg === 'unisex' || childGender === bg) {
+                name = childName;
+            } else {
+                name = bg === 'girl' ? 'Votre fille' : 'Votre garçon';
+            }
+        } else {
+            // Not logged in: gendered fallback
+            if (bg === 'girl') name = 'Votre fille';
+            else if (bg === 'boy') name = 'Votre garçon';
+            else name = 'Votre Enfant';
+        }
         return formatTitle(text)
             .replace(/\[Son prénom\]/gi, name)
             .replace(/\{childName\}/gi, name);
@@ -143,10 +158,10 @@ export default function BookDetailClient({ initialBook, initialRelatedBooks }) {
                         </div>
 
                         <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4 leading-tight">
-                            {personalize(book.title)}
+                            {personalize(book.title, book.genre)}
                         </h1>
 
-                        <p className="text-lg md:text-xl text-gray-500 italic mb-6 font-serif">"{personalize(book.tagline)}"</p>
+                        <p className="text-lg md:text-xl text-gray-500 italic mb-6 font-serif">"{personalize(book.tagline, book.genre)}"</p>
 
                         <div className="flex flex-wrap items-end gap-x-3 gap-y-1 mb-8">
                             <div className="flex items-end gap-2">
@@ -159,7 +174,7 @@ export default function BookDetailClient({ initialBook, initialRelatedBooks }) {
                         </div>
 
                         <div className="prose prose-lg text-gray-700 leading-relaxed mb-8">
-                            <p>{personalize(book.description)}</p>
+                            <p>{personalize(book.description, book.genre)}</p>
                         </div>
 
                         {/* BENEFITS SECTION */}
@@ -213,26 +228,38 @@ export default function BookDetailClient({ initialBook, initialRelatedBooks }) {
 
                 {/* --- OTHER STORIES SECTION --- */}
                 <div className="mt-24 mb-20 px-4">
-                    <h2 className="text-3xl font-bold text-center mb-12 text-gray-900">Vous aimerez aussi</h2>
+                    <h2 className="text-3xl font-bold text-center mb-12 text-gray-900">
+                        {childName
+                            ? `${childName} aimera aussi`
+                            : book?.genre === 'girl'
+                                ? 'Votre fille aimera aussi'
+                                : book?.genre === 'boy'
+                                    ? 'Votre garçon aimera aussi'
+                                    : 'Votre enfant aimera aussi'
+                        }
+                    </h2>
 
                     {relatedBooks.length > 0 ? (
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                            {relatedBooks.slice(0, 3).map((related) => (
-                                <Link href={`/book/${related.theme_slug || related.id}`} key={related.id} className="group block">
-                                    <div className="relative aspect-square rounded-[2rem] overflow-hidden mb-4 shadow-md group-hover:shadow-lg transition-all border border-gray-100">
-                                        <Image
-                                            src={related.cover_image_url || STATIC_COVERS[related.theme_slug] || '/images/covers/cover_school.jpg'}
-                                            alt={related.title}
-                                            fill
-                                            className="object-cover group-hover:scale-105 transition-transform duration-500"
-                                        />
-                                    </div>
-                                    <h3 className="font-bold text-gray-900 text-lg leading-tight group-hover:text-orange-600 transition-colors mb-1">
-                                        {personalize(related.title)}
-                                    </h3>
-                                    <p className="text-sm text-gray-500">{related.age_range.replace(/\s*ans$/i, '')} ans</p>
-                                </Link>
-                            ))}
+                            {relatedBooks
+                                .filter(r => !book?.genre || !r.genre || r.genre === book.genre || r.genre === 'unisex')
+                                .slice(0, 3)
+                                .map((related) => (
+                                    <Link href={`/book/${related.theme_slug || related.id}`} key={related.id} className="group block">
+                                        <div className="relative aspect-square rounded-[2rem] overflow-hidden mb-4 shadow-md group-hover:shadow-lg transition-all border border-gray-100">
+                                            <Image
+                                                src={related.cover_image_url || STATIC_COVERS[related.theme_slug] || '/images/covers/cover_school.jpg'}
+                                                alt={related.title}
+                                                fill
+                                                className="object-cover group-hover:scale-105 transition-transform duration-500"
+                                            />
+                                        </div>
+                                        <h3 className="font-bold text-gray-900 text-lg leading-tight group-hover:text-orange-600 transition-colors mb-1">
+                                            {personalize(related.title, related.genre)}
+                                        </h3>
+                                        <p className="text-sm text-gray-500">{related.age_range.replace(/\s*ans$/i, '')} ans</p>
+                                    </Link>
+                                ))}
                         </div>
                     ) : (
                         <div className="text-center">
@@ -250,6 +277,6 @@ export default function BookDetailClient({ initialBook, initialRelatedBooks }) {
                 </div>
 
             </div>
-        </div>
+        </div >
     );
 }

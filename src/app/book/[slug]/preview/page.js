@@ -247,32 +247,34 @@ export default function PreviewPage() {
             if (hasPhoto) {
                 setProgressMessage("Personnalisation de la couverture...");
                 try {
-                    console.log("🎭 Swapping Cover Face...");
-                    const swapInput = {
-                        base_image_url: falBaseUrl,
-                        swap_image_url: data.personalization.photoUrl
-                    };
+                    console.log("🎭 Generating Cover with PuLID...");
+                    const coverPrompt = `Cover illustration for children's book titled "${data.bookTitle}", ${data.personalization.gender === 'girl' ? 'young african girl' : 'young african boy'} hero, vibrant colors, photorealistic, cinematic lighting, masterpiece, 8k`;
 
-                    const swapResult = await fal.subscribe("fal-ai/face-swap", {
-                        input: swapInput,
+                    const coverResult = await fal.subscribe("fal-ai/flux-pulid", {
+                        input: {
+                            prompt: coverPrompt,
+                            reference_images: [{ image_url: data.personalization.photoUrl }],
+                            num_images: 1,
+                            guidance_scale: 3.5,
+                            num_inference_steps: 28,
+                            enable_safety_checker: false,
+                            output_format: "jpeg",
+                            identity_weight: 0.85,
+                            negative_prompt: "exaggerated eyes, oversized eyes, anime eyes, deformed, ugly, bad anatomy"
+                        },
                         logs: true,
                     });
 
-                    // DEBUG: Log Full Result
-                    console.log("🔍 Full Face Swap Result:", JSON.stringify(swapResult, null, 2));
+                    const newCover = coverResult.data?.images?.[0]?.url || coverResult.image?.url || coverResult.images?.[0]?.url;
 
-                    // Handle various Fal response formats (Arrays or Single Object)
-                    const swapUrl = swapResult.image?.url || swapResult.images?.[0]?.url || swapResult.data?.image?.url || swapResult.data?.images?.[0]?.url;
-
-                    if (swapUrl) {
-                        const newCover = swapUrl;
-                        console.log("✅ Cover Face Swap Success:", newCover);
-                        coverUrl = newCover; // ONLY update if success
+                    if (newCover) {
+                        console.log("✅ Cover Generated Success:", newCover);
+                        coverUrl = newCover;
                     } else {
-                        console.warn("⚠️ Cover Face Swap returned no images. Result:", swapResult);
+                        console.warn("⚠️ Cover Generation returned no images.");
                     }
                 } catch (e) {
-                    console.error("❌ Cover Swap Failed, using template:", e);
+                    console.error("❌ Cover Generation Failed, using template:", e);
                 }
             }
 
@@ -303,99 +305,46 @@ export default function PreviewPage() {
                 }
 
                 try {
-                    // --- STEP 1: GENERATE SCENE (Text-to-Image) ---
-                    let sceneUrl = null;
+                    let finalImageUrl = null;
 
-                    // ⚡️ COST OPTIMIZATION: Check for Cached Base Image
-                    if (page.base_image_url) {
-                        console.log(`⚡️ Using Cached Base Image for Page ${i + 1}: ${page.base_image_url}`);
-                        // DEBUG: To helper user verify source
-                        if (page.base_image_url.includes('supabase')) {
-                            console.log("✅ GOOD: Using Supabase Storage for Page " + (i + 1));
-                        } else {
-                            console.warn("⚠️ WARNING: Using Local/External Path for Page " + (i + 1));
-                        }
-
-                        sceneUrl = page.base_image_url;
-
-                        // FIX: Ensure absolute URL for Fal
-                        if (sceneUrl.startsWith('/')) {
-                            sceneUrl = `${window.location.origin}${sceneUrl}`;
-                        }
-
-                    } else {
-                        // 💸 FALLBACK: Generate New Scene (Expensive)
-                        console.log(`🖌️ Step 1: Generating Scene for Page ${i + 1}...`);
+                    if (hasPhoto) {
+                        console.log(`🖌️ Generating Page ${i + 1} with PuLID...`);
 
                         // CRITICAL: DYNAMIC PROMPT ENGINEERING (Resemblance & Composition)
                         const pGender = data.personalization.gender === 'girl' ? 'girl' : 'boy';
                         const pSkin = 'dark skin'; // Brand DNA
                         const pHair = data.personalization.gender === 'girl' ? 'braided hair' : 'short hair';
-
-                        // "looking at camera, detailed face" helps Face Swap
-                        // V1.5.3: Added specific features for better resemblance (beads, braids)
                         const pGenderTraits = data.personalization.gender === 'girl' ? 'cornrows, colorful beads, detailed african features' : '';
                         const physicalAttributes = `cute little african ${pGender}, ${pSkin}, ${pHair}, ${pGenderTraits}, detailed face, looking at camera, middle shot`;
-
                         const composition = "centered composition, detailed background, cinematic lighting, 8k";
-
                         const scenePrompt = `${physicalAttributes}, ${page.imagePrompt || page.text}, ${composition}, pixar style, 3d render, high fidelity, masterpiece, best quality, vibrant colors`;
 
                         console.log(`🎨 Prompting Page ${i + 1}: ${scenePrompt}`);
 
-                        const sceneInput = {
-                            prompt: scenePrompt,
-                            image_size: "landscape_4_3", // Wide shot for immersion
-                            num_inference_steps: 30, // Increased for better quality
-                            guidance_scale: 3.5,
-                            enable_safety_checker: false
-                        };
-
-                        // Use the correct model ID (T2I for scene generation)
-                        const sceneResult = await fal.subscribe("fal-ai/flux/dev", {
-                            input: sceneInput,
+                        const result = await fal.subscribe("fal-ai/flux-pulid", {
+                            input: {
+                                prompt: scenePrompt,
+                                reference_images: [{ image_url: data.personalization.photoUrl }],
+                                num_images: 1,
+                                guidance_scale: 3.5,
+                                num_inference_steps: 28, // Good balance of quality/speed
+                                enable_safety_checker: false,
+                                output_format: "jpeg",
+                                identity_weight: 0.85,
+                                negative_prompt: "exaggerated eyes, oversized eyes, anime eyes, deformed, ugly, bad anatomy"
+                            },
                             logs: true,
                         });
 
-                        const sceneImages = sceneResult.images || sceneResult.data?.images;
-                        if (Array.isArray(sceneImages) && sceneImages.length > 0) {
-                            sceneUrl = sceneImages[0].url;
-                        }
+                        finalImageUrl = result.data?.images?.[0]?.url || result.image?.url || result.images?.[0]?.url;
 
-                        if (!sceneUrl) throw new Error("Scene Generation Failed");
-                        console.log(`✅ Step 1 Success! Scene URL:`, sceneUrl);
-                    }
+                        if (!finalImageUrl) throw new Error("PuLID generation failed");
+                        console.log(`✅ Page ${i + 1} Generated Success! URL:`, finalImageUrl);
 
-                    // --- STEP 2: FACE SWAP (If Photo Exists) ---
-                    let finalImageUrl = sceneUrl;
-
-                    if (hasPhoto) {
-                        console.log(`🎭 Step 2: Applying Face Swap...`);
-
-                        // Corrected Parameters for fal-ai/face-swap (InsightFace)
-                        const swapInput = {
-                            base_image_url: sceneUrl, // Target (The Scene)
-                            swap_image_url: data.personalization.photoUrl // Source (The Face)
-                        };
-
-                        console.log("🔍 Fal Face Swap Input:", JSON.stringify(swapInput, null, 2));
-
-                        const swapResult = await fal.subscribe("fal-ai/face-swap", {
-                            input: swapInput,
-                            logs: true,
-                        });
-
-                        // DEBUG: Log Full Result
-                        console.log("🔍 Page Face Swap Result:", JSON.stringify(swapResult, null, 2));
-
-                        const swapUrl = swapResult.image?.url || swapResult.images?.[0]?.url || swapResult.data?.image?.url || swapResult.data?.images?.[0]?.url;
-
-                        if (swapUrl) {
-                            finalImageUrl = swapUrl;
-                            console.log(`✅ Step 2 Success! Face Swapped.`);
-                        } else {
-                            console.warn("⚠️ Face Swap returned no image, using scene. Result:", swapResult);
-                        }
+                    } else {
+                        // Fallback to static template image if no photo provided (edge case)
+                        console.log(`⚡️ Using Cached Base Image for Page ${i + 1} (No Photo Provided)`);
+                        finalImageUrl = page.base_image_url || "/images/placeholders/blurred-preview.jpg";
                     }
 
                     generatedPages.push({

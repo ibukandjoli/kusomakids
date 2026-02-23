@@ -17,51 +17,36 @@ if (process.env.FAL_KEY) {
 }
 
 /**
- * 2-STEP GENERATION PIPELINE
- * Step 1: Face Swap (Preserves 100% context/background)
- * Step 2: Flux Polish (Unifies lighting/texture, removes sticker effect)
+ * PULID GENERATION PIPELINE
+ * Generates a completely new image using Flux while perfectly preserving
+ * the identity from the provided photo using PuLID.
  */
-async function generatePersonalizedImage(baseImageUrl, childPhotoUrl, scenePrompt) {
+async function generatePersonalizedImage(childPhotoUrl, scenePrompt, childGender) {
     try {
-        console.log("   🔄 Step 1: Face Swap (Identity Injection)...");
-        // 1. Face Swap - The Context Keeper
-        const swapResult = await fal.subscribe("fal-ai/face-swap", {
+        console.log("   🔄 Running PuLID Generation...");
+
+        // Construct a strong prompt for a high quality children's book illustration
+        const fullPrompt = `${scenePrompt}, high quality children's book illustration, vibrant colors, photorealistic texture, cinematic lighting, masterpiece, 8k`;
+
+        const result = await fal.subscribe("fal-ai/flux-pulid", {
             input: {
-                base_image_url: baseImageUrl,
-                swap_image_url: childPhotoUrl
-            },
-            logs: true,
-        });
-
-        // Robust parsing of Swap Result
-        const swappedUrl = swapResult.image?.url || swapResult.images?.[0]?.url;
-
-        if (!swappedUrl) {
-            throw new Error("Face Swap returned no URL");
-        }
-
-        console.log("   ✨ Step 2: Flux Polish (High Fidelity integration)...");
-        // 2. Flux Img2Img - The Quality Enhancer
-        // Uses low strength to keep the swapped face but fix lighting/texture
-        const polishResult = await fal.subscribe("fal-ai/flux/dev/image-to-image", {
-            input: {
-                image_url: swappedUrl,
-                // Add "expressive face" to prompt to encourage keeping the original expression (open mouth, etc.)
-                prompt: scenePrompt + ", highly expressive face, open mouth if shouting, photorealistic, natural lighting, high quality, highly detailed skin texture, cinematic lighting, 8k",
-                strength: 0.45, // INCREASED to allow geometry changes (opening mouth)
-                num_inference_steps: 30,
+                prompt: fullPrompt,
+                reference_images: [{ image_url: childPhotoUrl }],
+                num_images: 1,
                 guidance_scale: 3.5,
+                num_inference_steps: 28,
                 enable_safety_checker: false,
-                output_format: "jpeg"
+                output_format: "jpeg",
+                identity_weight: 0.85, // Optimal balance between likeness and stylization
+                negative_prompt: "exaggerated eyes, oversized eyes, anime eyes, deformed, ugly, bad anatomy, deformed face"
             },
             logs: true,
         });
 
-        const finalUrl = polishResult.images?.[0]?.url;
+        const finalUrl = result.data?.images?.[0]?.url || result.image?.url || result.images?.[0]?.url;
 
         if (!finalUrl) {
-            console.warn("   ⚠️ Polish step failed, falling back to swapped image");
-            return swappedUrl; // Fallback to at least having the swapped face
+            throw new Error("PuLID returned no URL");
         }
 
         return finalUrl;
@@ -73,7 +58,7 @@ async function generatePersonalizedImage(baseImageUrl, childPhotoUrl, scenePromp
 }
 
 export async function POST(req) {
-    console.log("👷 WORKER START: Generate Book with FaceSwap V2 + Flux Polish");
+    console.log("👷 WORKER START: Generate Book with PuLID");
 
     try {
         const supabase = await createClient();
@@ -129,7 +114,7 @@ export async function POST(req) {
                 // Use title + standard prompt for polish
                 const coverPrompt = `Cover illustration for children's book titled "${book.title}", ${book.child_gender === 'Fille' ? 'young african girl' : 'young african boy'} hero, vibrant colors`;
 
-                const newCoverUrl = await generatePersonalizedImage(currentCoverUrl, photoUrl, coverPrompt);
+                const newCoverUrl = await generatePersonalizedImage(photoUrl, coverPrompt, book.child_gender);
 
                 if (newCoverUrl) {
                     console.log("✅ Cover Generated Successfully!");
@@ -169,10 +154,10 @@ export async function POST(req) {
             console.log(`🎭 Processing Page ${i + 1} / ${updatedPages.length}...`);
 
             try {
-                // Construct scene prompt based on page text for the Polish step
+                // Construct scene prompt based on page text for PuLID
                 const pagePrompt = `${page.scene_description || page.text || "Children's book illustration"}, ${book.child_gender === 'Fille' ? 'african girl' : 'african boy'}`;
 
-                const generatedImageUrl = await generatePersonalizedImage(baseImage, photoUrl, pagePrompt);
+                const generatedImageUrl = await generatePersonalizedImage(photoUrl, pagePrompt, book.child_gender);
 
                 updatedPages[i] = {
                     ...page,
@@ -268,7 +253,7 @@ export async function POST(req) {
         return NextResponse.json({
             success: true,
             generatedCount,
-            message: "Worker finished - FaceSwap V2 pipeline"
+            message: "Worker finished - PuLID pipeline"
         });
 
     } catch (error) {

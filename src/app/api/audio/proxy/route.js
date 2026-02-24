@@ -33,16 +33,28 @@ export async function GET(req) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        // 2. Parse URL to get Book ID
-        // Expected Path: .../book-audio/[bookId]/[file]
-        const urlObj = new URL(audioUrl);
-        const pathParts = urlObj.pathname.split('/book-audio/');
+        // 2. Parse URL or Path to get Book ID
+        // Handles both absolute URLs and relative paths (e.g. "book-123/page-1.mp3")
+        let filePath = audioUrl;
 
-        if (pathParts.length < 2) {
-            return NextResponse.json({ error: "Invalid URL" }, { status: 400 });
+        if (filePath.startsWith('http')) {
+            try {
+                const urlObj = new URL(filePath);
+                const pathParts = urlObj.pathname.split('/book-audio/');
+                if (pathParts.length > 1) {
+                    filePath = pathParts[1];
+                } else {
+                    return NextResponse.json({ error: "Invalid URL structure" }, { status: 400 });
+                }
+            } catch (e) {
+                return NextResponse.json({ error: "Invalid URL format" }, { status: 400 });
+            }
         }
 
-        const filePath = pathParts[1]; // e.g. "book-123/page-1.mp3"
+        if (!filePath || !filePath.includes('/')) {
+            return NextResponse.json({ error: "Invalid file path" }, { status: 400 });
+        }
+
         const bookId = filePath.split('/')[0]; // Extract "book-123" (which is actually the UUID)
 
         // 3. Verify Ownership

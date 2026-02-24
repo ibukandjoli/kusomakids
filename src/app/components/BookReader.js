@@ -9,6 +9,7 @@ export default function BookReader({ book, user, onUnlock, isEditable = false, o
     const [isFullscreen, setIsFullscreen] = useState(false);
     const [direction, setDirection] = useState(1);
     const readerRef = useRef(null);
+    const audioRef = useRef(null); // Ref for our hidden audio element
 
     // Normalize pages — merge DB content + extraPages
     const dbContent = book.story_content || book.content_json || {};
@@ -26,7 +27,11 @@ export default function BookReader({ book, user, onUnlock, isEditable = false, o
         return { ...p, image: p.image || p.image_url || p.imageUrl || null };
     });
 
-    const pages = normalizedDbPages.length > 0 ? normalizedDbPages : normalizedExtraPages;
+    const [normalizedPages, setNormalizedPages] = useState(
+        normalizedDbPages.length > 0 ? normalizedDbPages : normalizedExtraPages
+    );
+
+    const pages = normalizedPages;
 
     const coverUrl = book.cover_image_url || book.cover_url || pages?.[0]?.image;
     const totalPages = pages.length;
@@ -55,35 +60,57 @@ export default function BookReader({ book, user, onUnlock, isEditable = false, o
             .replace(/\{childName\}/gi, name);
     };
 
-    // ============ AUDIO — Browser TTS (free, instant, reliable) ============
+    // ============ AUDIO — Premium OpenAI TTS ============
     const [isPlaying, setIsPlaying] = useState(false);
     const [audioLoading, setAudioLoading] = useState(false);
-    const utteranceRef = useRef(null);
+    const [coverAudioUrl, setCoverAudioUrl] = useState(book?.cover_audio_url || null);
 
     // Stop audio when changing pages
     useEffect(() => {
-        if (typeof window !== 'undefined' && window.speechSynthesis) {
-            window.speechSynthesis.cancel();
+        if (audioRef.current) {
+            audioRef.current.pause();
+            audioRef.current.currentTime = 0;
         }
         setIsPlaying(false);
         setAudioLoading(false);
     }, [currentPage]);
 
-    const handlePlayAudio = () => {
-        if (!('speechSynthesis' in window)) {
-            alert("Votre navigateur ne supporte pas la lecture audio.");
-            return;
-        }
+    // Handle end of audio playback
+    useEffect(() => {
+        const audioEl = audioRef.current;
+        if (!audioEl) return;
 
-        // Toggle Stop if playing
-        if (isPlaying) {
-            window.speechSynthesis.cancel();
+        const handleEnded = () => setIsPlaying(false);
+        const handleError = () => {
+            console.error("Audio playback error");
+            setIsPlaying(false);
+            setAudioLoading(false);
+        };
+
+        audioEl.addEventListener('ended', handleEnded);
+        audioEl.addEventListener('error', handleError);
+
+        return () => {
+            audioEl.removeEventListener('ended', handleEnded);
+            audioEl.removeEventListener('error', handleError);
+        };
+    }, []);
+
+    const handlePlayAudio = async () => {
+        if (isPlaying && audioRef.current) {
+            audioRef.current.pause();
             setIsPlaying(false);
             return;
         }
 
-        const currentPageData = pages[currentPage > 0 ? currentPage - 1 : 0];
-        const textToRead = currentPage === 0
+        const isCover = currentPage === 0;
+        const actualPageIndex = isCover ? 'cover' : currentPage - 1;
+        const currentPageData = isCover ? null : pages[actualPageIndex];
+
+        let existingAudioPath = isCover ? coverAudioUrl : currentPageData?.audio_url;
+
+        // Determine Text to Synthesize
+        const textToRead = isCover
             ? `${personalize(book.title)}. Une histoire pour ${book.child_name || 'votre enfant'}.`
             : personalize(currentPageData?.text);
 
@@ -91,49 +118,60 @@ export default function BookReader({ book, user, onUnlock, isEditable = false, o
 
         setAudioLoading(true);
 
-        const utterance = new SpeechSynthesisUtterance(textToRead);
-        utterance.lang = 'fr-FR';
-        utterance.rate = 0.9;
-        utterance.pitch = 1.1;
+        try {
+            let finalUrlToPlay = null;
 
-        // Try to find a good French voice
-        const voices = window.speechSynthesis.getVoices();
-        const frenchVoice = voices.find(v => v.lang.startsWith('fr') && v.name.includes('Google')) ||
-            voices.find(v => v.lang.startsWith('fr') && v.name.includes('Amelie')) ||
-            voices.find(v => v.lang.startsWith('fr') && v.name.includes('Thomas')) ||
-            voices.find(v => v.lang.startsWith('fr'));
+            if (existingAudioPath) {
+                // Audio exists! We just use the proxy URL
+                finalUrlToPlay = `/api/audio/proxy?url=${encodeURIComponent(existingAudioPath)}`;
+            } else {
+                // Needs generation (Lazy Loading)
+                const gRes = await fetch('/api/audio/generate-speech', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        text: textToRead,
+                        bookId: book.id,
+                        pageIndex: actualPageIndex,
+                        voice: 'nova' // Premium, warm female voice
+                    })
+                });
 
-        if (frenchVoice) {
-            utterance.voice = frenchVoice;
+                if (!gRes.ok) throw new Error("Failed to generate audio");
+                const data = await gRes.json();
+
+                finalUrlToPlay = data.audioUrl; // Use signed URL directly for this session
+
+                // Update local state so subsequent plays don't regenerate
+                if (isCover) {
+                    setCoverAudioUrl(data.filePath);
+                } else {
+                    const updatedPages = [...pages];
+                    updatedPages[actualPageIndex].audio_url = data.filePath;
+                    setNormalizedPages(updatedPages);
+                }
+            }
+
+            if (audioRef.current && finalUrlToPlay) {
+                audioRef.current.src = finalUrlToPlay;
+                audioRef.current.play()
+                    .then(() => {
+                        setIsPlaying(true);
+                        setAudioLoading(false);
+                    })
+                    .catch((err) => {
+                        console.error("Playback interrupted or failed", err);
+                        setAudioLoading(false);
+                        setIsPlaying(false);
+                    });
+            }
+
+        } catch (err) {
+            console.error(err);
+            alert("Erreur lors du chargement de l'audio premium.");
+            setAudioLoading(false);
         }
-
-        utterance.onstart = () => {
-            setIsPlaying(true);
-            setAudioLoading(false);
-        };
-
-        utterance.onend = () => {
-            setIsPlaying(false);
-        };
-
-        utterance.onerror = () => {
-            setIsPlaying(false);
-            setAudioLoading(false);
-        };
-
-        utteranceRef.current = utterance;
-        window.speechSynthesis.speak(utterance);
     };
-
-    // Preload voices
-    useEffect(() => {
-        if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-            window.speechSynthesis.getVoices();
-            window.speechSynthesis.onvoiceschanged = () => {
-                window.speechSynthesis.getVoices();
-            };
-        }
-    }, []);
 
     // Fullscreen Logic
     const toggleFullscreen = () => {
@@ -176,6 +214,8 @@ export default function BookReader({ book, user, onUnlock, isEditable = false, o
     // ========== RENDER ==========
     return (
         <div ref={readerRef} className="w-full h-full bg-[#1a1a2e] overflow-hidden relative select-none">
+            {/* Premium Audio Element */}
+            <audio ref={audioRef} className="hidden" preload="auto" />
 
             {/* ============ MOBILE VIEW ============ */}
             <div className="md:hidden w-full h-full overflow-y-auto pb-20 space-y-6 p-4 bg-gradient-to-b from-orange-50 to-white">

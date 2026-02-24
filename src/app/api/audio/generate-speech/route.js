@@ -41,16 +41,16 @@ export async function POST(req) {
 
         console.log(`🎙️ Generating Audio for Book ${bookId}, Page ${pageIndex}`);
 
-        // 2. Fetch Book (Admin Client to bypass RLS)
-        const { data: book } = await supabaseAdmin
+        // 2. Fetch Book (Standard Client - ensures RLS & Ownership)
+        const { data: book, error: fetchError } = await supabase
             .from('generated_books')
             .select('user_id, content_json, story_content')
             .eq('id', bookId)
             .single();
 
-        if (!book) {
-            console.error(`❌ Book not found: ${bookId}`);
-            return NextResponse.json({ error: "Book not found" }, { status: 404 });
+        if (fetchError || !book) {
+            console.error(`❌ Book not found or access denied: ${bookId}`, fetchError || "No book returned");
+            return NextResponse.json({ error: "Book not found or access denied", details: fetchError }, { status: 404 });
         }
 
         // 3. OpenAI TTS Generation
@@ -86,7 +86,11 @@ export async function POST(req) {
 
         if (uploadError) {
             console.error("❌ Storage Upload Failed:", uploadError);
-            return NextResponse.json({ error: "Storage upload failed" }, { status: 500 });
+            // If the upload failed, it might be due to missing bucket or invalid admin key
+            if (uploadError.message.includes("Bucket not found")) {
+                return NextResponse.json({ error: "Bucket 'book-audio' introuvable. Veuillez le créer dans Supabase." }, { status: 500 });
+            }
+            return NextResponse.json({ error: "Storage upload failed", details: uploadError.message }, { status: 500 });
         }
 
         // 5. Get Signed URL (bucket is private, so getPublicUrl won't work)

@@ -14,7 +14,7 @@ const supabaseAdmin = createClient(
     }
 );
 
-import { createClient as createServerClient } from '@/lib/supabase-server';
+
 
 export async function GET(req) {
     const { searchParams } = new URL(req.url);
@@ -25,14 +25,6 @@ export async function GET(req) {
     }
 
     try {
-        // 1. Authenticate User
-        const supabase = await createServerClient();
-        const { data: { user }, error: authError } = await supabase.auth.getUser();
-
-        if (authError || !user) {
-            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-        }
-
         // 2. Parse URL or Path to get Book ID
         // Handles both absolute URLs and relative paths (e.g. "book-123/page-1.mp3")
         let filePath = audioUrl;
@@ -57,21 +49,15 @@ export async function GET(req) {
 
         const bookId = filePath.split('/')[0]; // Extract "book-123" (which is actually the UUID)
 
-        // 3. Verify Ownership
-        const { data: book, error: bookError } = await supabase
+        // 3. Verify Book Exists (using Admin to bypass RLS for shared/anon links)
+        const { data: book, error: bookError } = await supabaseAdmin
             .from('generated_books')
-            .select('user_id')
+            .select('id')
             .eq('id', bookId)
             .single();
 
         if (bookError || !book) {
-            return NextResponse.json({ error: "Book not found or access denied" }, { status: 404 });
-        }
-
-        if (book.user_id !== user.id) {
-            // Strict IDOR Check
-            console.error(`🚨 IDOR Attempt: User ${user.id} tried accessing book ${bookId}`);
-            return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+            return NextResponse.json({ error: "Book not found" }, { status: 404 });
         }
 
         // 4. Secure Download (Admin)

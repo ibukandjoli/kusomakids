@@ -34,7 +34,7 @@ export async function POST(req) {
         // 2. Fetch Book (Admin Client - bypasses RLS to guarantee find, then we check manually)
         const { data: book, error: fetchError } = await supabaseAdmin
             .from('generated_books')
-            .select('user_id, content_json, story_content')
+            .select('user_id, story_content')
             .eq('id', bookId)
             .single();
 
@@ -104,14 +104,14 @@ export async function POST(req) {
         }
 
         // 6. Update Book Data (Cache the file path for future use)
-        let content = book.story_content || book.content_json || {};
+        let content = book.story_content || {};
         let contentPages = Array.isArray(content) ? content : (content.pages || []);
 
         if (contentPages[pageIndex]) {
             contentPages[pageIndex].audio_url = fileName; // Store path, not full URL
 
             let newContent = Array.isArray(content) ? contentPages : { ...content, pages: contentPages };
-            const updatePayload = book.story_content ? { story_content: newContent } : { content_json: newContent };
+            const updatePayload = { story_content: newContent };
 
             const { error: updateError } = await supabaseAdmin
                 .from('generated_books')

@@ -96,6 +96,64 @@ export default function BookReader({ book, user, onUnlock, isEditable = false, o
         };
     }, []);
 
+    useEffect(() => {
+        let isCancelled = false;
+
+        const prefetchAudio = async () => {
+            const isCover = currentPage === 0;
+            const actualPageIndex = isCover ? 'cover' : currentPage - 1;
+            const currentPageData = isCover ? null : pages[actualPageIndex];
+            const existingAudioPath = isCover ? coverAudioUrl : currentPageData?.audio_url;
+
+            if (existingAudioPath || !book?.id || !enableAudio) return;
+
+            const textToRead = isCover
+                ? `${personalize(book.title)}. Une histoire pour ${book.child_name || 'votre enfant'}.`
+                : personalize(currentPageData?.text);
+
+            if (!textToRead) return;
+
+            // Trigger silent background generation
+            try {
+                const gRes = await fetch('/api/audio/generate-speech', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        text: textToRead,
+                        bookId: book.id,
+                        pageIndex: actualPageIndex,
+                        voice: 'nova'
+                    })
+                });
+
+                if (gRes.ok && !isCancelled) {
+                    const data = await gRes.json();
+                    if (isCover) {
+                        setCoverAudioUrl(data.filePath);
+                    } else {
+                        setNormalizedPages(prevPages => {
+                            const newPages = [...prevPages];
+                            if (newPages[actualPageIndex]) {
+                                newPages[actualPageIndex].audio_url = data.filePath;
+                            }
+                            return newPages;
+                        });
+                    }
+                }
+            } catch (error) {
+                console.error("Silent TTS prefetch failed:", error);
+            }
+        };
+
+        // Delay pre-fetch slightly so it doesn't block UI animations
+        const timer = setTimeout(prefetchAudio, 500);
+
+        return () => {
+            isCancelled = true;
+            clearTimeout(timer);
+        };
+    }, [currentPage, book, pages, coverAudioUrl, enableAudio]);
+
     const handlePlayAudio = async () => {
         if (isPlaying && audioRef.current) {
             audioRef.current.pause();
@@ -106,8 +164,7 @@ export default function BookReader({ book, user, onUnlock, isEditable = false, o
         const isCover = currentPage === 0;
         const actualPageIndex = isCover ? 'cover' : currentPage - 1;
         const currentPageData = isCover ? null : pages[actualPageIndex];
-
-        let existingAudioPath = isCover ? coverAudioUrl : currentPageData?.audio_url;
+        const existingAudioPath = isCover ? coverAudioUrl : currentPageData?.audio_url;
 
         // Determine Text to Synthesize
         const textToRead = isCover
@@ -125,7 +182,7 @@ export default function BookReader({ book, user, onUnlock, isEditable = false, o
                 // Audio exists! We just use the proxy URL
                 finalUrlToPlay = `/api/audio/proxy?url=${encodeURIComponent(existingAudioPath)}`;
             } else {
-                // Needs generation (Lazy Loading)
+                // Fallback: the silent background pre-fetch hasn't finished, so we wait for generation here
                 const gRes = await fetch('/api/audio/generate-speech', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -133,14 +190,14 @@ export default function BookReader({ book, user, onUnlock, isEditable = false, o
                         text: textToRead,
                         bookId: book.id,
                         pageIndex: actualPageIndex,
-                        voice: 'nova' // Premium, warm female voice
+                        voice: 'nova'
                     })
                 });
 
                 if (!gRes.ok) throw new Error("Failed to generate audio");
                 const data = await gRes.json();
 
-                finalUrlToPlay = data.audioUrl; // Use signed URL directly for this session
+                finalUrlToPlay = data.audioUrl;
 
                 // Update local state so subsequent plays don't regenerate
                 if (isCover) {

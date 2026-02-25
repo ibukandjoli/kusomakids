@@ -50,11 +50,12 @@ export async function POST(req) {
         //     console.warn(`⚠️ User ${user.id} generating audio for book ${bookId} owned by ${book.user_id}`);
         // }
 
-        // 3. OpenAI TTS Generation
+        // 3. OpenAI TTS Generation (tts-1 is much faster than tts-1-hd)
         const mp3 = await openai.audio.speech.create({
-            model: "tts-1-hd",
+            model: "tts-1",
             voice: voice,
             input: text,
+            speed: 0.85, // Slower speaking rate for children
         });
 
         const buffer = Buffer.from(await mp3.arrayBuffer());

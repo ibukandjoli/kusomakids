@@ -26,19 +26,19 @@ async function generatePersonalizedImage(childPhotoUrl, scenePrompt, childGender
         console.log("   🔄 Running PuLID Generation...");
 
         // Construct a strong prompt for a high quality children's book illustration
-        const fullPrompt = `${scenePrompt}, high quality children's book illustration, vibrant colors, photorealistic texture, cinematic lighting, masterpiece, 8k`;
+        const fullPrompt = `${scenePrompt}, minimalist 2D vector art style, flat colors, clean bold outlines, children's book illustration, full body visible in frame, perfect human anatomy`;
 
         const result = await fal.subscribe("fal-ai/flux-pulid", {
             input: {
                 prompt: fullPrompt,
-                reference_images: [{ image_url: childPhotoUrl }],
+                reference_image_url: childPhotoUrl,
                 num_images: 1,
                 guidance_scale: 3.5,
                 num_inference_steps: 28,
                 enable_safety_checker: false,
                 output_format: "jpeg",
-                identity_weight: 0.85, // Optimal balance between likeness and stylization
-                negative_prompt: "exaggerated eyes, oversized eyes, anime eyes, deformed, ugly, bad anatomy, deformed face"
+                identity_weight: 0.95, // High likeness for recognizable face swap
+                negative_prompt: "3d render, cgi, gradients, photorealistic, cut off limbs, out of frame, cropped, deformed, bad anatomy, poorly drawn face, mutated"
             },
             logs: true,
         });

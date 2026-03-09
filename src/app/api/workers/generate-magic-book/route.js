@@ -116,8 +116,8 @@ export async function POST(req) {
             }
         }
 
-        // MODIFIED: Ghibli style but with REALISTIC PROPORTIONS
-        const STYLE_SUFFIX = `, studio ghibli style, detailed 2D illustration, masterpiece, vibrant colors, hayao miyazaki style, correct human anatomy, proportional head, small eyes, natural face features, detailed background, no 3d render, no cgi, flat color`;
+        // MODIFIED: minimalist 2D vector style
+        const STYLE_SUFFIX = `, minimalist 2D vector art style, flat colors, clean bold outlines, children's book illustration, full body visible in frame, perfect human anatomy`;
 
         if (mergedPages.length === 0) {
             return NextResponse.json({ error: "No pages to generate" }, { status: 400 });
@@ -142,21 +142,33 @@ export async function POST(req) {
                 // STRONG CONSISTENCY PROMPT STRUCTURE
                 const prompt = `${CHARACTER_STYLE} . ${basePrompt}. ${STYLE_SUFFIX}`;
 
+                // Determine if we should use PuLID (Face Swap) or standard Flux
+                const modelId = referenceImage ? "fal-ai/flux-pulid" : "fal-ai/flux/dev";
+
+                const modelInput = {
+                    prompt: prompt,
+                    image_size: "landscape_4_3",
+                    num_inference_steps: 28,
+                    guidance_scale: 3.5,
+                    enable_safety_checker: false,
+                    seed: bookSeed, // FORCE SAME SEED
+                    sync_mode: true // Ensure consistent handling
+                };
+
+                // Add PuLID specific parameters if we have a reference image
+                if (referenceImage) {
+                    modelInput.reference_image_url = referenceImage;
+                    modelInput.identity_weight = 0.95; // High likeness
+                    modelInput.negative_prompt = "3d render, cgi, gradients, photorealistic, cut off limbs, out of frame, cropped, deformed, bad anatomy, poorly drawn face, mutated";
+                }
+
                 // Using fal.subscribe for checking status
-                const result = await fal.subscribe("fal-ai/flux/dev", {
-                    input: {
-                        prompt: prompt,
-                        image_size: "landscape_4_3",
-                        num_inference_steps: 28,
-                        guidance_scale: 3.5,
-                        enable_safety_checker: false,
-                        seed: bookSeed, // FORCE SAME SEED
-                        sync_mode: true // Ensure consistent handling
-                    },
+                const result = await fal.subscribe(modelId, {
+                    input: modelInput,
                     logs: true
                 });
 
-                const imageUrl = result.images?.[0]?.url;
+                const imageUrl = result.data?.images?.[0]?.url || result.image?.url || result.images?.[0]?.url;
 
                 if (imageUrl) {
                     generatedCount++;

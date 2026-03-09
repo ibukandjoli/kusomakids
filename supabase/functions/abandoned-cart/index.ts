@@ -1,13 +1,19 @@
+// @ts-ignore
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+// @ts-ignore
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1"
+// @ts-ignore
 import { Resend } from "https://esm.sh/resend@1.0.0"
 
-const resend = new Resend(Deno.env.get("RESEND_API_KEY"))
+// Declare Deno global to fix IDE errors in non-Deno specific environments
+declare const Deno: any;
+
+const resend = new Resend(Deno.env.get("RESEND_API_KEY") as string)
 const supabaseUrl = Deno.env.get("SUPABASE_URL")
 const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")
 const supabase = createClient(supabaseUrl!, supabaseServiceKey!)
 
-serve(async (req) => {
+serve(async (_req: Request) => {
     try {
         // 1. Calculate time threshold (2 hours ago)
         const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString();
@@ -19,15 +25,16 @@ serve(async (req) => {
             .select('*, profiles(email, full_name)')
             .lt('created_at', twoHoursAgo)
             .eq('is_unlocked', false)
-            .is('abandoned_cart_sent_at', null) // Ensure we haven't sent it yet
+            .is('abandoned_cart_sent_at', null as any) // Ensure we haven't sent it yet
             .limit(50); // Process in batches
 
         if (error) throw error;
 
-        console.log(`Found ${abandonedBooks.length} abandoned books.`);
+        const booksCount = abandonedBooks?.length || 0;
+        console.log(`Found ${booksCount} abandoned books.`);
 
         // 3. Loop and Send Emails
-        const results = await Promise.all(abandonedBooks.map(async (book) => {
+        const results = await Promise.all((abandonedBooks || []).map(async (book: any) => {
             const email = book.profiles?.email;
             const name = book.profiles?.full_name || "Parent";
             const childName = book.child_name || "votre enfant";
@@ -72,7 +79,7 @@ serve(async (req) => {
             JSON.stringify(results),
             { headers: { "Content-Type": "application/json" } },
         )
-    } catch (error) {
+    } catch (error: any) {
         return new Response(
             JSON.stringify({ error: error.message }),
             { status: 500, headers: { "Content-Type": "application/json" } },

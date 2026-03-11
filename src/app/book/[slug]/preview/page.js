@@ -248,19 +248,19 @@ export default function PreviewPage() {
                 setProgressMessage("Personnalisation de la couverture...");
                 try {
                     console.log("🎭 Generating Cover with PuLID...");
-                    const coverPrompt = `Cover illustration for children's book titled "${data.bookTitle}", ${data.personalization.gender === 'girl' ? 'young african girl' : 'young african boy'} hero, vibrant colors, photorealistic, cinematic lighting, masterpiece, 8k`;
+                    const coverPrompt = `Cover illustration for children's book titled "${data.bookTitle}", ${data.personalization.gender === 'girl' ? 'young african girl' : 'young african boy'} hero, minimalist 2D vector art style, flat colors, clean bold outlines, full body visible in frame, perfect human anatomy`;
 
                     const coverResult = await fal.subscribe("fal-ai/flux-pulid", {
                         input: {
                             prompt: coverPrompt,
-                            reference_images: [{ image_url: data.personalization.photoUrl }],
+                            reference_image_url: data.personalization.photoUrl,
                             num_images: 1,
                             guidance_scale: 3.5,
                             num_inference_steps: 28,
                             enable_safety_checker: false,
                             output_format: "jpeg",
-                            identity_weight: 0.85,
-                            negative_prompt: "exaggerated eyes, oversized eyes, anime eyes, deformed, ugly, bad anatomy"
+                            identity_weight: 0.95,
+                            negative_prompt: "3d render, cgi, gradients, photorealistic, cut off limbs, out of frame, cropped, deformed, bad anatomy, poorly drawn face, mutated"
                         },
                         logs: true,
                     });
@@ -316,22 +316,22 @@ export default function PreviewPage() {
                         const pHair = data.personalization.gender === 'girl' ? 'braided hair' : 'short hair';
                         const pGenderTraits = data.personalization.gender === 'girl' ? 'cornrows, colorful beads, detailed african features' : '';
                         const physicalAttributes = `cute little african ${pGender}, ${pSkin}, ${pHair}, ${pGenderTraits}, detailed face, looking at camera, middle shot`;
-                        const composition = "centered composition, detailed background, cinematic lighting, 8k";
-                        const scenePrompt = `${physicalAttributes}, ${page.imagePrompt || page.text}, ${composition}, pixar style, 3d render, high fidelity, masterpiece, best quality, vibrant colors`;
+                        const composition = "minimalist 2D vector art style, flat colors, clean bold outlines, children's book illustration, full body visible in frame, perfect human anatomy";
+                        const scenePrompt = `${physicalAttributes}, ${page.imagePrompt || page.text}, ${composition}`;
 
                         console.log(`🎨 Prompting Page ${i + 1}: ${scenePrompt}`);
 
                         const result = await fal.subscribe("fal-ai/flux-pulid", {
                             input: {
                                 prompt: scenePrompt,
-                                reference_images: [{ image_url: data.personalization.photoUrl }],
+                                reference_image_url: data.personalization.photoUrl,
                                 num_images: 1,
                                 guidance_scale: 3.5,
                                 num_inference_steps: 28, // Good balance of quality/speed
                                 enable_safety_checker: false,
                                 output_format: "jpeg",
-                                identity_weight: 0.85,
-                                negative_prompt: "exaggerated eyes, oversized eyes, anime eyes, deformed, ugly, bad anatomy"
+                                identity_weight: 0.95,
+                                negative_prompt: "3d render, cgi, gradients, photorealistic, cut off limbs, out of frame, cropped, deformed, bad anatomy, poorly drawn face, mutated"
                             },
                             logs: true,
                         });
